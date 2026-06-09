@@ -911,18 +911,16 @@ body {
 <div id="s-levels" class="screen"></div>
 <div id="s-drill" class="screen"></div>
 <div id="s-compute" class="screen"></div>
-<div id="s-geometry" class="screen"></div>
-<div id="s-stats" class="screen"></div>
+<div id="s-geometry" style="display:none"></div>
+<div id="s-stats" style="display:none"></div>
 <div id="s-wordprobs" class="screen"></div>
-<div id="s-spelling" class="screen"></div>
-<div id="s-grammar" class="screen"></div>
-<div id="s-gate" class="screen"></div>
-<div id="s-vocab" class="screen"></div>
+<div id="s-spelling" style="display:none"></div>
 
 <div id="s-concept" class="screen"></div>
 <div id="s-admin" class="screen"></div>
 <div id="s-admin" class="screen"></div>
 <div id="s-reading" class="screen"></div>
+<div id="s-gate" class="screen"></div>
 <div id="s-results" class="screen">
   <div class="screen" id="s-stickers"></div></div>
 <div id="s-reports" class="screen"></div>
@@ -945,6 +943,7 @@ body {
 </div>
 
 <script>
+
 
 /* ═══════════════════════════════════════════
    FIREBASE CONFIG & INIT
@@ -5439,6 +5438,62 @@ var GATE_BANK={
 {q:"Each row has 3 shapes that get darker. Row has: light star, gray star, ___",choices:["white star","light star","dark star","striped star"],ans:"dark star",type:"figure_matrix",battery:"nonverbal",exp:"The pattern is: light, gray, dark"},
 {q:"A group of shapes: big red circle, big blue circle, big red square. Which fits the group?",choices:["big red triangle","small red circle","big green circle","small blue square"],ans:"big red triangle",type:"figure_classification",battery:"nonverbal",exp:"All shapes in the group are big and red"},
 {q:"Pattern row: 1 star, 2 stars, 3 stars, 4 stars, ___",choices:["3 stars","4 stars","5 stars","6 stars"],ans:"5 stars",type:"figure_matrix",battery:"nonverbal",exp:"Add one star each step: 1, 2, 3, 4, 5"}
+,
+    {q:"Library is to Books as Zoo is to ___",choices:["Animals","Cages","Tickets","Zookeeper"],ans:"Animals",type:"verbal_analogy",battery:"verbal",exp:"A library is a place for books; a zoo is a place for animals"},
+    {q:"Which does NOT belong: Hammer, Screwdriver, Wrench, Crayon",choices:["Hammer","Screwdriver","Wrench","Crayon"],ans:"Crayon",type:"verbal_classification",battery:"verbal",exp:"Hammer, Screwdriver, and Wrench are tools; Crayon is an art supply"},
+    {q:"Wet is to Dry as Loud is to ___",choices:["Quiet","Sound","Noise","Music"],ans:"Quiet",type:"verbal_analogy",battery:"verbal",exp:"Wet and Dry are opposites; Loud and Quiet are opposites"},
+    {q:"Which does NOT belong: Red, Green, Blue, Circle",choices:["Red","Green","Blue","Circle"],ans:"Circle",type:"verbal_classification",battery:"verbal",exp:"Red, Green, and Blue are colors; Circle is a shape"},
+    {q:"A ___ is an animal that hops and lives near ponds.",choices:["frog","fish","bird","rabbit"],ans:"frog",type:"sentence_completion",battery:"verbal",exp:"Frogs hop and live near ponds or water"},
+    {q:"We read books in a ___.",choices:["library","garage","kitchen","gym"],ans:"library",type:"sentence_completion",battery:"verbal",exp:"A library is where people go to read or borrow books"},
+    {q:"Cub is to Bear as Calf is to ___",choices:["Cow","Horse","Lion","Deer"],ans:"Cow",type:"verbal_analogy",battery:"verbal",exp:"A cub is a baby bear; a calf is a baby cow"},
+    {q:"Which does NOT belong: Oak, Pine, Rose, Maple",choices:["Oak","Pine","Rose","Maple"],ans:"Rose",type:"verbal_classification",battery:"verbal",exp:"Oak, Pine, and Maple are trees; Rose is a flower"},
+    {q:"Rain comes from ___.",choices:["clouds","mountains","rivers","caves"],ans:"clouds",type:"sentence_completion",battery:"verbal",exp:"Rain falls from clouds in the sky"},
+    {q:"Laugh is to Happy as Cry is to ___",choices:["Sad","Tired","Hungry","Cold"],ans:"Sad",type:"verbal_analogy",battery:"verbal",exp:"Laughing shows happiness; crying shows sadness"},
+    {q:"Which does NOT belong: Add, Subtract, Multiply, Whisper",choices:["Add","Subtract","Multiply","Whisper"],ans:"Whisper",type:"verbal_classification",battery:"verbal",exp:"Add, Subtract, and Multiply are math operations; Whisper is something you do with your voice"},
+    {q:"A firefighter works at a ___.",choices:["fire station","hospital","school","farm"],ans:"fire station",type:"sentence_completion",battery:"verbal",exp:"Firefighters work at and respond from a fire station"},
+    {q:"Petal is to Flower as Leaf is to ___",choices:["Tree","Root","Soil","Water"],ans:"Tree",type:"verbal_analogy",battery:"verbal",exp:"A petal is part of a flower; a leaf is part of a tree"},
+    {q:"Which does NOT belong: Piano, Guitar, Drum, Paintbrush",choices:["Piano","Guitar","Drum","Paintbrush"],ans:"Paintbrush",type:"verbal_classification",battery:"verbal",exp:"Piano, Guitar, and Drum are musical instruments; Paintbrush is an art tool"},
+    {q:"We cook food in a ___.",choices:["kitchen","bedroom","bathroom","closet"],ans:"kitchen",type:"sentence_completion",battery:"verbal",exp:"A kitchen is the room where food is prepared and cooked"},
+    {q:"Morning is to Night as Summer is to ___",choices:["Winter","Spring","Hot","Sun"],ans:"Winter",type:"verbal_analogy",battery:"verbal",exp:"Morning and Night are opposites on a daily cycle; Summer and Winter are opposite seasons"},
+    {q:"Which does NOT belong: Apple, Banana, Carrot, Grape",choices:["Apple","Banana","Carrot","Grape"],ans:"Carrot",type:"verbal_classification",battery:"verbal",exp:"Apple, Banana, and Grape are fruits; Carrot is a vegetable"},
+    {q:"A doctor helps people who are ___.",choices:["sick","happy","playing","sleeping"],ans:"sick",type:"sentence_completion",battery:"verbal",exp:"Doctors treat people who are sick or injured"},
+    {q:"1, 2, 4, 8, ___",choices:["10","12","16","18"],ans:"16",type:"number_series",battery:"quantitative",exp:"Multiply by 2 each time: 8x2=16"},
+    {q:"3 is to 12 as 5 is to ___",choices:["15","18","20","25"],ans:"20",type:"number_analogy",battery:"quantitative",exp:"3x4=12, so 5x4=20"},
+    {q:"? + 9 = 17, ? = ___",choices:["6","7","8","9"],ans:"8",type:"number_puzzle",battery:"quantitative",exp:"17-9=8"},
+    {q:"20, 17, 14, 11, ___",choices:["7","8","9","10"],ans:"8",type:"number_series",battery:"quantitative",exp:"Subtract 3 each time: 11-3=8"},
+    {q:"6 is to 2 as 15 is to ___",choices:["3","4","5","6"],ans:"5",type:"number_analogy",battery:"quantitative",exp:"6 divided by 3=2, so 15 divided by 3=5"},
+    {q:"8 x ? = 40, ? = ___",choices:["4","5","6","7"],ans:"5",type:"number_puzzle",battery:"quantitative",exp:"40 divided by 8=5"},
+    {q:"2, 5, 8, 11, ___",choices:["13","14","15","16"],ans:"14",type:"number_series",battery:"quantitative",exp:"Add 3 each time: 11+3=14"},
+    {q:"4 is to 16 as 3 is to ___",choices:["9","12","15","18"],ans:"12",type:"number_analogy",battery:"quantitative",exp:"4x4=16, so 3x4=12"},
+    {q:"25 - ? = 18, ? = ___",choices:["5","6","7","8"],ans:"7",type:"number_puzzle",battery:"quantitative",exp:"25-18=7"},
+    {q:"1, 4, 7, 10, ___",choices:["11","12","13","14"],ans:"13",type:"number_series",battery:"quantitative",exp:"Add 3 each time: 10+3=13"},
+    {q:"7 is to 49 as 4 is to ___",choices:["12","16","20","24"],ans:"16",type:"number_analogy",battery:"quantitative",exp:"7x7=49, so 4x4=16"},
+    {q:"? divided by 4 = 9, ? = ___",choices:["32","36","40","45"],ans:"36",type:"number_puzzle",battery:"quantitative",exp:"9x4=36"},
+    {q:"50, 45, 40, 35, ___",choices:["25","28","30","32"],ans:"30",type:"number_series",battery:"quantitative",exp:"Subtract 5 each time: 35-5=30"},
+    {q:"9 is to 3 as 21 is to ___",choices:["3","6","7","9"],ans:"7",type:"number_analogy",battery:"quantitative",exp:"9 divided by 3=3, so 21 divided by 3=7"},
+    {q:"6 + ? + 4 = 15, ? = ___",choices:["4","5","6","7"],ans:"5",type:"number_puzzle",battery:"quantitative",exp:"6+4=10, so ?=15-10=5"},
+    {q:"3, 6, 12, 24, ___",choices:["36","42","48","54"],ans:"48",type:"number_series",battery:"quantitative",exp:"Multiply by 2 each time: 24x2=48"},
+    {q:"8 is to 64 as 5 is to ___",choices:["20","25","35","45"],ans:"25",type:"number_analogy",battery:"quantitative",exp:"8x8=64, so 5x5=25"},
+    {q:"? - 11 = 8, ? = ___",choices:["17","18","19","20"],ans:"19",type:"number_puzzle",battery:"quantitative",exp:"8+11=19"},
+    {q:"Pattern: triangle square circle triangle square ___",choices:["triangle","square","circle","diamond"],ans:"circle",type:"figure_classification",battery:"nonverbal",exp:"The pattern repeats: triangle, square, circle"},
+    {q:"Row 1: small star becomes big star. Row 2: small heart becomes ___",choices:["big heart","small star","big star","small heart"],ans:"big heart",type:"figure_matrix",battery:"nonverbal",exp:"The pattern makes shapes larger"},
+    {q:"All shapes are white, 4 sides, small. Which does NOT belong: white small square, white small rectangle, white small diamond, black small square?",choices:["white small square","white small rectangle","white small diamond","black small square"],ans:"black small square",type:"figure_classification",battery:"nonverbal",exp:"All shapes should be white; the black square breaks this rule"},
+    {q:"Pattern adds 2 dots each step: 1 dot, 3 dots, 5 dots, ___ dots",choices:["6","7","8","9"],ans:"7",type:"figure_matrix",battery:"nonverbal",exp:"Add 2 dots each time: 1, 3, 5, 7"},
+    {q:"Which shape has only curved sides: circle, oval, rectangle, or half-circle?",choices:["circle","rectangle","triangle","hexagon"],ans:"circle",type:"figure_classification",battery:"nonverbal",exp:"Only a circle has all curved sides (no straight sides)"},
+    {q:"Shapes get an extra side each step: triangle has 3, square has 4, the next shape has 5 sides and is a ___",choices:["circle","pentagon","hexagon","octagon"],ans:"pentagon",type:"figure_matrix",battery:"nonverbal",exp:"5 sides = pentagon"},
+    {q:"Row: 1 triangle, 2 triangles, 3 triangles, ___",choices:["2 triangles","3 triangles","4 triangles","5 triangles"],ans:"4 triangles",type:"figure_matrix",battery:"nonverbal",exp:"Add one triangle each step"},
+    {q:"Group rule: dark shapes with straight sides. Which fits: dark square, light triangle, dark circle, light square?",choices:["dark square","light triangle","dark circle","light square"],ans:"dark square",type:"figure_classification",battery:"nonverbal",exp:"Must be dark AND have straight sides - only dark square qualifies"},
+    {q:"A striped pattern alternates dark-light. Stripe 7 is ___",choices:["dark","light","striped","missing"],ans:"dark",type:"figure_matrix",battery:"nonverbal",exp:"Odd positions are dark: 1,3,5,7 are dark"},
+    {q:"Which shape has the most lines of symmetry: square, rectangle, equilateral triangle, or scalene triangle?",choices:["square","rectangle","equilateral triangle","scalene triangle"],ans:"square",type:"figure_classification",battery:"nonverbal",exp:"A square has 4 lines of symmetry; rectangle has 2; equilateral triangle has 3; scalene has 0"},
+    {q:"An arrow pointing right is rotated 90 degrees clockwise each step. After 2 steps it points ___",choices:["right","down","left","up"],ans:"left",type:"figure_matrix",battery:"nonverbal",exp:"Right to down to left: after 2 rotations of 90 degrees clockwise"},
+    {q:"3 circles are arranged in a triangle. A 4th circle is added in the center. How many circles touch the center circle?",choices:["1","2","3","4"],ans:"3",type:"figure_matrix",battery:"nonverbal",exp:"The 3 outer circles each touch the center"},
+    {q:"Which two shapes are both large and dark: small dark circle, large dark square, large light triangle, large dark circle?",choices:["large dark square and large dark circle","small dark circle and large dark square","large light triangle and large dark circle","small dark circle and large dark circle"],ans:"large dark square and large dark circle",type:"figure_classification",battery:"nonverbal",exp:"Must be large AND dark: large dark square and large dark circle"},
+    {q:"A shape with 6 sides is a ___",choices:["hexagon","octagon","heptagon","nonagon"],ans:"hexagon",type:"figure_matrix",battery:"nonverbal",exp:"Hex = 6, so hexagon has 6 sides"},
+    {q:"In a 2x2 grid: top-left=star, top-right=circle, bottom-left=circle, bottom-right=___",choices:["star","circle","triangle","square"],ans:"star",type:"figure_matrix",battery:"nonverbal",exp:"Each row and column has one star and one circle; bottom-right must be star"},
+    {q:"Pattern of sizes: big, medium, small, big, medium, ___",choices:["big","medium","small","tiny"],ans:"small",type:"figure_matrix",battery:"nonverbal",exp:"The pattern repeats: big, medium, small"},
+    {q:"A shape is cut in half horizontally. Each half has ___ area as the original.",choices:["half the","double the","the same","a quarter of the"],ans:"half the",type:"figure_classification",battery:"nonverbal",exp:"Cutting in half gives each piece exactly half the original area"}
+,
+    {q:"A coin is flipped and lands on heads. The other side shows tails because they are on ___ sides.",choices:["opposite","the same","adjacent","parallel"],ans:"opposite",type:"figure_classification",battery:"nonverbal",exp:"Heads and tails are on opposite sides of a coin"}
 ],
 4:[
 /* VERBAL */
@@ -5480,6 +5535,61 @@ var GATE_BANK={
 {q:"In each row, the inner shape matches the outer shape but smaller. Outer: circle, Inner: small circle. Outer: square, Inner: ___",choices:["small square","small circle","large square","triangle"],ans:"small square",type:"figure_matrix",battery:"nonverbal",exp:"The inner shape is always a smaller version of the outer shape"},
 {q:"Group rule: shapes that are both striped AND have more than 3 sides. Which fits: striped square, plain square, striped triangle, plain hexagon?",choices:["striped square","plain square","striped triangle","plain hexagon"],ans:"striped square",type:"figure_classification",battery:"nonverbal",exp:"Striped AND more than 3 sides: only the striped square qualifies"},
 {q:"Row pattern: 1 dot, 3 dots, 6 dots, ___",choices:["8 dots","9 dots","10 dots","12 dots"],ans:"10 dots",type:"figure_matrix",battery:"nonverbal",exp:"Add 2, then 3, then 4: 1, 3, 6, 10 (triangular numbers)"}
+,
+    {q:"Telescope is to Stars as Microscope is to ___",choices:["Cells","Rocks","Planets","Water"],ans:"Cells",type:"verbal_analogy",battery:"verbal",exp:"A telescope lets you see stars; a microscope lets you see cells"},
+    {q:"Which does NOT belong: Mercury, Venus, Earth, Moon",choices:["Mercury","Venus","Earth","Moon"],ans:"Moon",type:"verbal_classification",battery:"verbal",exp:"Mercury, Venus, and Earth are planets; the Moon is a natural satellite"},
+    {q:"Chapter is to Book as Scene is to ___",choices:["Movie","Actor","Theater","Screen"],ans:"Movie",type:"verbal_analogy",battery:"verbal",exp:"A chapter is a section of a book; a scene is a section of a movie"},
+    {q:"Which does NOT belong: Whisper, Shout, Murmur, Run",choices:["Whisper","Shout","Murmur","Run"],ans:"Run",type:"verbal_classification",battery:"verbal",exp:"Whisper, Shout, and Murmur are ways of speaking; Run is a way of moving"},
+    {q:"___ is the process by which plants make food using sunlight.",choices:["Photosynthesis","Evaporation","Digestion","Respiration"],ans:"Photosynthesis",type:"sentence_completion",battery:"verbal",exp:"Photosynthesis is how plants convert sunlight into food"},
+    {q:"A biography tells the story of a real person's ___.",choices:["life","dreams","future","opinions"],ans:"life",type:"sentence_completion",battery:"verbal",exp:"A biography is a factual account of a real person's life"},
+    {q:"Inflation is to Economy as Fever is to ___",choices:["Body","Disease","Medicine","Doctor"],ans:"Body",type:"verbal_analogy",battery:"verbal",exp:"Inflation happens in an economy; fever happens in a body"},
+    {q:"Which does NOT belong: Noun, Verb, Adjective, Equation",choices:["Noun","Verb","Adjective","Equation"],ans:"Equation",type:"verbal_classification",battery:"verbal",exp:"Noun, Verb, and Adjective are parts of speech; Equation is a math term"},
+    {q:"The prefix un- means ___.",choices:["not","again","before","after"],ans:"not",type:"sentence_completion",battery:"verbal",exp:"Unhappy = not happy; undo = not done; unfair = not fair"},
+    {q:"Conductor is to Orchestra as Captain is to ___",choices:["Ship","Army","Team","Pilot"],ans:"Ship",type:"verbal_analogy",battery:"verbal",exp:"A conductor leads an orchestra; a captain commands a ship"},
+    {q:"Which does NOT belong: Autobiography, Memoir, Biography, Sonata",choices:["Autobiography","Memoir","Biography","Sonata"],ans:"Sonata",type:"verbal_classification",battery:"verbal",exp:"Autobiography, Memoir, and Biography are life-story genres; Sonata is a musical composition"},
+    {q:"A ___ uses evidence and reasoning to support a position.",choices:["persuasive essay","fairy tale","limerick","haiku"],ans:"persuasive essay",type:"sentence_completion",battery:"verbal",exp:"A persuasive essay argues a point using evidence and logic"},
+    {q:"Flock is to Birds as Pack is to ___",choices:["Wolves","Fish","Bees","Cattle"],ans:"Wolves",type:"verbal_analogy",battery:"verbal",exp:"A group of birds is a flock; a group of wolves is a pack"},
+    {q:"Which does NOT belong: Perimeter, Area, Volume, Metaphor",choices:["Perimeter","Area","Volume","Metaphor"],ans:"Metaphor",type:"verbal_classification",battery:"verbal",exp:"Perimeter, Area, and Volume are geometry measurements; Metaphor is a literary device"},
+    {q:"The suffix -ful means ___.",choices:["full of","without","before","the study of"],ans:"full of",type:"sentence_completion",battery:"verbal",exp:"Joyful = full of joy; careful = full of care; powerful = full of power"},
+    {q:"Synonym is to Same as Antonym is to ___",choices:["Opposite","Similar","Word","Different"],ans:"Opposite",type:"verbal_analogy",battery:"verbal",exp:"A synonym has the same meaning; an antonym has the opposite meaning"},
+    {q:"Which does NOT belong: Simile, Alliteration, Onomatopoeia, Integer",choices:["Simile","Alliteration","Onomatopoeia","Integer"],ans:"Integer",type:"verbal_classification",battery:"verbal",exp:"Simile, Alliteration, and Onomatopoeia are literary devices; Integer is a math term"},
+    {q:"___ is the repetition of the same beginning sound in nearby words.",choices:["Alliteration","Rhyme","Simile","Metaphor"],ans:"Alliteration",type:"sentence_completion",battery:"verbal",exp:"Peter Piper picked peppers is an example of alliteration"},
+    {q:"2, 6, 18, 54, ___",choices:["108","162","216","270"],ans:"162",type:"number_series",battery:"quantitative",exp:"Multiply by 3 each time: 54x3=162"},
+    {q:"16 is to 4 as 36 is to ___",choices:["4","6","9","12"],ans:"6",type:"number_analogy",battery:"quantitative",exp:"Square root of 16=4, so square root of 36=6"},
+    {q:"(5 x 4) - ? = 12, ? = ___",choices:["6","7","8","9"],ans:"8",type:"number_puzzle",battery:"quantitative",exp:"20-?=12, so ?=8"},
+    {q:"3, 9, 27, 81, ___",choices:["162","243","324","405"],ans:"243",type:"number_series",battery:"quantitative",exp:"Multiply by 3 each time: 81x3=243"},
+    {q:"144 is to 12 as 81 is to ___",choices:["7","8","9","10"],ans:"9",type:"number_analogy",battery:"quantitative",exp:"12 squared=144, so 9 squared=81"},
+    {q:"3x - 2 = 13, x = ___",choices:["3","4","5","6"],ans:"5",type:"number_puzzle",battery:"quantitative",exp:"3x=15, x=5"},
+    {q:"1, 8, 27, 64, ___",choices:["100","121","125","144"],ans:"125",type:"number_series",battery:"quantitative",exp:"Perfect cubes: 1 cubed, 2 cubed, 3 cubed, 4 cubed, 5 cubed=125"},
+    {q:"One-quarter is to 4 as one-fifth is to ___",choices:["4","5","6","10"],ans:"5",type:"number_analogy",battery:"quantitative",exp:"One-quarter times 4 = 1 (reciprocal); one-fifth times 5 = 1"},
+    {q:"What is 15% of 60?",choices:["7","8","9","10"],ans:"9",type:"number_puzzle",battery:"quantitative",exp:"15% x 60 = 0.15 x 60 = 9"},
+    {q:"5, 7, 11, 17, 25, ___",choices:["33","34","35","36"],ans:"35",type:"number_series",battery:"quantitative",exp:"Differences increase by 2 each time: +2,+4,+6,+8,+10; 25+10=35"},
+    {q:"30 is to 6 as 45 is to ___",choices:["7","8","9","10"],ans:"9",type:"number_analogy",battery:"quantitative",exp:"30 divided by 5=6, so 45 divided by 5=9"},
+    {q:"A triangle has angles 40 and 75 degrees. The third angle is ___",choices:["55 degrees","60 degrees","65 degrees","70 degrees"],ans:"65 degrees",type:"number_puzzle",battery:"quantitative",exp:"180-40-75=65"},
+    {q:"One-half, 1, 2, 4, ___",choices:["6","8","10","12"],ans:"8",type:"number_series",battery:"quantitative",exp:"Multiply by 2 each time: 4x2=8"},
+    {q:"7 is to 343 as 3 is to ___",choices:["9","18","27","81"],ans:"27",type:"number_analogy",battery:"quantitative",exp:"7 cubed=343, so 3 cubed=27"},
+    {q:"A rectangle is 8 units long and 5 units wide. Perimeter = ___",choices:["13","26","40","80"],ans:"26",type:"number_puzzle",battery:"quantitative",exp:"P=2(8+5)=2(13)=26"},
+    {q:"0.5, 1.5, 4.5, 13.5, ___",choices:["27","40.5","41","45"],ans:"40.5",type:"number_series",battery:"quantitative",exp:"Multiply by 3: 13.5x3=40.5"},
+    {q:"25 is to 5 as 100 is to ___",choices:["10","20","25","50"],ans:"10",type:"number_analogy",battery:"quantitative",exp:"Square root of 25=5, so square root of 100=10"},
+    {q:"How many minutes in 2 and one-quarter hours?",choices:["115","120","130","135"],ans:"135",type:"number_puzzle",battery:"quantitative",exp:"2 hours=120 min, quarter hour=15 min, total=135 min"},
+    {q:"A 4x4 grid has 4 symbols per row and column. If a column already has a star and a circle, which symbol goes next?",choices:["diamond","triangle","star","circle"],ans:"diamond",type:"figure_matrix",battery:"nonverbal",exp:"Each column must have all 4 symbols; if star and circle are taken, diamond comes next"},
+    {q:"The letter b reflected over a vertical line looks like ___",choices:["d","p","q","b"],ans:"d",type:"figure_matrix",battery:"nonverbal",exp:"Reflecting b horizontally gives d"},
+    {q:"Which 3D shape has the most faces: cube, square pyramid, triangular prism, or sphere?",choices:["cube","square pyramid","triangular prism","sphere"],ans:"cube",type:"figure_classification",battery:"nonverbal",exp:"A cube has 6 faces; square pyramid has 5; triangular prism has 5; sphere has none"},
+    {q:"A clock shows 3:00. The minute hand points to ___ and the hour hand points to ___",choices:["12 and 3","3 and 12","12 and 6","6 and 3"],ans:"12 and 3",type:"figure_matrix",battery:"nonverbal",exp:"At 3:00, minute hand points to 12, hour hand points to 3"},
+    {q:"Pattern: 8 dots, then 4 dots, then 2 dots. Next would have ___ dot(s)",choices:["0","1","2","4"],ans:"1",type:"figure_matrix",battery:"nonverbal",exp:"Halve each time: 8 to 4 to 2 to 1"},
+    {q:"Viewing a cube from a corner, how many faces are visible?",choices:["1","2","3","4"],ans:"3",type:"figure_classification",battery:"nonverbal",exp:"Viewing a cube from a corner reveals exactly 3 faces"},
+    {q:"Row 1 has 1 shaded cell, Row 2 has 3, Row 3 has 5, Row 4 has ___",choices:["6","7","8","9"],ans:"7",type:"figure_matrix",battery:"nonverbal",exp:"Odd numbers: 1,3,5,7"},
+    {q:"A pentagon is divided into triangles from one vertex. How many triangles?",choices:["2","3","4","5"],ans:"3",type:"figure_classification",battery:"nonverbal",exp:"From one vertex of a pentagon, 3 triangles can be drawn"},
+    {q:"Which shape has both rotational AND reflective symmetry: rectangle, parallelogram, circle, or right triangle?",choices:["rectangle","parallelogram","circle","right triangle"],ans:"circle",type:"figure_classification",battery:"nonverbal",exp:"A circle has infinite lines of symmetry and rotational symmetry at every angle"},
+    {q:"A scale balance has 3 identical boxes on the left and 12 balls on the right. Each box weighs as many balls as ___",choices:["3","4","5","6"],ans:"4",type:"figure_matrix",battery:"nonverbal",exp:"3 boxes = 12 balls, so 1 box = 4 balls"},
+    {q:"The word NO rotated 180 degrees most closely reads ___",choices:["ON","NO","reversed","upside down"],ans:"ON",type:"figure_matrix",battery:"nonverbal",exp:"180 degree rotation of NO flips it to read ON"},
+    {q:"A 3x3 grid has 9 cells. How many cells share a side with the center cell?",choices:["2","3","4","8"],ans:"4",type:"figure_classification",battery:"nonverbal",exp:"The center cell shares a side with top, bottom, left, right - 4 cells"},
+    {q:"Two overlapping circles share a region. The overlap region belongs to ___ circle(s).",choices:["0","1","2","3"],ans:"2",type:"figure_matrix",battery:"nonverbal",exp:"The overlap region is inside both circles"},
+    {q:"Each step a shape doubles in size. Start: 1 unit square. After 3 steps: ___ units",choices:["4","6","8","16"],ans:"8",type:"figure_matrix",battery:"nonverbal",exp:"1 to 2 to 4 to 8 (double each step)"},
+    {q:"A square tilted on its corner vs an upright square: they have the same ___",choices:["orientation","area and perimeter","appearance","shadow"],ans:"area and perimeter",type:"figure_classification",battery:"nonverbal",exp:"Rotating a square does not change its area or perimeter"},
+    {q:"Pattern: each figure adds one more ring around it. Rings: 1, 2, 3, ___",choices:["3","4","5","6"],ans:"4",type:"figure_matrix",battery:"nonverbal",exp:"Add one ring each step"},
+    {q:"A 4x4 grid has exactly 2 shaded cells in each row and each column. Total shaded cells = ___",choices:["4","6","8","16"],ans:"8",type:"figure_matrix",battery:"nonverbal",exp:"4 rows x 2 shaded per row = 8 total"},
+    {q:"A rectangle 6 units by 4 units is cut into 2x2 squares. How many squares?",choices:["4","6","8","12"],ans:"6",type:"figure_classification",battery:"nonverbal",exp:"(6 divided by 2) x (4 divided by 2) = 3 x 2 = 6 squares"}
 ],
 5:[
 /* VERBAL */
@@ -5521,6 +5631,61 @@ var GATE_BANK={
 {q:"Tiles alternate: dark-light-dark-light. In a row of 7 tiles starting dark, the 6th tile is ___",choices:["dark","light","striped","missing"],ans:"light",type:"figure_classification",battery:"nonverbal",exp:"1=dark, 2=light, 3=dark, 4=light, 5=dark, 6=light"},
 {q:"A 2x2 grid has X in top-left, O in top-right, O in bottom-left. Bottom-right must be ___ so each row and column has exactly one X and one O.",choices:["X","O","blank","either"],ans:"X",type:"figure_matrix",battery:"nonverbal",exp:"Bottom row needs an X; right column needs an X"},
 {q:"Which shape has rotational symmetry: a square, letter F, letter Z, a right triangle?",choices:["square","letter F","letter Z","right triangle"],ans:"letter Z",type:"figure_classification",battery:"nonverbal",exp:"The letter Z looks the same when rotated 180 degrees"}
+,
+    {q:"Democracy is to Voting as Monarchy is to ___",choices:["Inheritance","Election","Revolution","Parliament"],ans:"Inheritance",type:"verbal_analogy",battery:"verbal",exp:"In a democracy, leaders are chosen by voting; in a monarchy, power is inherited"},
+    {q:"Which does NOT belong: Proton, Neutron, Electron, Molecule",choices:["Proton","Neutron","Electron","Molecule"],ans:"Molecule",type:"verbal_classification",battery:"verbal",exp:"Proton, Neutron, and Electron are subatomic particles; Molecule is made of atoms"},
+    {q:"Herbivore is to Plants as Carnivore is to ___",choices:["Meat","Grass","Vegetables","Sunlight"],ans:"Meat",type:"verbal_analogy",battery:"verbal",exp:"A herbivore eats plants; a carnivore eats meat"},
+    {q:"Which does NOT belong: Haiku, Sonnet, Limerick, Equation",choices:["Haiku","Sonnet","Limerick","Equation"],ans:"Equation",type:"verbal_classification",battery:"verbal",exp:"Haiku, Sonnet, and Limerick are poetry forms; Equation is a math concept"},
+    {q:"___ is a persuasive technique that uses only emotionally charged words.",choices:["Loaded language","Evidence","Statistics","Anecdote"],ans:"Loaded language",type:"sentence_completion",battery:"verbal",exp:"Loaded language uses words with strong emotional connotations to persuade"},
+    {q:"The Greek root geo means ___.",choices:["earth","water","fire","sky"],ans:"earth",type:"sentence_completion",battery:"verbal",exp:"Geography, geology, and geometry all relate to the earth"},
+    {q:"Predator is to Prey as Parasite is to ___",choices:["Host","Prey","Victim","Enemy"],ans:"Host",type:"verbal_analogy",battery:"verbal",exp:"A predator hunts prey; a parasite lives off a host"},
+    {q:"Which does NOT belong: Igneous, Sedimentary, Metamorphic, Gaseous",choices:["Igneous","Sedimentary","Metamorphic","Gaseous"],ans:"Gaseous",type:"verbal_classification",battery:"verbal",exp:"Igneous, Sedimentary, and Metamorphic are rock types; Gaseous is a state of matter"},
+    {q:"The suffix -ous means ___.",choices:["full of or having the quality of","without","before","the study of"],ans:"full of or having the quality of",type:"sentence_completion",battery:"verbal",exp:"Dangerous=full of danger; famous=having fame; joyous=full of joy"},
+    {q:"Mitosis is to Cell Division as Photosynthesis is to ___",choices:["Food Production","Respiration","Growth","Reproduction"],ans:"Food Production",type:"verbal_analogy",battery:"verbal",exp:"Mitosis is the process of cell division; photosynthesis is the process of food production in plants"},
+    {q:"Which does NOT belong: Isotope, Element, Compound, Protagonist",choices:["Isotope","Element","Compound","Protagonist"],ans:"Protagonist",type:"verbal_classification",battery:"verbal",exp:"Isotope, Element, and Compound are chemistry terms; Protagonist is a literary term"},
+    {q:"An ___ argument relies on facts and data rather than feelings.",choices:["objective","subjective","emotional","passionate"],ans:"objective",type:"sentence_completion",battery:"verbal",exp:"Objective means based on facts, not personal feelings"},
+    {q:"Judicial is to Courts as Legislative is to ___",choices:["Congress","President","Military","Police"],ans:"Congress",type:"verbal_analogy",battery:"verbal",exp:"The judicial branch operates in courts; the legislative branch operates in Congress"},
+    {q:"Which does NOT belong: Osmosis, Diffusion, Convection, Metaphor",choices:["Osmosis","Diffusion","Convection","Metaphor"],ans:"Metaphor",type:"verbal_classification",battery:"verbal",exp:"Osmosis, Diffusion, and Convection are scientific processes; Metaphor is a literary device"},
+    {q:"A ___ is a map legend that explains the symbols used on the map.",choices:["key","scale","compass","grid"],ans:"key",type:"sentence_completion",battery:"verbal",exp:"A map key or legend explains what each symbol on a map represents"},
+    {q:"Epic is to Odyssey as Play is to ___",choices:["Hamlet","Poem","Novel","Story"],ans:"Hamlet",type:"verbal_analogy",battery:"verbal",exp:"The Odyssey is a famous epic; Hamlet is a famous play"},
+    {q:"Which does NOT belong: Prime, Composite, Rational, Iambic",choices:["Prime","Composite","Rational","Iambic"],ans:"Iambic",type:"verbal_classification",battery:"verbal",exp:"Prime, Composite, and Rational are math terms; Iambic is a poetry term"},
+    {q:"___ is the main idea or central message of a literary work.",choices:["Theme","Plot","Setting","Character"],ans:"Theme",type:"sentence_completion",battery:"verbal",exp:"The theme is the underlying message or main idea of a story"},
+    {q:"1, 3, 6, 10, 15, ___",choices:["18","20","21","24"],ans:"21",type:"number_series",battery:"quantitative",exp:"Triangular numbers - add 2,3,4,5,6: 15+6=21"},
+    {q:"If 5x = 35, then 3x = ___",choices:["15","18","21","24"],ans:"21",type:"number_puzzle",battery:"quantitative",exp:"x=7, so 3x=21"},
+    {q:"Three-quarters is to 0.75 as five-eighths is to ___",choices:["0.55","0.60","0.625","0.65"],ans:"0.625",type:"number_analogy",battery:"quantitative",exp:"Three-quarters=0.75; five-eighths=5 divided by 8=0.625"},
+    {q:"4, 9, 16, 25, 36, ___",choices:["42","46","48","49"],ans:"49",type:"number_series",battery:"quantitative",exp:"Perfect squares: 2 squared, 3 squared, 4 squared, 5 squared, 6 squared, 7 squared=49"},
+    {q:"Area of triangle with base 10 and height 6 = ___",choices:["16","30","60","120"],ans:"30",type:"number_puzzle",battery:"quantitative",exp:"Area = half x base x height = half x 10 x 6 = 30"},
+    {q:"12 is to 60 as 15 is to ___",choices:["60","70","75","80"],ans:"75",type:"number_analogy",battery:"quantitative",exp:"12x5=60, so 15x5=75"},
+    {q:"1, 2, 4, 7, 11, 16, ___",choices:["20","21","22","23"],ans:"22",type:"number_series",battery:"quantitative",exp:"Differences increase by 1 each time: +1,+2,+3,+4,+5,+6; 16+6=22"},
+    {q:"A store sells 3 items for $7.50. Cost per item = ___",choices:["$2.00","$2.25","$2.50","$3.00"],ans:"$2.50",type:"number_puzzle",battery:"quantitative",exp:"$7.50 divided by 3 = $2.50"},
+    {q:"0.1 is to 10% as 0.35 is to ___",choices:["3.5%","35%","350%","3500%"],ans:"35%",type:"number_analogy",battery:"quantitative",exp:"Multiply by 100 to convert decimal to percent: 0.35 x 100 = 35%"},
+    {q:"16, 8, 4, 2, ___",choices:["0","1","0.5","2"],ans:"1",type:"number_series",battery:"quantitative",exp:"Divide by 2 each time: 2 divided by 2 = 1"},
+    {q:"A bag has 4 red marbles and 6 blue marbles. Probability of picking red = ___",choices:["2/5","4/10","both 2/5 and 4/10","1/4"],ans:"both 2/5 and 4/10",type:"number_puzzle",battery:"quantitative",exp:"4/10 = 2/5; both are equivalent"},
+    {q:"2 cubed is to 8 as 3 cubed is to ___",choices:["9","18","27","81"],ans:"27",type:"number_analogy",battery:"quantitative",exp:"2 cubed=8; 3 cubed=27"},
+    {q:"3, 7, 15, 31, ___",choices:["47","53","63","65"],ans:"63",type:"number_series",battery:"quantitative",exp:"Double and add 1: 3x2+1=7, 7x2+1=15, 15x2+1=31, 31x2+1=63"},
+    {q:"GCF of 24 and 36 = ___",choices:["4","6","8","12"],ans:"12",type:"number_puzzle",battery:"quantitative",exp:"Factors of 24 and 36 share 12 as the greatest common factor"},
+    {q:"40% of 80 is to 32 as 40% of 120 is to ___",choices:["40","48","52","56"],ans:"48",type:"number_analogy",battery:"quantitative",exp:"40% x 80=32; 40% x 120=48"},
+    {q:"1, 1, 2, 3, 5, 8, 13, ___",choices:["18","20","21","24"],ans:"21",type:"number_series",battery:"quantitative",exp:"Fibonacci: each term = sum of previous two; 8+13=21"},
+    {q:"Volume of rectangular prism: 4 x 5 x 3 = ___",choices:["12","20","60","120"],ans:"60",type:"number_puzzle",battery:"quantitative",exp:"V = length x width x height = 4 x 5 x 3 = 60"},
+    {q:"LCM of 4 and 6 = ___",choices:["2","12","18","24"],ans:"12",type:"number_analogy",battery:"quantitative",exp:"LCM(4,6)=12 (smallest number divisible by both 4 and 6)"},
+    {q:"A Venn diagram has circle A for multiples of 3 and circle B for multiples of 4. The overlap contains ___",choices:["Multiples of 12","Multiples of 7","Multiples of 3 or 4","Even numbers"],ans:"Multiples of 12",type:"figure_matrix",battery:"nonverbal",exp:"Numbers divisible by both 3 and 4 must be multiples of LCM(3,4)=12"},
+    {q:"A triangular prism has 2 triangular faces and 3 rectangular faces. Total faces = ___",choices:["3","5","6","8"],ans:"5",type:"figure_classification",battery:"nonverbal",exp:"2 triangular + 3 rectangular = 5 faces total"},
+    {q:"A bar chart shows Mon=4, Tue=7, Wed=5, Thu=8. Which day had the most?",choices:["Monday","Tuesday","Wednesday","Thursday"],ans:"Thursday",type:"figure_matrix",battery:"nonverbal",exp:"Thursday's bar (8) is the tallest"},
+    {q:"A shape has 10 vertices and each is connected to 3 others. Total connections = ___",choices:["10","15","20","30"],ans:"15",type:"figure_matrix",battery:"nonverbal",exp:"10 vertices x 3 connections divided by 2 (each connection counted twice) = 15"},
+    {q:"On a number line, -3 and +3 are equal distances from ___",choices:["-1","0","1","3"],ans:"0",type:"figure_classification",battery:"nonverbal",exp:"Both -3 and +3 are exactly 3 units from zero"},
+    {q:"A rectangle's length is doubled and width is halved. The area ___",choices:["doubles","halves","stays the same","quadruples"],ans:"stays the same",type:"figure_matrix",battery:"nonverbal",exp:"New area = 2L x W/2 = LW = original area"},
+    {q:"Point A is at (2,3) and point B is at (5,7). Which direction is B from A?",choices:["up and right","up and left","down and right","down and left"],ans:"up and right",type:"figure_matrix",battery:"nonverbal",exp:"B has greater x (right) and greater y (up) than A"},
+    {q:"An angle of 135 degrees is ___",choices:["acute","right","obtuse","straight"],ans:"obtuse",type:"figure_classification",battery:"nonverbal",exp:"Obtuse angles are between 90 and 180 degrees"},
+    {q:"In a matrix, each row increases the number of sides by 1. Row 1: 3-sided. Row 2: 4-sided. Row 3: ___-sided",choices:["4","5","6","7"],ans:"5",type:"figure_matrix",battery:"nonverbal",exp:"Increase by 1 each row: 3 to 4 to 5"},
+    {q:"For a cube with side length 4, surface area = 6 x side squared = ___",choices:["24","48","64","96"],ans:"96",type:"figure_matrix",battery:"nonverbal",exp:"6 x 4 squared = 6 x 16 = 96"},
+    {q:"Which cross-section of a cylinder gives a circle: horizontal cut, vertical cut, diagonal cut, or corner cut?",choices:["horizontal cut","vertical cut","diagonal cut","corner cut"],ans:"horizontal cut",type:"figure_classification",battery:"nonverbal",exp:"Cutting a cylinder horizontally gives a circular cross-section"},
+    {q:"On a graph, a straight horizontal line means the value is ___",choices:["increasing","decreasing","constant","unknown"],ans:"constant",type:"figure_matrix",battery:"nonverbal",exp:"A horizontal line has zero slope - the value does not change"},
+    {q:"Which regular polygon has right angles: square, regular pentagon, regular hexagon, or equilateral triangle?",choices:["square","regular pentagon","regular hexagon","equilateral triangle"],ans:"square",type:"figure_classification",battery:"nonverbal",exp:"Only a square has right angles (4 of them)"},
+    {q:"Scale factor 2 applied to a square with area 9. New area = ___",choices:["18","27","36","81"],ans:"36",type:"figure_matrix",battery:"nonverbal",exp:"Area scales by factor squared: 9 x 2 squared = 9 x 4 = 36"},
+    {q:"A pie chart shows one-quarter shaded. That sector's angle = ___ degrees",choices:["45","60","90","120"],ans:"90",type:"figure_matrix",battery:"nonverbal",exp:"One-quarter of 360 degrees = 90 degrees"},
+    {q:"Triangle with vertices at (0,0), (4,0), (0,3). Area = ___",choices:["6","7","12","14"],ans:"6",type:"figure_matrix",battery:"nonverbal",exp:"Area = half x base x height = half x 4 x 3 = 6"},
+    {q:"A shape is moved 3 units right and 2 units up. Its size and shape ___",choices:["stay the same","change","get bigger","rotate"],ans:"stay the same",type:"figure_classification",battery:"nonverbal",exp:"Translation only moves a shape; it does not change size or shape"},
+    {q:"A line graph shows Jan=10, Feb=15, Mar=12, Apr=18. The overall trend is ___",choices:["increasing","decreasing","constant","random"],ans:"increasing",type:"figure_matrix",battery:"nonverbal",exp:"Despite the dip in March, the overall direction from 10 to 18 is upward"}
 ],
 6:[
 /* VERBAL */
@@ -5562,6 +5727,61 @@ var GATE_BANK={
 {q:"Rotation pattern: 0, 90, 180, 270, ___",choices:["180","270","360","315"],ans:"360",type:"figure_matrix",battery:"nonverbal",exp:"Add 90 degrees each time; 270+90=360 which looks the same as 0"},
 {q:"Which net folds into a cube: a plus-sign of 6 squares, 6 squares in a row, a T-shape of 6 squares, or an L-shape of 4 squares?",choices:["a plus-sign of 6 squares","6 squares in a row","a T-shape of 6 squares","an L-shape of 4 squares"],ans:"a plus-sign of 6 squares",type:"figure_classification",battery:"nonverbal",exp:"The plus-sign (cross) arrangement is a valid net for a cube"},
 {q:"Grid pattern: each row the shaded area increases by one square. Row 1: 1 shaded, Row 2: 2 shaded, Row 3: ___",choices:["2 shaded","3 shaded","4 shaded","5 shaded"],ans:"3 shaded",type:"figure_matrix",battery:"nonverbal",exp:"Add one shaded square per row"}
+,
+    {q:"Anarchy is to Order as Chaos is to ___",choices:["Calm","Disorder","Noise","Control"],ans:"Calm",type:"verbal_analogy",battery:"verbal",exp:"Anarchy is the absence of order; chaos is the opposite of calm"},
+    {q:"Which does NOT belong: Mitosis, Meiosis, Osmosis, Syntax",choices:["Mitosis","Meiosis","Osmosis","Syntax"],ans:"Syntax",type:"verbal_classification",battery:"verbal",exp:"Mitosis, Meiosis, and Osmosis are biological processes; Syntax is grammar"},
+    {q:"Circumference is to Circle as Perimeter is to ___",choices:["Polygon","Square","Rectangle","Triangle"],ans:"Polygon",type:"verbal_analogy",battery:"verbal",exp:"Circumference is the perimeter of a circle; perimeter is the boundary measurement of any polygon"},
+    {q:"Which does NOT belong: Ionic, Covalent, Metallic, Iambic",choices:["Ionic","Covalent","Metallic","Iambic"],ans:"Iambic",type:"verbal_classification",battery:"verbal",exp:"Ionic, Covalent, and Metallic are types of chemical bonds; Iambic is a poetry meter"},
+    {q:"A hypothesis is a ___ that can be tested through experimentation.",choices:["testable prediction","proven fact","scientific law","definition"],ans:"testable prediction",type:"sentence_completion",battery:"verbal",exp:"A hypothesis is an educated guess or prediction that can be tested"},
+    {q:"The Latin root port means ___.",choices:["to carry","to build","to speak","to write"],ans:"to carry",type:"sentence_completion",battery:"verbal",exp:"Transport, portable, export all involve carrying something somewhere"},
+    {q:"Protagonist is to Conflict as Scientist is to ___",choices:["Hypothesis","Lab","Discovery","Theory"],ans:"Hypothesis",type:"verbal_analogy",battery:"verbal",exp:"A protagonist drives the story through conflict; a scientist drives research through hypotheses"},
+    {q:"Which does NOT belong: Allele, Genotype, Phenotype, Hyperbole",choices:["Allele","Genotype","Phenotype","Hyperbole"],ans:"Hyperbole",type:"verbal_classification",battery:"verbal",exp:"Allele, Genotype, and Phenotype are genetics terms; Hyperbole is a literary device"},
+    {q:"A ___ is a statement that contradicts itself but reveals a deeper truth.",choices:["paradox","simile","metaphor","irony"],ans:"paradox",type:"sentence_completion",battery:"verbal",exp:"Example: Less is more - it seems to contradict itself but makes sense"},
+    {q:"Kinetic is to Motion as Potential is to ___",choices:["Position","Power","Force","Speed"],ans:"Position",type:"verbal_analogy",battery:"verbal",exp:"Kinetic energy comes from motion; potential energy comes from position or stored state"},
+    {q:"Which does NOT belong: Tectonic, Seismic, Volcanic, Syntactic",choices:["Tectonic","Seismic","Volcanic","Syntactic"],ans:"Syntactic",type:"verbal_classification",battery:"verbal",exp:"Tectonic, Seismic, and Volcanic relate to Earth science; Syntactic relates to grammar"},
+    {q:"___ is the practice of examining one's own thoughts and feelings.",choices:["Introspection","Empathy","Observation","Inference"],ans:"Introspection",type:"sentence_completion",battery:"verbal",exp:"Introspection = looking inward at your own mental state"},
+    {q:"Supply is to Demand as Producer is to ___",choices:["Consumer","Seller","Merchant","Trader"],ans:"Consumer",type:"verbal_analogy",battery:"verbal",exp:"Supply and demand are economic opposites; producers create goods that consumers use"},
+    {q:"Which does NOT belong: Correlation, Causation, Variable, Limerick",choices:["Correlation","Causation","Variable","Limerick"],ans:"Limerick",type:"verbal_classification",battery:"verbal",exp:"Correlation, Causation, and Variable are research terms; Limerick is a poem type"},
+    {q:"A primary source is ___ created, as opposed to a secondary source that analyzes it.",choices:["originally","later","partially","indirectly"],ans:"originally",type:"sentence_completion",battery:"verbal",exp:"A primary source was originally created; a secondary source interprets it"},
+    {q:"Amplitude is to Sound Waves as Brightness is to ___",choices:["Light Waves","Color","Vision","Eyes"],ans:"Light Waves",type:"verbal_analogy",battery:"verbal",exp:"Amplitude measures the intensity of sound waves; brightness measures the intensity of light waves"},
+    {q:"Which does NOT belong: Photon, Neutron, Electron, Protagonist",choices:["Photon","Neutron","Electron","Protagonist"],ans:"Protagonist",type:"verbal_classification",battery:"verbal",exp:"Photon, Neutron, and Electron are physics particles; Protagonist is a literary character"},
+    {q:"___ reasoning starts with specific observations and draws general conclusions.",choices:["Inductive","Deductive","Circular","Fallacious"],ans:"Inductive",type:"sentence_completion",battery:"verbal",exp:"Inductive reasoning: specific examples lead to general rule"},
+    {q:"5, 10, 20, 40, 80, ___",choices:["120","140","160","200"],ans:"160",type:"number_series",battery:"quantitative",exp:"Multiply by 2: 80x2=160"},
+    {q:"If 2x + 5y = 20 and x = 5, then y = ___",choices:["1","2","3","4"],ans:"2",type:"number_puzzle",battery:"quantitative",exp:"10+5y=20; 5y=10; y=2"},
+    {q:"Speed equals distance divided by time. If distance=150 and time=3, speed = ___",choices:["45","50","55","60"],ans:"50",type:"number_analogy",battery:"quantitative",exp:"150 divided by 3=50"},
+    {q:"11, 13, 17, 19, 23, ___",choices:["25","27","29","31"],ans:"29",type:"number_series",battery:"quantitative",exp:"Prime numbers: next prime after 23 is 29"},
+    {q:"Circle area = pi x r squared. For r=7, area is approximately ___ (use pi=3.14)",choices:["44","88","110","154"],ans:"154",type:"number_puzzle",battery:"quantitative",exp:"3.14 x 7 squared = 3.14 x 49 = approximately 154"},
+    {q:"3:5 ratio. If the larger quantity is 45, the smaller is ___",choices:["27","28","29","30"],ans:"27",type:"number_analogy",battery:"quantitative",exp:"3:5 = ?:45; multiply both by 9; 3x9=27"},
+    {q:"2, 3, 5, 7, 11, 13, ___",choices:["15","17","19","21"],ans:"17",type:"number_series",battery:"quantitative",exp:"All prime numbers; next prime after 13 is 17"},
+    {q:"Solve: absolute value of (x - 3) = 5. Possible values of x: ___",choices:["2 only","8 only","-2 and 8","2 and 8"],ans:"-2 and 8",type:"number_puzzle",battery:"quantitative",exp:"x-3=5 gives x=8, or x-3=-5 gives x=-2"},
+    {q:"A car depreciates 20% per year. Original value $10,000. Value after 2 years: ___",choices:["$6,000","$6,400","$7,200","$8,000"],ans:"$6,400",type:"number_analogy",battery:"quantitative",exp:"After year 1: $8,000; after year 2: $8,000 x 0.8 = $6,400"},
+    {q:"Arithmetic mean of 12, 15, 18, 21, 24 = ___",choices:["18","19","20","21"],ans:"18",type:"number_series",battery:"quantitative",exp:"Sum=90; 90 divided by 5=18"},
+    {q:"x squared - 9 = 0, x = ___",choices:["3 only","-3 only","3 or -3","9"],ans:"3 or -3",type:"number_puzzle",battery:"quantitative",exp:"x squared=9; x = plus or minus 3"},
+    {q:"Compound interest: $1000 at 10% for 2 years = ___",choices:["$1,100","$1,200","$1,210","$1,250"],ans:"$1,210",type:"number_analogy",battery:"quantitative",exp:"$1000 x 1.1 squared = $1000 x 1.21 = $1,210"},
+    {q:"1, 4, 13, 40, 121, ___",choices:["240","364","365","400"],ans:"364",type:"number_series",battery:"quantitative",exp:"Multiply by 3 then add 1: 1x3+1=4, 4x3+1=13, 13x3+1=40, 40x3+1=121, 121x3+1=364"},
+    {q:"If f(x)=3x-2, find x when f(x)=13",choices:["3","4","5","6"],ans:"5",type:"number_puzzle",battery:"quantitative",exp:"3x-2=13; 3x=15; x=5"},
+    {q:"Median of: 3, 7, 1, 9, 5, 2, 8 = ___",choices:["4","5","6","7"],ans:"5",type:"number_analogy",battery:"quantitative",exp:"Sorted: 1,2,3,5,7,8,9 - middle value (4th of 7) is 5"},
+    {q:"5% of what number is 12?",choices:["60","120","200","240"],ans:"240",type:"number_puzzle",battery:"quantitative",exp:"0.05x=12; x=240"},
+    {q:"Mode of: 4,7,4,9,7,4,2 = ___",choices:["2","4","7","9"],ans:"4",type:"number_series",battery:"quantitative",exp:"4 appears 3 times - more than any other value"},
+    {q:"A triangle has sides 5, 12, 13. It is a ___ triangle.",choices:["right","acute","obtuse","equilateral"],ans:"right",type:"number_analogy",battery:"quantitative",exp:"5 squared + 12 squared = 25+144=169=13 squared; Pythagorean triple confirms right triangle"},
+    {q:"A function machine: input x 3 - 1 = output. Input=5, Output = ___",choices:["12","13","14","16"],ans:"14",type:"figure_matrix",battery:"nonverbal",exp:"5 x 3 - 1 = 15 - 1 = 14"},
+    {q:"On a coordinate plane, which quadrant contains the point (-3, 5)?",choices:["Quadrant I","Quadrant II","Quadrant III","Quadrant IV"],ans:"Quadrant II",type:"figure_classification",battery:"nonverbal",exp:"Quadrant II: x negative, y positive"},
+    {q:"A box plot shows: min=2, Q1=5, median=8, Q3=12, max=16. The IQR = ___",choices:["4","7","8","11"],ans:"7",type:"figure_matrix",battery:"nonverbal",exp:"IQR = Q3 - Q1 = 12 - 5 = 7"},
+    {q:"Slope of a line through (0,0) and (4,8) = ___",choices:["0.5","1","2","4"],ans:"2",type:"figure_matrix",battery:"nonverbal",exp:"Slope = rise divided by run = 8 divided by 4 = 2"},
+    {q:"A scatter plot shows points rising from left to right. The correlation is ___",choices:["positive","negative","zero","undefined"],ans:"positive",type:"figure_classification",battery:"nonverbal",exp:"Rising left-to-right means as x increases, y increases - positive correlation"},
+    {q:"Transformation: (x,y) maps to (x+3, y-2). Point (1,4) maps to ___",choices:["(4,2)","(4,6)","(-2,6)","(1,2)"],ans:"(4,2)",type:"figure_matrix",battery:"nonverbal",exp:"(1+3, 4-2)=(4,2)"},
+    {q:"A function graph passes through (0,3) and (1,5). The y-intercept is ___",choices:["1","2","3","5"],ans:"3",type:"figure_matrix",battery:"nonverbal",exp:"The y-intercept is where x=0; at (0,3), y=3"},
+    {q:"Number of edges in a triangular prism: ___",choices:["6","9","12","15"],ans:"9",type:"figure_classification",battery:"nonverbal",exp:"Triangular prism: 3 edges per triangle x 2 + 3 connecting edges = 9"},
+    {q:"Area under a velocity-time graph represents ___",choices:["acceleration","distance","speed","time"],ans:"distance",type:"figure_matrix",battery:"nonverbal",exp:"On a velocity-time graph, the area under the curve = distance traveled"},
+    {q:"A line has slope -2 and passes through (0,4). At x=3, y = ___",choices:["-2","0","2","4"],ans:"-2",type:"figure_matrix",battery:"nonverbal",exp:"y=mx+b = -2(3)+4 = -6+4 = -2"},
+    {q:"Two-way table: 20 students like math, 15 like both math and science, 10 like only science. Total students = ___",choices:["30","35","45","50"],ans:"30",type:"figure_classification",battery:"nonverbal",exp:"Math only: 5, Both: 15, Science only: 10 - total: 5+15+10=30"},
+    {q:"Dilation: a triangle is enlarged by factor 3. If original perimeter is 12, new perimeter = ___",choices:["15","24","36","144"],ans:"36",type:"figure_matrix",battery:"nonverbal",exp:"Perimeter scales by the same factor: 12 x 3 = 36"},
+    {q:"Bar chart: 3 bars of heights 4, 7, 5. Mean height = ___",choices:["4","5","6","7"],ans:"5",type:"figure_matrix",battery:"nonverbal",exp:"(4+7+5)/3=16/3 approximately 5.3; closest answer is 5"},
+    {q:"Reflection over the y-axis: point (3,-4) maps to ___",choices:["(-3,-4)","(3,4)","(-3,4)","(4,-3)"],ans:"(-3,-4)",type:"figure_matrix",battery:"nonverbal",exp:"Reflecting over y-axis negates x: (3,-4) maps to (-3,-4)"},
+    {q:"A histogram shows: 0-10 has 5 students, 10-20 has 8, 20-30 has 3. Total students = ___",choices:["14","16","18","20"],ans:"16",type:"figure_classification",battery:"nonverbal",exp:"5+8+3=16"},
+    {q:"Distance between (1,2) and (4,6) = ___",choices:["3","4","5","7"],ans:"5",type:"figure_matrix",battery:"nonverbal",exp:"Square root of ((4-1) squared+(6-2) squared) = square root of (9+16) = square root of 25 = 5"},
+    {q:"Circle graph: one-third shaded blue, one-quarter shaded red. Fraction unshaded = ___",choices:["5/12","7/12","1/4","1/3"],ans:"5/12",type:"figure_matrix",battery:"nonverbal",exp:"One-third + one-quarter = 7/12 shaded; unshaded = 1 - 7/12 = 5/12"},
+    {q:"A graph is symmetric about the y-axis means f(-x) = ___",choices:["f(x)","-f(x)","0","undefined"],ans:"f(x)",type:"figure_classification",battery:"nonverbal",exp:"y-axis symmetry means f(-x)=f(x) - even function"}
 ],
 7:[
 /* VERBAL */
@@ -5603,6 +5823,61 @@ var GATE_BANK={
 {q:"How many lines of symmetry does a regular hexagon have?",choices:["3","4","6","12"],ans:"6",type:"figure_classification",battery:"nonverbal",exp:"A regular hexagon has 6 lines of symmetry"},
 {q:"A cube with side 3 is painted and cut into unit cubes. How many unit cubes have exactly 2 painted faces?",choices:["8","12","24","36"],ans:"12",type:"figure_matrix",battery:"nonverbal",exp:"Edge pieces (not corner) have 2 painted faces; a 3x3x3 cube has 12 edge pieces"},
 {q:"A right triangle has legs 3 and 4. What is the hypotenuse?",choices:["5","6","7","8"],ans:"5",type:"figure_matrix",battery:"nonverbal",exp:"Pythagorean theorem: 3 squared plus 4 squared equals 25, square root of 25 equals 5"}
+,
+    {q:"Pragmatist is to Theory as Idealist is to ___",choices:["Reality","Vision","Practice","Truth"],ans:"Reality",type:"verbal_analogy",battery:"verbal",exp:"A pragmatist focuses on practice over theory; an idealist focuses on vision over reality"},
+    {q:"Which does NOT belong: Alliteration, Assonance, Consonance, Photosynthesis",choices:["Alliteration","Assonance","Consonance","Photosynthesis"],ans:"Photosynthesis",type:"verbal_classification",battery:"verbal",exp:"Alliteration, Assonance, and Consonance are sound devices in poetry; Photosynthesis is biology"},
+    {q:"Epitome is to Essence as Microcosm is to ___",choices:["World","Small","Universe","Reflection"],ans:"World",type:"verbal_analogy",battery:"verbal",exp:"The epitome captures the essence; a microcosm is a small-scale reflection of the world"},
+    {q:"Which does NOT belong: Soliloquy, Aside, Monologue, Electrode",choices:["Soliloquy","Aside","Monologue","Electrode"],ans:"Electrode",type:"verbal_classification",battery:"verbal",exp:"Soliloquy, Aside, and Monologue are dramatic speech types; Electrode is a physics term"},
+    {q:"A ___ fallacy occurs when someone attacks the person making an argument rather than the argument itself.",choices:["ad hominem","straw man","false dilemma","slippery slope"],ans:"ad hominem",type:"sentence_completion",battery:"verbal",exp:"Ad hominem means against the person - attacking the arguer instead of the argument"},
+    {q:"The prefix pseudo- means ___.",choices:["false","before","after","above"],ans:"false",type:"sentence_completion",battery:"verbal",exp:"Pseudoscience=false science; pseudonym=false name"},
+    {q:"Bureaucracy is to Efficiency as Redundancy is to ___",choices:["Clarity","Repetition","Error","Speed"],ans:"Clarity",type:"verbal_analogy",battery:"verbal",exp:"Bureaucracy often impedes efficiency; redundancy often impedes clarity"},
+    {q:"Which does NOT belong: Kinetic, Thermal, Potential, Allegorical",choices:["Kinetic","Thermal","Potential","Allegorical"],ans:"Allegorical",type:"verbal_classification",battery:"verbal",exp:"Kinetic, Thermal, and Potential are types of energy; Allegorical is a literary term"},
+    {q:"A ___ is an extended metaphor where an entire story represents a deeper moral or political meaning.",choices:["allegory","simile","paradox","irony"],ans:"allegory",type:"sentence_completion",battery:"verbal",exp:"An allegory uses characters and events to symbolize deeper meanings (e.g., Animal Farm)"},
+    {q:"Satire is to Humor as Elegy is to ___",choices:["Grief","Joy","Anger","Love"],ans:"Grief",type:"verbal_analogy",battery:"verbal",exp:"Satire uses humor to critique; an elegy is a poem expressing grief"},
+    {q:"Which does NOT belong: Newton, Einstein, Darwin, Shakespeare",choices:["Newton","Einstein","Darwin","Shakespeare"],ans:"Shakespeare",type:"verbal_classification",battery:"verbal",exp:"Newton, Einstein, and Darwin are scientists; Shakespeare is a playwright"},
+    {q:"The word ubiquitous means ___.",choices:["present everywhere","unique","useful","unknown"],ans:"present everywhere",type:"sentence_completion",battery:"verbal",exp:"Ubiquitous: seeming to appear everywhere at the same time"},
+    {q:"Catalyst is to Reaction as Ignition is to ___",choices:["Engine","Explosion","Fire","Fuel"],ans:"Engine",type:"verbal_analogy",battery:"verbal",exp:"A catalyst starts a chemical reaction; ignition starts an engine"},
+    {q:"Which does NOT belong: Solvent, Solute, Solution, Sonnet",choices:["Solvent","Solute","Solution","Sonnet"],ans:"Sonnet",type:"verbal_classification",battery:"verbal",exp:"Solvent, Solute, and Solution are chemistry terms; Sonnet is a poetry form"},
+    {q:"___ is the study of signs and symbols and their use or interpretation.",choices:["Semiotics","Semantics","Syntax","Phonics"],ans:"Semiotics",type:"sentence_completion",battery:"verbal",exp:"Semiotics examines how meaning is created and communicated through signs and symbols"},
+    {q:"Empirical is to Evidence as Theoretical is to ___",choices:["Model","Proof","Experiment","Data"],ans:"Model",type:"verbal_analogy",battery:"verbal",exp:"Empirical knowledge comes from evidence and observation; theoretical knowledge comes from models and frameworks"},
+    {q:"Which does NOT belong: Inertia, Momentum, Velocity, Oxymoron",choices:["Inertia","Momentum","Velocity","Oxymoron"],ans:"Oxymoron",type:"verbal_classification",battery:"verbal",exp:"Inertia, Momentum, and Velocity are physics concepts; Oxymoron is a literary device"},
+    {q:"A ___ narrative presents events out of chronological order.",choices:["non-linear","linear","circular","frame"],ans:"non-linear",type:"sentence_completion",battery:"verbal",exp:"A non-linear narrative jumps between time periods or presents events out of order"},
+    {q:"If y=2x+3 and y=11, then x = ___",choices:["3","4","5","6"],ans:"4",type:"number_puzzle",battery:"quantitative",exp:"2x+3=11; 2x=8; x=4"},
+    {q:"The relationship 4 is to 2 as 9 is to 3 is ___",choices:["square to square root","double to half","cube to cube root","triple to third"],ans:"square to square root",type:"number_analogy",battery:"quantitative",exp:"4=2 squared, 9=3 squared; the relationship is perfect square to its square root"},
+    {q:"Arithmetic sequence: first term=3, common difference=7. 10th term = ___",choices:["66","67","68","69"],ans:"66",type:"number_series",battery:"quantitative",exp:"a_n = a_1 + (n-1)d = 3 + (9)(7) = 3+63 = 66"},
+    {q:"Two lines: y=2x+1 and y=2x-3. They are ___",choices:["parallel","perpendicular","identical","intersecting"],ans:"parallel",type:"number_puzzle",battery:"quantitative",exp:"Same slope (2) but different y-intercepts means parallel lines"},
+    {q:"24 is to 4 factorial as 6 is to ___",choices:["2 factorial","3 factorial","4 factorial","5 factorial"],ans:"3 factorial",type:"number_analogy",battery:"quantitative",exp:"4 factorial=24, 3 factorial=6"},
+    {q:"Geometric sequence: 3, 6, 12, 24. Common ratio = ___",choices:["2","3","4","6"],ans:"2",type:"number_series",battery:"quantitative",exp:"Each term is multiplied by 2"},
+    {q:"Solve: x divided by 3 + 5 = 9, x = ___",choices:["9","12","15","18"],ans:"12",type:"number_puzzle",battery:"quantitative",exp:"x divided by 3 = 4; x = 12"},
+    {q:"For 2x squared + 5x + 3 = 0: a=2, b=5, c=3. Discriminant b squared - 4ac = ___",choices:["1","2","3","4"],ans:"1",type:"number_analogy",battery:"quantitative",exp:"5 squared - 4(2)(3) = 25 - 24 = 1"},
+    {q:"Sum of interior angles of a hexagon = ___ degrees",choices:["540","600","720","900"],ans:"720",type:"number_series",battery:"quantitative",exp:"Sum=(n-2) x 180 = (6-2) x 180 = 4 x 180 = 720"},
+    {q:"A ratio is 3:7. The percentage represented by the first quantity = ___",choices:["30%","42.9%","70%","43%"],ans:"30%",type:"number_puzzle",battery:"quantitative",exp:"3 divided by (3+7) = 3 divided by 10 = 30%"},
+    {q:"The range of: 14, 7, 22, 3, 18 = ___",choices:["15","18","19","22"],ans:"19",type:"number_analogy",battery:"quantitative",exp:"Range = max - min = 22 - 3 = 19"},
+    {q:"2 to the power x = 32, x = ___",choices:["4","5","6","16"],ans:"5",type:"number_puzzle",battery:"quantitative",exp:"2 to the 5th power = 32"},
+    {q:"Scientific notation: 0.000047 = ___",choices:["4.7 x 10 to the -5","4.7 x 10 to the 5","47 x 10 to the -6","4.7 x 10 to the -4"],ans:"4.7 x 10 to the -5",type:"number_series",battery:"quantitative",exp:"Move decimal 5 places right: 4.7 x 10 to the -5"},
+    {q:"P(A or B) = P(A) + P(B) - P(A and B). If P(A)=0.4, P(B)=0.3, P(A and B)=0.1: P(A or B)=___",choices:["0.5","0.6","0.7","0.8"],ans:"0.6",type:"number_puzzle",battery:"quantitative",exp:"0.4+0.3-0.1=0.6"},
+    {q:"Factor: x squared + 5x + 6 = ___",choices:["(x+2)(x+3)","(x+1)(x+6)","(x+5)(x+1)","(x+2)(x-3)"],ans:"(x+2)(x+3)",type:"number_analogy",battery:"quantitative",exp:"Find factors of 6 that add to 5: 2 and 3"},
+    {q:"Gradient of y=4x-7 is ___",choices:["4","-7","7","-4"],ans:"4",type:"number_series",battery:"quantitative",exp:"In y=mx+b, m is the gradient/slope; here m=4"},
+    {q:"Solve the system: x+y=10 and x-y=4. x = ___",choices:["3","5","7","8"],ans:"7",type:"number_puzzle",battery:"quantitative",exp:"Adding equations: 2x=14, x=7"},
+    {q:"Rolling a die: probability of even or greater than 4 = ___",choices:["1/2","2/3","5/6","4/6"],ans:"2/3",type:"number_analogy",battery:"quantitative",exp:"Even={2,4,6}, greater than 4={5,6}. Union={2,4,5,6}. P=4/6=2/3"},
+    {q:"Graph of y=x squared: as x increases from -3 to 0, y ___",choices:["increases","decreases","stays the same","alternates"],ans:"decreases",type:"figure_matrix",battery:"nonverbal",exp:"y=x squared: at x=-3, y=9; at x=0, y=0; y decreases as x approaches 0 from the left"},
+    {q:"How many faces does an octahedron have?",choices:["6","8","10","12"],ans:"8",type:"figure_classification",battery:"nonverbal",exp:"Octa=8; a regular octahedron has 8 equilateral triangular faces"},
+    {q:"Rotation 270 degrees clockwise = rotation ___ degrees counterclockwise",choices:["90","180","270","360"],ans:"90",type:"figure_matrix",battery:"nonverbal",exp:"270 degrees clockwise = 90 degrees counterclockwise"},
+    {q:"A dilation with center at origin, scale factor 2, maps (3,4) to ___",choices:["(1.5,2)","(5,6)","(6,8)","(9,16)"],ans:"(6,8)",type:"figure_matrix",battery:"nonverbal",exp:"Multiply each coordinate by scale factor: (3x2, 4x2)=(6,8)"},
+    {q:"A cube has V=8, E=12. Using Euler formula V-E+F=2, F = ___",choices:["4","6","8","10"],ans:"6",type:"figure_classification",battery:"nonverbal",exp:"8-12+F=2; F=6"},
+    {q:"The graph of y=absolute value of x looks like ___",choices:["a V shape","a U shape","a straight line","a zigzag"],ans:"a V shape",type:"figure_matrix",battery:"nonverbal",exp:"The absolute value function creates a V shape with vertex at the origin"},
+    {q:"Which regular polygon does NOT tessellate alone?",choices:["Equilateral triangle","Square","Regular pentagon","Regular hexagon"],ans:"Regular pentagon",type:"figure_classification",battery:"nonverbal",exp:"Regular pentagons cannot tile a plane without gaps"},
+    {q:"A circle with center (2,3) and radius 5 passes through which points?",choices:["(7,3) only","(2,8) only","both (7,3) and (2,8)","neither"],ans:"both (7,3) and (2,8)",type:"figure_matrix",battery:"nonverbal",exp:"Distance from (2,3) to (7,3)=5 and to (2,8)=5; both are on the circle"},
+    {q:"If triangle A has angles 30-60-90 and is similar to triangle B, triangle B also has angles ___",choices:["30-60-90","60-60-60","45-45-90","30-30-120"],ans:"30-60-90",type:"figure_classification",battery:"nonverbal",exp:"Similar triangles have the same angles"},
+    {q:"On a number line, the midpoint of -4 and 10 is ___",choices:["2","3","4","6"],ans:"3",type:"figure_matrix",battery:"nonverbal",exp:"(-4+10) divided by 2 = 6 divided by 2 = 3"},
+    {q:"Which transformation preserves shape but NOT size?",choices:["Reflection","Translation","Rotation","Dilation"],ans:"Dilation",type:"figure_classification",battery:"nonverbal",exp:"Dilation scales size; reflection, translation, and rotation preserve size"},
+    {q:"A spiral pattern: each loop is 2 times the radius of the previous. Radii: 1, 2, 4, 8, ___",choices:["12","14","16","20"],ans:"16",type:"figure_matrix",battery:"nonverbal",exp:"Multiply by 2: 8 x 2 = 16"},
+    {q:"Point of intersection of y=3x+2 and y=-x+10 has x-coordinate ___",choices:["1","2","3","4"],ans:"2",type:"figure_matrix",battery:"nonverbal",exp:"3x+2=-x+10; 4x=8; x=2"},
+    {q:"Area of a parallelogram with base 8 and height 5 = ___",choices:["13","20","40","80"],ans:"40",type:"figure_classification",battery:"nonverbal",exp:"Area = base x height = 8 x 5 = 40"},
+    {q:"Which has a larger perimeter: a circle with diameter 10 or a square with side 8?",choices:["Circle (approximately 31.4)","Square (32)","They are equal","Cannot determine"],ans:"Square (32)",type:"figure_matrix",battery:"nonverbal",exp:"Circle perimeter = pi x 10 approximately 31.4; Square perimeter = 4 x 8 = 32"},
+    {q:"A function is one-to-one if each input maps to a unique output AND ___",choices:["each output comes from exactly one input","the graph is a straight line","all values are positive","the domain is limited"],ans:"each output comes from exactly one input",type:"figure_classification",battery:"nonverbal",exp:"One-to-one: no two inputs share the same output"},
+    {q:"Net of a cylinder (unfolded) consists of ___",choices:["two circles and one rectangle","two rectangles and one circle","three circles","one circle and two triangles"],ans:"two circles and one rectangle",type:"figure_matrix",battery:"nonverbal",exp:"Unfolding a cylinder gives two circular caps and one rectangular tube"},
+    {q:"Gradient between (-2,1) and (4,13) = ___",choices:["1","2","3","6"],ans:"2",type:"figure_matrix",battery:"nonverbal",exp:"(13-1) divided by (4-(-2)) = 12 divided by 6 = 2"}
 ],
 8:[
 /* VERBAL */
@@ -5644,6 +5919,61 @@ var GATE_BANK={
 {q:"Point (2,4) is rotated 90 degrees counterclockwise. New point: ___",choices:["(-4,2)","(4,-2)","(-2,4)","(-4,-2)"],ans:"(-4,2)",type:"figure_matrix",battery:"nonverbal",exp:"90 degree CCW rotation: (x,y) becomes (-y,x); so (2,4) becomes (-4,2)"},
 {q:"A Venn diagram has 20 in circle A only, 15 in circle B only, and 10 in both. Total in A or B?",choices:["35","40","45","50"],ans:"45",type:"figure_classification",battery:"nonverbal",exp:"20+15+10=45"},
 {q:"Which 3D shape has exactly 2 circular faces and 1 curved surface?",choices:["Sphere","Cylinder","Cone","Cube"],ans:"Cylinder",type:"figure_classification",battery:"nonverbal",exp:"A cylinder has 2 circular faces and 1 curved surface"}
+,
+    {q:"Empiricism is to Experience as Rationalism is to ___",choices:["Reason","Science","Religion","Logic"],ans:"Reason",type:"verbal_analogy",battery:"verbal",exp:"Empiricism grounds knowledge in experience; rationalism grounds it in reason"},
+    {q:"Which does NOT belong: Syntax, Morphology, Phonology, Thermodynamics",choices:["Syntax","Morphology","Phonology","Thermodynamics"],ans:"Thermodynamics",type:"verbal_classification",battery:"verbal",exp:"Syntax, Morphology, and Phonology are branches of linguistics; Thermodynamics is physics"},
+    {q:"Solipsism is to Reality as Nihilism is to ___",choices:["Meaning","Self","Truth","God"],ans:"Meaning",type:"verbal_analogy",battery:"verbal",exp:"Solipsism questions external reality; nihilism questions meaning and purpose"},
+    {q:"Which does NOT belong: Dialectic, Rhetoric, Sophism, Entropy",choices:["Dialectic","Rhetoric","Sophism","Entropy"],ans:"Entropy",type:"verbal_classification",battery:"verbal",exp:"Dialectic, Rhetoric, and Sophism are philosophical argument methods; Entropy is a thermodynamics concept"},
+    {q:"___ is the logical fallacy of assuming that because A follows B in time, A must have caused B.",choices:["Post hoc ergo propter hoc","Ad hominem","Straw man","False dilemma"],ans:"Post hoc ergo propter hoc",type:"sentence_completion",battery:"verbal",exp:"After this, therefore because of this - correlation is not causation"},
+    {q:"The Greek prefix epi- means ___.",choices:["upon or above","below","within","without"],ans:"upon or above",type:"sentence_completion",battery:"verbal",exp:"Epicenter=point above the earthquake; epidemic=spreading upon the people"},
+    {q:"Hegemony is to Dominance as Sovereignty is to ___",choices:["Autonomy","Power","Nation","Government"],ans:"Autonomy",type:"verbal_analogy",battery:"verbal",exp:"Hegemony = dominance over others; sovereignty = autonomy and self-governance"},
+    {q:"Which does NOT belong: Cognitive Dissonance, Confirmation Bias, Dunning-Kruger Effect, Osmosis",choices:["Cognitive Dissonance","Confirmation Bias","Dunning-Kruger Effect","Osmosis"],ans:"Osmosis",type:"verbal_classification",battery:"verbal",exp:"The first three are psychological phenomena; Osmosis is biology"},
+    {q:"A ___ argument is one where the conclusion is already assumed in the premises.",choices:["circular","deductive","inductive","abductive"],ans:"circular",type:"sentence_completion",battery:"verbal",exp:"Circular reasoning (begging the question): the premise assumes the conclusion"},
+    {q:"Hubris is to Downfall as Ambition is to ___",choices:["Success","Pride","Greed","Overreach"],ans:"Success",type:"verbal_analogy",battery:"verbal",exp:"In tragedy, hubris causes downfall; in general, ambition drives success"},
+    {q:"Which does NOT belong: Denouement, Climax, Rising Action, Covalent Bond",choices:["Denouement","Climax","Rising Action","Covalent Bond"],ans:"Covalent Bond",type:"verbal_classification",battery:"verbal",exp:"Denouement, Climax, and Rising Action are parts of narrative structure; Covalent Bond is chemistry"},
+    {q:"___ is the principle that the simplest explanation is usually correct.",choices:["Occam's Razor","Pascal's Wager","Hume's Fork","Plato's Cave"],ans:"Occam's Razor",type:"sentence_completion",battery:"verbal",exp:"Occam's Razor: among competing hypotheses, the one with fewest assumptions is preferred"},
+    {q:"Tautology is to Redundancy as Oxymoron is to ___",choices:["Contradiction","Repetition","Emphasis","Clarity"],ans:"Contradiction",type:"verbal_analogy",battery:"verbal",exp:"A tautology is needless repetition; an oxymoron is a self-contradiction like deafening silence"},
+    {q:"Which does NOT belong: Homogeneous, Heterogeneous, Isotope, Iambic Pentameter",choices:["Homogeneous","Heterogeneous","Isotope","Iambic Pentameter"],ans:"Iambic Pentameter",type:"verbal_classification",battery:"verbal",exp:"Homogeneous, Heterogeneous, and Isotope are science terms; Iambic Pentameter is a poetry meter"},
+    {q:"The Sapir-Whorf hypothesis suggests that ___ shapes thought.",choices:["language","culture","biology","education"],ans:"language",type:"sentence_completion",battery:"verbal",exp:"Linguistic relativity: the language you speak influences how you perceive and think"},
+    {q:"Epistemology is to Knowledge as Ontology is to ___",choices:["Existence","Ethics","Logic","Beauty"],ans:"Existence",type:"verbal_analogy",battery:"verbal",exp:"Epistemology studies the nature of knowledge; ontology studies the nature of existence"},
+    {q:"Which does NOT belong: Consequentialism, Deontology, Virtue Ethics, Stoichiometry",choices:["Consequentialism","Deontology","Virtue Ethics","Stoichiometry"],ans:"Stoichiometry",type:"verbal_classification",battery:"verbal",exp:"The first three are ethical theories; Stoichiometry is chemistry"},
+    {q:"A ___ is a statement that is necessarily true by its own logical form.",choices:["tautology","paradox","hypothesis","theorem"],ans:"tautology",type:"sentence_completion",battery:"verbal",exp:"Example: Either it will rain or it will not - true no matter what"},
+    {q:"For f(x)=x squared - 4x + 3, the vertex x-coordinate = ___",choices:["-2","2","3","4"],ans:"2",type:"number_puzzle",battery:"quantitative",exp:"x = -b divided by (2a) = -(-4) divided by (2x1) = 2"},
+    {q:"log base 2 of 64 = ___",choices:["4","5","6","8"],ans:"6",type:"number_series",battery:"quantitative",exp:"2 to the 6th power = 64"},
+    {q:"Derivative of f(x) = 3x squared is ___",choices:["3x","6x","6x squared","3x cubed"],ans:"6x",type:"number_analogy",battery:"quantitative",exp:"Power rule: d/dx of 3x squared = 3 times 2x = 6x"},
+    {q:"Matrix with rows [2,1] and [3,4]. Determinant = ___",choices:["5","6","7","8"],ans:"5",type:"number_puzzle",battery:"quantitative",exp:"det = 2x4 - 1x3 = 8-3 = 5"},
+    {q:"Binomial expansion: (x+1) cubed = ___",choices:["x cubed + 3x squared + 3x + 1","x cubed + x squared + x + 1","x cubed + 3x + 1","3x cubed + 3x + 1"],ans:"x cubed + 3x squared + 3x + 1",type:"number_series",battery:"quantitative",exp:"(x+1) cubed = x cubed + 3x squared + 3x + 1 using Pascal's triangle"},
+    {q:"Sum of geometric series: 1+2+4+8+16 = ___",choices:["30","31","32","33"],ans:"31",type:"number_analogy",battery:"quantitative",exp:"S = a(r to the n - 1) divided by (r-1) = 1(2 to the 5 - 1) divided by (2-1) = 31"},
+    {q:"Standard deviation measures ___",choices:["spread of data","average value","most common value","middle value"],ans:"spread of data",type:"number_puzzle",battery:"quantitative",exp:"Standard deviation quantifies how spread out the data values are from the mean"},
+    {q:"Limit: as x approaches infinity, (2x+1) divided by x = ___",choices:["0","1","2","infinity"],ans:"2",type:"number_series",battery:"quantitative",exp:"(2x+1)/x = 2+1/x approaches 2 as x approaches infinity"},
+    {q:"Probability of at least one head in 3 coin flips = ___",choices:["1/2","3/8","7/8","5/8"],ans:"7/8",type:"number_analogy",battery:"quantitative",exp:"P(at least one H) = 1 - P(all tails) = 1 - (1/2) cubed = 1 - 1/8 = 7/8"},
+    {q:"Solve: 3 to the power (x+1) = 81, x = ___",choices:["2","3","4","5"],ans:"3",type:"number_puzzle",battery:"quantitative",exp:"3 to the (x+1) = 3 to the 4th, so x+1=4, x=3"},
+    {q:"The integral of 2x from 0 to 3 = ___",choices:["3","6","9","12"],ans:"9",type:"number_series",battery:"quantitative",exp:"Integral of 2x = x squared; evaluated from 0 to 3 = 9 - 0 = 9"},
+    {q:"sin(30 degrees) = ___",choices:["1/2","square root of 2 over 2","square root of 3 over 2","1"],ans:"1/2",type:"number_analogy",battery:"quantitative",exp:"sin(30 degrees) = 1/2 - standard value"},
+    {q:"The graph of y=sin(x) has a period of ___",choices:["pi","2 pi","pi over 2","4 pi"],ans:"2 pi",type:"number_puzzle",battery:"quantitative",exp:"The sine function completes one full cycle every 2 pi radians"},
+    {q:"6 choose 2 = ___",choices:["12","15","18","30"],ans:"15",type:"number_series",battery:"quantitative",exp:"6! divided by (2! times 4!) = 720 divided by 48 = 15"},
+    {q:"Vector addition: (3,4) + (-1,2) = ___",choices:["(2,6)","(4,6)","(2,2)","(4,2)"],ans:"(2,6)",type:"number_analogy",battery:"quantitative",exp:"(3+(-1), 4+2) = (2,6)"},
+    {q:"The asymptote of y=1/x is the ___ and ___ axes",choices:["x and y","x only","y only","neither"],ans:"x and y",type:"number_puzzle",battery:"quantitative",exp:"y=1/x approaches but never touches both the x-axis and y-axis"},
+    {q:"If i equals the square root of -1, then i squared = ___",choices:["1","-1","i","-i"],ans:"-1",type:"number_series",battery:"quantitative",exp:"By definition, i squared = -1"},
+    {q:"Variance: if standard deviation = 4, variance = ___",choices:["2","8","16","64"],ans:"16",type:"number_analogy",battery:"quantitative",exp:"Variance = SD squared = 4 squared = 16"},
+    {q:"Parametric equations x=cos(t), y=sin(t) trace out a ___",choices:["line","parabola","circle","spiral"],ans:"circle",type:"figure_matrix",battery:"nonverbal",exp:"cos squared(t) + sin squared(t) = 1, so x squared + y squared = 1 - a unit circle"},
+    {q:"How many planes of symmetry does a cube have?",choices:["3","6","9","12"],ans:"9",type:"figure_classification",battery:"nonverbal",exp:"A cube has 9 planes of symmetry: 3 through face centers, 6 through edge midpoints"},
+    {q:"A hyperbola has two ___",choices:["asymptotes only","vertices only","foci only","asymptotes, vertices, and foci"],ans:"asymptotes, vertices, and foci",type:"figure_matrix",battery:"nonverbal",exp:"A hyperbola has 2 asymptotes, 2 vertices, and 2 foci"},
+    {q:"Rotating point (x,y) by 90 degrees counterclockwise gives ___",choices:["(-y,x)","(y,-x)","(-x,-y)","(y,x)"],ans:"(-y,x)",type:"figure_matrix",battery:"nonverbal",exp:"90 degree counterclockwise rotation: (x,y) maps to (-y,x)"},
+    {q:"Which function is even: f(x)=x cubed, f(x)=x squared, f(x)=x, or f(x)=x+1?",choices:["f(x)=x cubed","f(x)=x squared","f(x)=x","f(x)=x+1"],ans:"f(x)=x squared",type:"figure_classification",battery:"nonverbal",exp:"f(-x) = (-x) squared = x squared = f(x) - symmetric about y-axis"},
+    {q:"The cross-product of two parallel vectors is ___",choices:["zero vector","unit vector","same vector","maximum"],ans:"zero vector",type:"figure_matrix",battery:"nonverbal",exp:"Parallel vectors have no perpendicular component, so their cross product is zero"},
+    {q:"The eccentricity of a circle is ___",choices:["0","0.5","1","undefined"],ans:"0",type:"figure_classification",battery:"nonverbal",exp:"A circle has eccentricity exactly 0; ellipses: 0 to 1; parabola: 1; hyperbola: greater than 1"},
+    {q:"A Mobius strip has ___ side(s)",choices:["1","2","3","infinite"],ans:"1",type:"figure_matrix",battery:"nonverbal",exp:"A Mobius strip is a non-orientable surface with only one side and one edge"},
+    {q:"Which conic section is formed by cutting a cone parallel to its base?",choices:["Circle","Ellipse","Parabola","Hyperbola"],ans:"Circle",type:"figure_classification",battery:"nonverbal",exp:"A horizontal cut parallel to the base of a cone creates a circle"},
+    {q:"Graph of y = -x squared + 4: vertex is at ___",choices:["(0,-4)","(0,4)","(4,0)","(-4,0)"],ans:"(0,4)",type:"figure_matrix",battery:"nonverbal",exp:"Vertex of y=ax squared+bx+c is at x=-b/(2a)=0; y=-0+4=4"},
+    {q:"Sierpinski triangle: iteration 0 has 1 triangle, iteration 1 has 3. Iteration 2 has ___",choices:["6","7","8","9"],ans:"9",type:"figure_matrix",battery:"nonverbal",exp:"Each triangle becomes 3 smaller triangles: 3 squared = 9 at iteration 2"},
+    {q:"In polar coordinates, the point (r=5, theta=90 degrees) is at Cartesian ___",choices:["(5,0)","(0,5)","(-5,0)","(0,-5)"],ans:"(0,5)",type:"figure_classification",battery:"nonverbal",exp:"x = r times cos(90) = 0; y = r times sin(90) = 5"},
+    {q:"The determinant of the 2x2 identity matrix is ___",choices:["0","1","2","undefined"],ans:"1",type:"figure_matrix",battery:"nonverbal",exp:"det([1,0;0,1]) = 1x1 - 0x0 = 1"},
+    {q:"A function's inverse is its reflection over the line ___",choices:["y=0","x=0","y=x","y=-x"],ans:"y=x",type:"figure_matrix",battery:"nonverbal",exp:"The inverse function is geometrically the reflection of the original over y=x"},
+    {q:"A point c is in the Mandelbrot set if the sequence z to z squared + c remains ___",choices:["bounded","unbounded","zero","negative"],ans:"bounded",type:"figure_classification",battery:"nonverbal",exp:"Points in the Mandelbrot set are those where iteration does not escape to infinity"},
+    {q:"In a 3D coordinate system, the plane z=0 is the ___",choices:["xy-plane","xz-plane","yz-plane","origin"],ans:"xy-plane",type:"figure_matrix",battery:"nonverbal",exp:"z=0 means all points with no z-component, which is the xy-plane"},
+    {q:"A rotation matrix for 180 degrees: cos(180)=-1, sin(180)=0. Matrix effect on (x,y): ___",choices:["(-x,-y)","(x,y)","(-y,x)","(-x,y)"],ans:"(-x,-y)",type:"figure_matrix",battery:"nonverbal",exp:"[[cos180,-sin180],[sin180,cos180]] = [[-1,0],[0,-1]] maps (x,y) to (-x,-y)"},
+    {q:"How many edges does a dodecahedron have?",choices:["20","30","36","60"],ans:"30",type:"figure_classification",battery:"nonverbal",exp:"A dodecahedron has 12 faces, 20 vertices, 30 edges (Euler: 20-30+12=2)"}
 ]};
 
 /* ─── GATE / CogAT Prep Mode ─── */
@@ -5759,10 +6089,336 @@ function finishGate(){
     h+='</div></div>';
   }
   h+='<div class="sp"></div>';
-  h+='<div class="rbx"><button class="hb" style="background:'+gc.color+';color:#fff" onclick="startGate('+grade+',\''+pid+'\')">🔄 Try Again</button>';
+  h+='<div class="rbx"><button class="hb" style="background:'+gc.color+';color:#fff" onclick="renderGateMenu('+grade+',\''+pid+'\')">🔄 Try Again</button>';
   h+='<button class="hb" style="background:var(--bg-card);border:1.5px solid var(--border)" onclick="renderCurriculum('+grade+',\''+pid+'\')">← Back</button></div>';
   el('s-gate').innerHTML=h;
 }
+
+var _GTP={q:0,probs:[],answers:[],grade:3,pid:'',startTime:0,score:0,section:'',sectionStart:0};
+
+function startGatePracticeTest(grade,pid){
+  grade=Math.max(3,grade||ST.grade||3);pid=pid||ST.profileId;
+  var bank=GATE_BANK[grade]||GATE_BANK[3];
+  var verbal=_shuf(bank.filter(function(q){return q.battery==='verbal';})).slice(0,15);
+  var quant=_shuf(bank.filter(function(q){return q.battery==='quantitative';})).slice(0,15);
+  var nonverbal=_shuf(bank.filter(function(q){return q.battery==='nonverbal';})).slice(0,15);
+  var pool=verbal.concat(quant).concat(nonverbal);
+  _GTP={q:0,probs:pool,answers:[],grade:grade,pid:pid,startTime:Date.now(),score:0,section:'intro',sectionStart:0};
+  go('s-gate');renderGatePracticeTest();
+}
+
+function renderGatePracticeTest(){
+  var gc=gradeConf(_GTP.grade);
+  if(_GTP.q===0||_GTP.q===15||_GTP.q===30){
+    renderGateSectionStart(_GTP.q);return;
+  }
+  var pr=_GTP.probs[_GTP.q];
+  var batteryColor={verbal:'#6366F1',quantitative:'#10B981',nonverbal:'#F59E0B'};
+  var batteryLabel={verbal:'🔤 Verbal',quantitative:'🔢 Quantitative',nonverbal:'🔷 Nonverbal'};
+  var bc=batteryColor[pr.battery]||gc.color;
+  var sectionNum=_GTP.q<15?1:_GTP.q<30?2:3;
+  var qInSection=(_GTP.q%15)+1;
+  var h='<div class="hdr"><div style="float:left"><button class="bbtn" onclick="if(confirm(\'Quit practice test? Progress will be lost.\'))renderCurriculum('+_GTP.grade+',\''+_GTP.pid+'\')">✕</button></div>';
+  h+='<div style="float:right;font-size:12px;font-weight:700;color:'+gc.color+'">'+_GTP.q+'/45</div>';
+  h+='<div style="text-align:center;padding-top:4px;font-size:13px;font-weight:700;color:'+gc.color+'">📋 Practice Test</div><div style="clear:both"></div></div>';
+  h+='<div style="height:4px;background:var(--border);border-radius:99px;margin:0 0 12px 0"><div style="width:'+(_GTP.q/45*100)+'%;background:'+gc.color+';height:100%;border-radius:99px;transition:width 0.3s"></div></div>';
+  h+='<div style="display:flex;gap:6px;justify-content:center;margin-bottom:12px">';
+  var sColors=['#6366F1','#10B981','#F59E0B'];
+  var sLabels=['Verbal','Quantitative','Nonverbal'];
+  for(var si=0;si<3;si++){
+    var sActive=si+1===sectionNum;
+    h+='<div style="flex:1;text-align:center;padding:6px 4px;border-radius:10px;font-size:11px;font-weight:700;';
+    h+=sActive?'background:'+sColors[si]+'20;border:1.5px solid '+sColors[si]+';color:'+sColors[si]:
+               'background:var(--bg-subtle);border:1px solid var(--border);color:var(--text-tertiary)';
+    h+='">'+(sActive?'▶ ':'')+sLabels[si]+'<br><span style="font-size:10px;opacity:0.8">';
+    if(si+1<sectionNum)h+='✅ Done';
+    else if(sActive)h+=qInSection+'/15';
+    else h+='upcoming';
+    h+='</span></div>';
+  }
+  h+='</div>';
+  h+='<div class="card" style="padding:20px;margin-bottom:18px;min-height:90px;text-align:center">';
+  h+='<div style="font-size:16px;font-weight:700;color:var(--text-primary);line-height:1.7">'+pr.q+'</div></div>';
+  h+='<div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px">';
+  for(var ci=0;ci<pr.choices.length;ci++){
+    var ch=pr.choices[ci];
+    h+='<button onclick="answerGatePracticeTest(this.dataset.ans)" data-ans="'+ch.replace(/"/g,'&quot;')+'" style="padding:14px 18px;font-size:15px;font-weight:600;text-align:left;font-family:Sora,sans-serif;border:2px solid var(--border);border-radius:14px;background:var(--bg-card);color:var(--text-primary);cursor:pointer;width:100%;-webkit-tap-highlight-color:transparent">'+ch+'</button>';
+  }
+  h+='</div>';
+  el('s-gate').innerHTML=h;
+}
+
+function renderGateSectionStart(qIdx){
+  var gc=gradeConf(_GTP.grade);
+  var sections=[
+    {n:1,label:'Verbal Battery',icon:'🔤',color:'#6366F1',desc:'Verbal Analogies, Classification, Sentence Completion',count:15},
+    {n:2,label:'Quantitative Battery',icon:'🔢',color:'#10B981',desc:'Number Series, Number Analogies, Number Puzzles',count:15},
+    {n:3,label:'Nonverbal Battery',icon:'🔷',color:'#F59E0B',desc:'Figure Matrices, Figure Classification, Pattern Recognition',count:15}
+  ];
+  var sec=sections[qIdx===0?0:qIdx===15?1:2];
+  var prevScore=0;
+  if(qIdx>0){
+    for(var i=0;i<qIdx;i++){if(_GTP.answers[i]&&_GTP.answers[i].ok)prevScore++;}
+  }
+  var h='<div class="hdr"><div style="text-align:center;padding-top:4px;font-size:13px;font-weight:700;color:'+gc.color+'">📋 Practice Test — Section '+sec.n+' of 3</div></div>';
+  if(qIdx>0){
+    h+='<div style="background:rgba(16,185,129,0.08);border:1.5px solid rgba(16,185,129,0.2);border-radius:14px;padding:12px 16px;margin-bottom:14px;text-align:center">';
+    h+='<div style="font-size:13px;font-weight:700;color:#10B981">Previous section: '+prevScore+'/'+qIdx+' correct</div></div>';
+  }
+  h+='<div class="card" style="padding:28px 20px;text-align:center;margin-bottom:16px">';
+  h+='<div style="font-size:48px;margin-bottom:10px">'+sec.icon+'</div>';
+  h+='<div style="font-size:20px;font-weight:800;color:'+sec.color+';margin-bottom:8px">'+sec.label+'</div>';
+  h+='<div style="font-size:13px;color:var(--text-secondary);margin-bottom:12px">'+sec.desc+'</div>';
+  h+='<div style="background:'+sec.color+'15;border-radius:99px;padding:6px 18px;display:inline-block;font-size:13px;font-weight:700;color:'+sec.color+'">'+sec.count+' questions</div></div>';
+  h+='<div class="card" style="padding:14px 16px;margin-bottom:16px">';
+  h+='<div style="font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:8px">💡 Strategy</div>';
+  var tips={1:"For verbal analogies, identify the relationship first. For classification, find what 3 words have in common that the 4th doesn\'t.",2:"For number series, write out the differences between terms. Look for add, multiply, or alternating patterns.",3:"For figure matrices, check changes in size, shading, rotation, and count — both across rows AND down columns."};
+  h+='<div style="font-size:13px;color:var(--text-primary);line-height:1.7">'+tips[sec.n]+'</div></div>';
+  h+='<button class="hb" style="background:'+sec.color+';color:#fff;font-size:16px;padding:16px" onclick="_GTP.sectionStart=Date.now();renderGatePracticeTest()">Start '+sec.label+' →</button>';
+  el('s-gate').innerHTML=h;
+}
+
+function answerGatePracticeTest(chosen){
+  var pr=_GTP.probs[_GTP.q];
+  var ok=(chosen===pr.ans);
+  _GTP.answers.push({q:pr.q,chosen:chosen,ans:pr.ans,ok:ok,exp:pr.exp||'',battery:pr.battery||''});
+  if(ok)_GTP.score++;
+  _GTP.q++;
+  if(_GTP.q>=45){setTimeout(finishGatePracticeTest,250);}else{setTimeout(renderGatePracticeTest,250);}
+}
+
+function finishGatePracticeTest(){
+  var elapsed=Math.round((Date.now()-_GTP.startTime)/1000);
+  var score=_GTP.score,pid=_GTP.pid,grade=_GTP.grade;
+  var st=updateStreak(pid);
+  var earnedPts=addPoints(pid,grade,score,45);
+  addHist(grade,{date:new Date().toISOString(),lid:'gate_pt_g'+grade,score:score,time:elapsed,mode:'gate_practice',subject:'gifted',total:45,streakAfter:st.count},pid);
+  syncToCloud(grade);
+  var gc=gradeConf(grade);
+  var pct=Math.round(score/45*100);
+  var stanine=pct>=90?9:pct>=80?8:pct>=70?7:pct>=60?6:pct>=50?5:pct>=40?4:pct>=30?3:pct>=20?2:1;
+  var stanineLabel=stanine>=8?'Gifted/GATE Ready':stanine>=6?'Above Average':stanine>=4?'Average':stanine>=2?'Below Average':'Needs Practice';
+  var stanineColor=stanine>=8?'#10B981':stanine>=6?'#6366F1':stanine>=4?'#F59E0B':stanine>=2?'#EF4444':'#DC2626';
+  var vScore=0,qScore=0,nScore=0;
+  for(var i=0;i<45;i++){
+    if(!_GTP.answers[i])continue;
+    if(_GTP.answers[i].battery==='verbal')vScore+=_GTP.answers[i].ok?1:0;
+    else if(_GTP.answers[i].battery==='quantitative')qScore+=_GTP.answers[i].ok?1:0;
+    else nScore+=_GTP.answers[i].ok?1:0;
+  }
+  var h='<div class="hdr"><div style="text-align:center;padding-top:4px;font-size:15px;font-weight:700;color:'+gc.color+'">📋 Practice Test — Results</div></div>';
+  h+='<div class="card" style="text-align:center;padding:28px 20px;margin-bottom:12px">';
+  h+='<div style="font-size:48px;font-weight:800;color:'+gc.color+';font-family:Sora,sans-serif">'+score+'<span style="font-size:24px;color:var(--text-tertiary)">/45</span></div>';
+  h+='<div style="font-size:28px;font-weight:700;color:var(--text-secondary);margin-top:4px">'+pct+'%</div>';
+  h+='<div style="margin:12px 0"><div style="background:'+stanineColor+'15;border:1.5px solid '+stanineColor+'30;border-radius:14px;padding:10px 20px;display:inline-block">';
+  h+='<div style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:'+stanineColor+'">Estimated Stanine</div>';
+  h+='<div style="font-size:32px;font-weight:800;color:'+stanineColor+'">'+stanine+'<span style="font-size:14px;">/9</span></div>';
+  h+='<div style="font-size:13px;font-weight:700;color:'+stanineColor+'">'+stanineLabel+'</div></div></div>';
+  if(st.count>=2){h+='<div style="font-size:14px;color:#F59E0B;font-weight:700;margin-top:6px">🔥 '+st.count+'-day streak!</div>';}
+  h+='<div style="margin-top:10px"><span style="background:rgba(99,102,241,0.1);border:1.5px solid rgba(99,102,241,0.25);border-radius:99px;padding:6px 18px;font-size:14px;font-weight:700;color:#6366F1">+'+earnedPts+' pts</span></div>';
+  h+='</div>';
+  h+='<div class="card" style="margin-bottom:12px"><div style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:12px">📊 Battery Scores</div>';
+  var bats=[{l:'🔤 Verbal',s:vScore,t:15,c:'#6366F1'},{l:'🔢 Quantitative',s:qScore,t:15,c:'#10B981'},{l:'🔷 Nonverbal',s:nScore,t:15,c:'#F59E0B'}];
+  for(var bi=0;bi<3;bi++){
+    var bat=bats[bi];var bp=Math.round(bat.s/bat.t*100);
+    h+='<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;margin-bottom:4px">';
+    h+='<span>'+bat.l+'</span><span style="color:'+bat.c+'">'+bat.s+'/'+bat.t+' ('+bp+'%)</span></div>';
+    h+='<div style="background:var(--bg-subtle);border-radius:99px;height:8px"><div style="width:'+bp+'%;background:'+bat.c+';height:100%;border-radius:99px"></div></div></div>';
+  }
+  h+='</div>';
+  h+='<div class="card" style="margin-bottom:12px"><div style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:10px">📝 Next Steps</div>';
+  var lowest=bats.reduce(function(a,b){return a.s/a.t<b.s/b.t?a:b;});
+  h+='<div style="font-size:13px;color:var(--text-primary);line-height:1.7">Weakest area: <strong>'+lowest.l+'</strong>. Use Targeted Drill to focus practice there. Aim for stanine 7+ for GATE qualification.</div></div>';
+  h+='<div style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:10px">Review All Questions</div>';
+  for(var i=0;i<_GTP.answers.length;i++){
+    var a=_GTP.answers[i];
+    h+='<div style="display:flex;align-items:flex-start;gap:8px;padding:8px 12px;border-radius:10px;margin-bottom:6px;background:'+(a.ok?'rgba(16,185,129,0.06)':'rgba(239,68,68,0.06)')+'">';
+    h+='<span style="flex-shrink:0;font-size:16px">'+(a.ok?'✅':'❌')+'</span>';
+    h+='<div style="flex:1"><div style="font-size:12px;font-weight:600;color:var(--text-primary);margin-bottom:3px">'+a.q+'</div>';
+    if(!a.ok){h+='<div style="font-size:11px;color:#EF4444">✗ '+a.chosen+'</div><div style="font-size:11px;color:#10B981">✓ '+a.ans+'</div>';}
+    if(a.exp){h+='<div style="font-size:11px;color:var(--text-secondary);border-left:2px solid #6366F1;padding-left:6px;margin-top:3px">'+a.exp+'</div>';}
+    h+='</div></div>';
+  }
+  h+='<div class="sp"></div>';
+  h+='<div class="rbx"><button class="hb" style="background:'+gc.color+';color:#fff" onclick="startGatePracticeTest('+grade+',\''+pid+'\')">🔄 Retake Test</button>';
+  h+='<button class="hb" style="background:var(--bg-card);border:1.5px solid var(--border)" onclick="renderCurriculum('+grade+',\''+pid+'\')">← Back</button></div>';
+  el('s-gate').innerHTML=h;
+}
+
+var _GD={q:0,probs:[],answers:[],grade:3,pid:'',startTime:0,score:0,drillType:''};
+var GATE_DRILL_LABELS={
+  verbal_analogy:'Verbal Analogies',
+  verbal_classification:'Verbal Classification',
+  sentence_completion:'Sentence Completion',
+  number_series:'Number Series',
+  number_analogy:'Number Analogies',
+  number_puzzle:'Number Puzzles',
+  figure_matrix:'Figure Matrices',
+  figure_classification:'Figure Classification'
+};
+
+function startGateDrill(grade,pid,drillType){
+  grade=Math.max(3,grade||ST.grade||3);pid=pid||ST.profileId;
+  var bank=GATE_BANK[grade]||GATE_BANK[3];
+  var pool=_shuf(bank.filter(function(q){return q.type===drillType;})).slice(0,10);
+  if(pool.length<5){
+    var fallbackBattery=(bank.find(function(q2){return q2.type===drillType;})||{}).battery;
+    pool=_shuf(bank.filter(function(q){return q.battery===fallbackBattery;})).slice(0,10);
+  }
+  _GD={q:0,probs:pool,answers:[],grade:grade,pid:pid,startTime:Date.now(),score:0,drillType:drillType};
+  go('s-gate');renderGateDrill();
+}
+
+function renderGateDrill(){
+  var gc=gradeConf(_GD.grade);
+  var lbl=GATE_DRILL_LABELS[_GD.drillType]||'Drill';
+  var batteryOfType={verbal_analogy:'#6366F1',verbal_classification:'#6366F1',sentence_completion:'#6366F1',number_series:'#10B981',number_analogy:'#10B981',number_puzzle:'#10B981',figure_matrix:'#F59E0B',figure_classification:'#F59E0B'};
+  var bc=batteryOfType[_GD.drillType]||gc.color;
+  var pr=_GD.probs[_GD.q];
+  var h='<div class="hdr"><div style="float:left"><button class="bbtn" onclick="renderGateMenu('+_GD.grade+',\''+_GD.pid+'\')">✕</button></div>';
+  h+='<div style="float:right;font-size:12px;font-weight:700;color:'+gc.color+'">'+_GD.q+'/'+_GD.probs.length+'</div>';
+  h+='<div style="text-align:center;padding-top:4px;font-size:13px;font-weight:700;color:'+bc+'">🎯 '+lbl+' Drill</div><div style="clear:both"></div></div>';
+  h+='<div style="height:4px;background:var(--border);border-radius:99px;margin:0 0 16px 0"><div style="width:'+(_GD.probs.length>0?_GD.q/_GD.probs.length*100:0)+'%;background:'+bc+';height:100%;border-radius:99px;transition:width 0.3s"></div></div>';
+  h+='<div class="card" style="padding:20px;margin-bottom:18px;min-height:90px;text-align:center">';
+  h+='<div style="font-size:16px;font-weight:700;color:var(--text-primary);line-height:1.7">'+pr.q+'</div></div>';
+  h+='<div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px">';
+  for(var ci=0;ci<pr.choices.length;ci++){
+    var ch=pr.choices[ci];
+    h+='<button onclick="answerGateDrill(this.dataset.ans)" data-ans="'+ch.replace(/"/g,'&quot;')+'" style="padding:14px 18px;font-size:15px;font-weight:600;text-align:left;font-family:Sora,sans-serif;border:2px solid var(--border);border-radius:14px;background:var(--bg-card);color:var(--text-primary);cursor:pointer;width:100%;-webkit-tap-highlight-color:transparent">'+ch+'</button>';
+  }
+  h+='</div>';
+  el('s-gate').innerHTML=h;
+}
+
+function answerGateDrill(chosen){
+  var pr=_GD.probs[_GD.q];
+  var ok=(chosen===pr.ans);
+  _GD.answers.push({q:pr.q,chosen:chosen,ans:pr.ans,ok:ok,exp:pr.exp||''});
+  if(ok)_GD.score++;
+  _GD.q++;
+  if(_GD.q>=_GD.probs.length){setTimeout(finishGateDrill,250);}else{setTimeout(renderGateDrill,250);}
+}
+
+function finishGateDrill(){
+  var elapsed=Math.round((Date.now()-_GD.startTime)/1000);
+  var score=_GD.score,pid=_GD.pid,grade=_GD.grade;
+  var total=_GD.probs.length;
+  var earnedPts=addPoints(pid,grade,score,total);
+  addHist(grade,{date:new Date().toISOString(),lid:'gate_drill_'+_GD.drillType+'_g'+grade,score:score,time:elapsed,mode:'gate_drill',subject:'gifted',total:total},pid);
+  syncToCloud(grade);
+  var gc=gradeConf(grade);
+  var pct=Math.round(score/total*100);
+  var lbl=GATE_DRILL_LABELS[_GD.drillType]||'Drill';
+  var batteryOfType={verbal_analogy:'#6366F1',verbal_classification:'#6366F1',sentence_completion:'#6366F1',number_series:'#10B981',number_analogy:'#10B981',number_puzzle:'#10B981',figure_matrix:'#F59E0B',figure_classification:'#F59E0B'};
+  var bc=batteryOfType[_GD.drillType]||gc.color;
+  var emoji=pct===100?'🏆':pct>=80?'⭐':pct>=60?'👍':'💪';
+  var h='<div class="hdr"><div style="text-align:center;padding-top:4px;font-size:14px;font-weight:700;color:'+bc+'">🎯 '+lbl+' — Done!</div></div>';
+  h+='<div class="card" style="text-align:center;padding:28px 20px;margin-bottom:14px">';
+  h+='<div style="font-size:56px;margin-bottom:8px">'+emoji+'</div>';
+  h+='<div style="font-size:48px;font-weight:800;color:'+bc+';font-family:Sora,sans-serif">'+score+'<span style="font-size:24px;color:var(--text-tertiary)">/'+total+'</span></div>';
+  h+='<div style="font-size:28px;font-weight:700;color:var(--text-secondary);margin-top:4px">'+pct+'%</div>';
+  h+='<div style="margin-top:10px"><span style="background:rgba(99,102,241,0.1);border:1.5px solid rgba(99,102,241,0.25);border-radius:99px;padding:6px 18px;font-size:14px;font-weight:700;color:#6366F1">+'+earnedPts+' pts</span></div>';
+  h+='</div>';
+  for(var i=0;i<_GD.answers.length;i++){
+    var a=_GD.answers[i];
+    h+='<div style="display:flex;gap:8px;padding:10px 12px;border-radius:12px;margin-bottom:8px;background:'+(a.ok?'rgba(16,185,129,0.07)':'rgba(239,68,68,0.07)')+'">';
+    h+='<span style="font-size:18px;flex-shrink:0">'+(a.ok?'✅':'❌')+'</span>';
+    h+='<div style="flex:1"><div style="font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:3px">'+a.q+'</div>';
+    if(!a.ok){h+='<div style="font-size:12px;color:#EF4444">✗ '+a.chosen+'</div><div style="font-size:12px;color:#10B981">✓ '+a.ans+'</div>';}
+    if(a.exp){h+='<div style="font-size:12px;color:var(--text-secondary);border-left:2px solid '+bc+';padding-left:6px;margin-top:3px">💡 '+a.exp+'</div>';}
+    h+='</div></div>';
+  }
+  h+='<div class="sp"></div>';
+  h+='<div class="rbx"><button class="hb" style="background:'+bc+';color:#fff" onclick="startGateDrill('+grade+',\''+pid+'\',\''+_GD.drillType+'\')">🔄 Drill Again</button>';
+  h+='<button class="hb" style="background:var(--bg-card);border:1.5px solid var(--border)" onclick="renderGateMenu('+grade+',\''+pid+'\')">← Menu</button></div>';
+  el('s-gate').innerHTML=h;
+}
+
+function renderGateMenu(grade,pid){
+  grade=grade||ST.grade||3;pid=pid||ST.profileId;
+  var gc=gradeConf(grade);
+  go('s-gate');
+  var h='<div class="hdr"><div style="float:left"><button class="bbtn" onclick="renderCurriculum('+grade+',\''+pid+'\')">←</button></div>';
+  h+='<div style="text-align:center;padding-top:4px;font-size:15px;font-weight:700;color:'+gc.color+'">🏆 GATE Prep</div><div style="clear:both"></div></div>';
+  h+='<div style="font-size:12px;color:var(--text-secondary);text-align:center;margin-bottom:16px">CogAT Practice — Grade '+grade+'</div>';
+  h+='<div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px">';
+  h+='<button class="hb" style="background:linear-gradient(135deg,#6366F1,#8B5CF6);color:#fff;padding:18px 16px;font-size:15px;font-weight:700;border-radius:16px;text-align:left" onclick="startGatePracticeTest('+grade+',\''+pid+'\')">';
+  h+='<div style="font-size:18px;margin-bottom:4px">📋 Full Practice Test</div>';
+  h+='<div style="font-size:12px;opacity:0.85">45 questions · All 3 batteries · Stanine score</div></button>';
+  h+='<button class="hb" style="background:var(--bg-card);border:2px solid #6366F1;color:#6366F1;padding:16px;font-size:14px;font-weight:700;border-radius:16px;text-align:left" onclick="startGate('+grade+',\''+pid+'\')">';
+  h+='<div style="font-size:16px;margin-bottom:2px">⚡ Quick Practice</div>';
+  h+='<div style="font-size:12px;color:var(--text-secondary)">15 questions · Mixed batteries</div></button>';
+  h+='</div>';
+  h+='<div style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:10px">🎯 Targeted Drills</div>';
+  h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px">';
+  var drills=[
+    {type:'verbal_analogy',label:'Verbal Analogies',icon:'🔤',color:'#6366F1'},
+    {type:'verbal_classification',label:'Classification',icon:'🗂️',color:'#6366F1'},
+    {type:'sentence_completion',label:'Sentence Fill',icon:'📝',color:'#6366F1'},
+    {type:'number_series',label:'Number Series',icon:'🔢',color:'#10B981'},
+    {type:'number_analogy',label:'Number Analogies',icon:'∝',color:'#10B981'},
+    {type:'number_puzzle',label:'Number Puzzles',icon:'🧩',color:'#10B981'},
+    {type:'figure_matrix',label:'Figure Matrices',icon:'🔷',color:'#F59E0B'},
+    {type:'figure_classification',label:'Fig. Classification',icon:'🔶',color:'#F59E0B'}
+  ];
+  for(var di=0;di<drills.length;di++){
+    var d=drills[di];
+    h+='<button onclick="startGateDrill('+grade+',\''+pid+'\',\''+d.type+'\')" style="padding:12px 10px;border-radius:14px;border:1.5px solid '+d.color+'30;background:'+d.color+'08;color:'+d.color+';font-size:12px;font-weight:700;text-align:center;cursor:pointer">'+d.icon+'<br>'+d.label+'</button>';
+  }
+  h+='</div>';
+  h+='<button class="hb" style="background:var(--bg-card);border:1.5px solid var(--border);color:var(--text-primary);padding:14px;font-size:14px;font-weight:700" onclick="renderGateStrategy('+grade+',\''+pid+'\')">';
+  h+='📚 Strategy Guide</button>';
+  el('s-gate').innerHTML=h;
+}
+
+function renderGateStrategy(grade,pid){
+  grade=grade||ST.grade||3;pid=pid||ST.profileId;
+  var gc=gradeConf(grade);
+  go('s-gate');
+  var h='<div class="hdr"><div style="float:left"><button class="bbtn" onclick="renderGateMenu('+grade+',\''+pid+'\')">←</button></div>';
+  h+='<div style="text-align:center;padding-top:4px;font-size:15px;font-weight:700;color:'+gc.color+'">📚 Strategy Guide</div><div style="clear:both"></div></div>';
+  var guides=[
+    {title:'🔤 Verbal Analogies',color:'#6366F1',
+     steps:['Identify the relationship between the first pair (e.g., "is a type of", "is used to", "is the opposite of")','Apply the SAME relationship to the second pair','Eliminate answers that have a different relationship type','Example: Bird:Fly as Fish:Swim — both describe how the animal moves'],
+     tip:'Always say the relationship out loud: "Bird FLIES, so Fish _____"'},
+    {title:'🗂️ Verbal Classification',color:'#6366F1',
+     steps:['Look at what 3 words have in COMMON','The 4th word breaks that pattern — find what makes it different','Check multiple possible categories — the answer is the best fit','Example: Apple,Banana,Grape,Carrot — first 3 are fruits; Carrot is a vegetable'],
+     tip:'If stuck, use process of elimination — which word fits the least?'},
+    {title:'📝 Sentence Completion',color:'#6366F1',
+     steps:['Read the full sentence and identify context clues','Look for signal words: "because", "despite", "however" indicate the relationship','Try each answer in the blank and pick the best fit','Eliminate answers that are wrong part of speech or don\'t make logical sense'],
+     tip:'Cover the choices first and predict your own word, then find the best match'},
+    {title:'🔢 Number Series',color:'#10B981',
+     steps:['Write out the DIFFERENCES between consecutive terms','+2,+3,+4,+5 = increasing arithmetic sequence','×2,×2,×2 = geometric sequence (doubling)','Check for alternating patterns: 1,5,2,6,3,7 = two interleaved sequences'],
+     tip:'Draw a number line — mark each term and the gaps between them'},
+    {title:'∝ Number Analogies',color:'#10B981',
+     steps:['Find the operation: ×, ÷, +, −, or power relationship','Test it: does 4:16 mean ×4? Or 4²? Try both','Apply the SAME operation to the second pair','Verify: "6 is to 36 as 7 is to ___" — 6²=36, so 7²=49'],
+     tip:'Write the relationship as a fraction: 4/16 = 6/24 (both ÷4 = ¼)'},
+    {title:'🧩 Number Puzzles',color:'#10B981',
+     steps:['Write it as an equation with the unknown = ?','Use inverse operations to solve: if ?+5=12, then ?=12-5','For multi-step: work from outside in, (3+?)×2=16 → 3+?=8 → ?=5','Check by substituting your answer back in'],
+     tip:'Underline what you know and circle what you\'re solving for'},
+    {title:'🔷 Figure Matrices',color:'#F59E0B',
+     steps:['Look across rows first: what changes from left to right?','Then look down columns: does the same rule apply?','Changes to check: size, shading, rotation, number of elements, position','The answer completes BOTH the row pattern AND column pattern'],
+     tip:'Use a 2×2 grid — cover the answer choices and predict what belongs in the empty cell'},
+    {title:'🔶 Figure Classification',color:'#F59E0B',
+     steps:['Find what ALL shapes in the group have in common','Check: sides, angles, size, shading, orientation, pattern','The odd one out breaks at least ONE of those rules','If two rules apply, the answer breaks the most important one'],
+     tip:'List the properties of each shape: "4 sides, dark, small" — then compare'}
+  ];
+  for(var gi=0;gi<guides.length;gi++){
+    var g2=guides[gi];
+    h+='<div style="background:var(--bg-card);border:0.5px solid var(--border);border-left:3px solid '+g2.color+';border-radius:14px;padding:16px;margin-bottom:12px">';
+    h+='<div style="font-size:15px;font-weight:700;color:'+g2.color+';margin-bottom:10px">'+g2.title+'</div>';
+    for(var si2=0;si2<g2.steps.length;si2++){
+      h+='<div style="display:flex;gap:8px;margin-bottom:6px"><span style="font-size:12px;font-weight:700;color:'+g2.color+';flex-shrink:0;margin-top:1px">'+(si2+1)+'.</span><span style="font-size:13px;color:var(--text-primary);line-height:1.6">'+g2.steps[si2]+'</span></div>';
+    }
+    h+='<div style="background:'+g2.color+'12;border-radius:8px;padding:8px 12px;margin-top:8px;font-size:12px;color:'+g2.color+';font-weight:600">💡 Pro tip: '+g2.tip+'</div>';
+    h+='</div>';
+  }
+  h+='<div class="sp"></div>';
+  h+='<div class="rbx"><button class="hb" style="background:'+gc.color+';color:#fff" onclick="startGatePracticeTest('+grade+',\''+pid+'\')">Start Practice Test</button>';
+  h+='<button class="hb" style="background:var(--bg-card);border:1.5px solid var(--border)" onclick="renderGateMenu('+grade+',\''+pid+'\')">← Menu</button></div>';
+  el('s-gate').innerHTML=h;
+}
+
 
 function renderHome(){
   /* Check session — if not logged in, show login */
@@ -6209,7 +6865,7 @@ function renderCurriculum(grade,pid){
   else{h+='<div style="border:2px dashed var(--border);border-radius:12px;padding:14px 10px;font-size:12px;color:var(--text-tertiary);text-align:center">&#128202; Stats (Grade 5+)</div>';}
   h+='<button class="hb" style="background:var(--bg-card);border:2px solid '+gc.color+';color:'+gc.color+';padding:14px 10px;font-size:13px;font-weight:700" onclick="startGrammar('+grade+',\''+pid+'\')" >&#9999;&#65039; Grammar</button>';
 h+='<button class="hb" style="background:var(--bg-card);border:2px solid '+gc.color+';color:'+gc.color+';padding:14px 10px;font-size:13px;font-weight:700" onclick="startVocab('+grade+',\''+pid+'\')">📚 Vocabulary</button>';
-  if(grade>=3){h+='<button class="hb" style="background:linear-gradient(135deg,#6366F1,#8B5CF6);color:#fff;padding:14px 10px;font-size:13px;font-weight:700" onclick="startGate('+grade+',\''+pid+'\')">'+'🏆 GATE Prep'+'</button>';}
+  if(grade>=3){h+='<button class="hb" style="background:linear-gradient(135deg,#6366F1,#8B5CF6);color:#fff;padding:14px 10px;font-size:13px;font-weight:700" onclick="renderGateMenu('+grade+',\''+pid+'\')">'+'🏆 GATE Prep'+'</button>';}
   h+='</div></div>';
   h+='<div class="sp"></div><button class="btn btn-secondary" onclick="renderReports('+grade+',\''+pid+'\')">'+'&#128202; My Reports</button>';
   h+='<button class="btn" style="background:var(--blue-light);color:#3B82F6;border:1.5px solid #BFDBFE;border-radius:var(--radius-lg);padding:14px;font-size:15px;font-weight:700;width:100%;cursor:pointer;margin-top:8px" onclick="renderReadingHub('+grade+',\''+pid+'\')" >📚 Language Arts & Reading</button>';
@@ -10996,4 +11652,25 @@ function renderStickerBook(pid, grade){
     h+='</div></div>';
   });
 
-  h+='<div
+  h+='<div style="height:80px"></div>';
+  el('s-stickers').innerHTML=h;
+}
+
+initDarkMode();
+try{
+  if(loadSession()){
+    setupCloudListener();
+    renderHome();
+  } else {
+    go('s-login');
+    initLoginScreen();
+  }
+}
+catch(e){
+  document.body.style.cssText='background:#0d1117;color:#fff;padding:30px;font-family:sans-serif;';
+  document.body.innerHTML='<h2 style="color:#ff5050">Error</h2><pre style="color:#FFD700;font-size:11px;margin-top:12px;white-space:pre-wrap">'+String(e)+'\n'+(e.stack||'')+'</pre>';
+}
+</script>
+<button class="dark-toggle" onclick="toggleDark()" id="dark-btn" title="Toggle dark mode">🌙</button>
+</body>
+</html>
