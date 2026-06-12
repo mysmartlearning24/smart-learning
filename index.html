@@ -851,6 +851,20 @@ body {
   transition: all var(--transition-base);
 }
 .dark-toggle:active { transform: scale(0.9); }
+/* ── CELEBRATION ENGINE ────────────────────────── */
+@keyframes starFall{0%{transform:translateY(-40px) rotate(0);opacity:1}100%{transform:translateY(110vh) rotate(540deg);opacity:0}}
+@keyframes giftShake{0%,100%{transform:rotate(0)}20%{transform:rotate(-12deg) scale(1.05)}40%{transform:rotate(10deg)}60%{transform:rotate(-8deg) scale(1.1)}80%{transform:rotate(6deg)}}
+@keyframes prizeBurst{0%{transform:scale(0);opacity:0}55%{transform:scale(1.5)}75%{transform:scale(.92)}100%{transform:scale(1);opacity:1}}
+@keyframes glowPulse{0%,100%{filter:drop-shadow(0 0 5px currentColor)}50%{filter:drop-shadow(0 0 18px currentColor)}}
+@keyframes crownFloat{0%,100%{transform:translateY(0) rotate(-8deg)}50%{transform:translateY(-5px) rotate(8deg)}}
+@keyframes sparkleSpin{0%{transform:scale(0) rotate(0);opacity:0}50%{transform:scale(1) rotate(180deg);opacity:1}100%{transform:scale(0) rotate(360deg);opacity:0}}
+.star-fly{position:fixed;top:-40px;font-size:22px;z-index:10001;pointer-events:none;animation:starFall linear forwards}
+.crown-float{display:inline-block;animation:crownFloat 1.6s ease-in-out infinite}
+.tile-legend{animation:glowPulse 1.8s ease-in-out infinite;color:#F59E0B}
+.tile-epic{animation:glowPulse 2.4s ease-in-out infinite;color:#8B5CF6}
+.sparkle{position:absolute;font-size:11px;animation:sparkleSpin 1.6s ease-in-out infinite;pointer-events:none}
+.prize-ov{position:fixed;inset:0;background:rgba(10,5,30,.88);z-index:10000;display:flex;align-items:center;justify-content:center;text-align:center}
+
 /* ── PRINT (parent reports) ────────────────────── */
 @media print{
   .dark-toggle,.bbtn,button{display:none!important}
@@ -1076,6 +1090,7 @@ function addPoints(pid,grade,correct,total){
   data.weekly=(data.weekly||0)+earned;
   data.weekOf=getWeekStr();
   try{localStorage.setItem('smart_pr_'+pid+'_pts',JSON.stringify(data));}catch(e){}
+  try{maybePrizeReveal(pid,data.total-earned,data.total);}catch(e){}
   return earned;
 }
 function getRankInfo(pts){
@@ -4387,9 +4402,79 @@ function showCelebration(lid,grade){
   var e=emojis[Math.floor(Math.random()*emojis.length)];
   el('cel-msg').innerHTML='Next level unlocked! Keep going champion! '+e+e;
   el('cel-ov').style.display='block';
+  starShower(22);buzz();
   setTimeout(closeCel,5000);
 }
 function closeCel(){el('cel-ov').style.display='none';}
+
+/* ═══════════════════════════════════════════
+   CELEBRATION ENGINE v2 — star showers, haptics,
+   animated prize reveals with rarity tiers
+═══════════════════════════════════════════ */
+function starShower(n){
+  try{
+    n=n||24;
+    var ems=['⭐','✨','🎉','💛','🌟'];
+    for(var i=0;i<n;i++){
+      var s=document.createElement('span');
+      s.className='star-fly';
+      s.textContent=ems[Math.floor(Math.random()*ems.length)];
+      s.style.left=(Math.random()*100)+'vw';
+      s.style.fontSize=(14+Math.random()*22)+'px';
+      s.style.animationDuration=(1.6+Math.random()*1.8)+'s';
+      s.style.animationDelay=(Math.random()*0.8)+'s';
+      document.body.appendChild(s);
+      (function(el2){setTimeout(function(){if(el2.parentNode)el2.parentNode.removeChild(el2);},4500);})(s);
+    }
+  }catch(e){}
+}
+function buzz(p){try{if(navigator.vibrate)navigator.vibrate(p||[60,40,90]);}catch(e){}}
+function prizeRarity(idx){
+  var pos=idx%12;
+  if(pos>=10)return{nm:'LEGENDARY',color:'#F59E0B',cls:'tile-legend'};
+  if(pos>=7)return{nm:'EPIC',color:'#8B5CF6',cls:'tile-epic'};
+  if(pos>=4)return{nm:'RARE',color:'#3B82F6',cls:''};
+  return{nm:'',color:'#10B981',cls:''};
+}
+function prizeAt(idx){
+  var w=PRIZE_WORLDS[Math.floor(idx/12)];
+  return w?{world:w.nm,em:w.em[idx%12]}:null;
+}
+function showPrizeReveal(pid,unlockedCount){
+  try{
+    var idx=unlockedCount-1;
+    var p=prizeAt(idx);if(!p)return;
+    var r=prizeRarity(idx);
+    var old=document.getElementById('prize-ov');if(old&&old.parentNode)old.parentNode.removeChild(old);
+    var ov=document.createElement('div');
+    ov.id='prize-ov';ov.className='prize-ov';
+    ov.innerHTML='<div style="max-width:320px;padding:30px 24px">'
+      +'<div id="pr-gift" style="font-size:84px;animation:giftShake .9s ease-in-out 2">&#127873;</div>'
+      +'<div id="pr-prize" style="display:none">'
+        +'<div style="font-size:11px;font-weight:800;letter-spacing:3px;color:'+r.color+';margin-bottom:6px">'+(r.nm?r.nm+' ':'')+'PRIZE UNLOCKED!</div>'
+        +'<div style="font-size:96px;animation:prizeBurst .7s cubic-bezier(.2,1.6,.4,1) forwards;color:'+r.color+(r.nm?';filter:drop-shadow(0 0 18px '+r.color+')':'')+'">'+p.em+'</div>'
+        +'<div style="color:#fff;font-size:16px;font-weight:800;font-family:Sora,sans-serif;margin-top:8px">'+p.world+' &middot; #'+unlockedCount+' of 48</div>'
+        +'<div style="color:rgba(255,255,255,.7);font-size:12px;margin-top:14px">Tap anywhere to keep going!</div>'
+      +'</div></div>';
+    ov.onclick=function(){if(ov.parentNode)ov.parentNode.removeChild(ov);};
+    document.body.appendChild(ov);
+    buzz([40,30,40]);
+    setTimeout(function(){
+      var g=document.getElementById('pr-gift'),pr=document.getElementById('pr-prize');
+      if(g)g.style.display='none';
+      if(pr)pr.style.display='block';
+      starShower(28);buzz([80,40,120]);
+      try{launchConfetti();}catch(e){}
+    },1900);
+    setTimeout(function(){if(ov.parentNode)ov.parentNode.removeChild(ov);},9000);
+  }catch(e){}
+}
+function maybePrizeReveal(pid,beforeTotal,afterTotal){
+  try{
+    var b=Math.floor(beforeTotal/PRIZE_TILE_COST),a=Math.floor(afterTotal/PRIZE_TILE_COST);
+    if(a>b&&a<=48){setTimeout(function(){showPrizeReveal(pid,a);},1200);}
+  }catch(e){}
+}
 
 /* ═══════════════════════════════════════════
    HOME SCREEN — PROFILE SELECTOR
@@ -6638,7 +6723,7 @@ function renderHome(){
       var _lp=_lb[_li];
       var _isTop=_li===0&&_lp.weekly>0;
       h+='<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:12px;margin-bottom:6px;background:'+(_isTop?'rgba(99,102,241,0.07)':'var(--bg-card)')+';border:1.5px solid '+(_isTop?'rgba(99,102,241,0.2)':'var(--border)')+'">';
-      h+='<div style="font-size:20px;width:28px;text-align:center">'+(_li<3?_medals[_li]:(_li+1)+'.')+'</div>';
+      h+='<div style="font-size:20px;width:28px;text-align:center">'+(_isTop?'<span class="crown-float">👑</span>':(_li<3?_medals[_li]:(_li+1)+'.'))+'</div>';
       h+='<div style="flex:1;min-width:0">';
       h+='<div style="font-size:14px;font-weight:700;color:var(--text-primary)">'+_lp.name+'</div>';
       h+='<div style="font-size:11px;color:'+_lp.rank.color+';font-weight:600">'+_lp.rank.icon+' '+_lp.rank.title+'</div>';
@@ -6983,6 +7068,7 @@ function claimQuestBonus(grade,pid){
     var data=getPoints(pid);
     data.total=(data.total||0)+25;data.weekly=(data.weekly||0)+25;data.weekOf=getWeekStr();
     localStorage.setItem('smart_pr_'+pid+'_pts',JSON.stringify(data));
+    maybePrizeReveal(pid,data.total-25,data.total);
   }catch(e){}
   try{launchConfetti();}catch(e){}
   renderCurriculum(grade,pid);
@@ -7008,7 +7094,8 @@ function renderPrizeBoard(grade,pid){
   h+='<div style="font-size:13px;color:var(--text-secondary)">You have <strong style="color:'+gc.color+'">'+pts+' points</strong> &mdash; '+Math.min(unlocked,48)+' of 48 prizes unlocked</div>';
   if(unlocked<48){
     h+='<div class="pbar" style="margin-top:10px"><div class="pbar-f" style="width:'+prog+'%;background:'+gc.color+'"></div></div>';
-    h+='<div style="font-size:11px;color:var(--text-tertiary);margin-top:6px">'+(next-pts)+' points to your next prize!</div>';
+    var nr8=prizeRarity(unlocked);
+    h+='<div style="font-size:11px;color:var(--text-tertiary);margin-top:6px">'+(next-pts)+' points to your next prize'+(nr8.nm?' — <strong style="color:'+nr8.color+'">'+nr8.nm+'!</strong>':'!')+'</div>';
   }else{
     h+='<div style="font-size:13px;font-weight:700;color:#10B981;margin-top:8px">&#127942; COLLECTION COMPLETE! You are a SMART legend!</div>';
   }
@@ -7021,7 +7108,11 @@ function renderPrizeBoard(grade,pid){
     h+='<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px">';
     for(var ti=0;ti<w.em.length;ti++){
       var got=idx<unlocked;
-      h+='<div style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:24px;border-radius:12px;border:1.5px solid '+(got?gc.color+'55':'var(--border)')+';background:'+(got?gc.color+'15':'var(--bg-subtle)')+'">'+(got?w.em[ti]:'<span style="opacity:.35;font-size:16px">&#10067;</span>')+'</div>';
+      var r7=prizeRarity(idx);
+      h+='<div class="'+(got?r7.cls:'')+'" style="position:relative;aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:24px;border-radius:12px;border:1.5px solid '+(got?r7.color+'66':'var(--border)')+';background:'+(got?r7.color+'14':'var(--bg-subtle)')+'">'
+        +(got?w.em[ti]+(r7.nm==='LEGENDARY'?'<span class="sparkle" style="top:2px;right:4px">✨</span><span class="sparkle" style="bottom:3px;left:4px;animation-delay:.8s">✨</span>':'')
+             :'<span style="opacity:.35;font-size:16px">&#10067;</span>'+(r7.nm?'<span style="position:absolute;bottom:3px;left:0;right:0;font-size:7px;font-weight:800;letter-spacing:.5px;color:'+r7.color+'99">'+r7.nm+'</span>':''))
+        +'</div>';
       idx++;
     }
     h+='</div></div>';
