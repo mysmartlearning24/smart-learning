@@ -922,10 +922,10 @@ body {
 <div id="s-levels" class="screen"></div>
 <div id="s-drill" class="screen"></div>
 <div id="s-compute" class="screen"></div>
-<div id="s-geometry" style="display:none"></div>
-<div id="s-stats" style="display:none"></div>
+<div id="s-geometry" class="screen"></div>
+<div id="s-stats" class="screen"></div>
 <div id="s-wordprobs" class="screen"></div>
-<div id="s-spelling" style="display:none"></div>
+<div id="s-spelling" class="screen"></div>
 
 <div id="s-concept" class="screen"></div>
 <div id="s-admin" class="screen"></div>
@@ -2046,6 +2046,8 @@ function saveHist(grade,h,pid){
 }
 function addHist(grade,e,pid){
   pid=pid||ST.profileId;
+  /* clamp session time to 60 min — a tab left open must not record hours of "practice" */
+  if(e&&typeof e.time==='number'&&e.time>3600)e.time=3600;
   /* capture missed questions for the parent dashboard (kept small + separate from synced history) */
   try{
     var aa=e._ansTmp||e.ans;
@@ -6676,7 +6678,7 @@ function renderHome(){
         for(var hi4=0;hi4<h4x.length;hi4++){
           var sd4x=new Date(h4x[hi4].date);
           var sk4x=sd4x.getFullYear()+'-'+(sd4x.getMonth()+1)+'-'+sd4x.getDate();
-          if(sk4x===dk4) mins4+=Math.round((h4x[hi4].time||0)/60);
+          if(sk4x===dk4) mins4+=Math.min(60,Math.round((h4x[hi4].time||0)/60));
         }
       }
       dayData4.push({label:lbl4,mins:mins4,pct:Math.min(100,Math.round(mins4/dayGoal*100))});
@@ -6712,7 +6714,7 @@ function renderHome(){
           else if(re5.lid==='READING_ANALOGY') readAnalogyCount++;
           var rd5=new Date(re5.date);
           var rk5=rd5.getFullYear()+'-'+(rd5.getMonth()+1)+'-'+rd5.getDate();
-          if(rk5===todayKey2) readMinsToday+=Math.round((re5.time||0)/60);
+          if(rk5===todayKey2) readMinsToday+=Math.min(60,Math.round((re5.time||0)/60));
         }
       }
     }
@@ -7946,7 +7948,7 @@ function renderReportsInner(grade,pid){
   for(var i=0;i<h.length;i++){
     var sd=new Date(h[i].date);
     var sk=sd.getFullYear()+'-'+(sd.getMonth()+1)+'-'+sd.getDate();
-    if(dayMap[sk]!==undefined){dayMap[sk]+=h[i].time||0;}
+    if(dayMap[sk]!==undefined){dayMap[sk]+=Math.min(3600,h[i].time||0);}
   }
   var dayKeys=Object.keys(dayMap).reverse();
   var maxTime=0;for(var dk in dayMap){if(dayMap[dk]>maxTime)maxTime=dayMap[dk];}
@@ -8254,7 +8256,7 @@ function renderParentDashInner(){
         try{
           var sd4=new Date(hist4[h4i].date);
           var sk4=sd4.getFullYear()+'-'+(sd4.getMonth()+1)+'-'+sd4.getDate();
-          if(dayMap4[sk4]!==undefined){dayMap4[sk4]+=Math.round((hist4[h4i].time||0)/60);}
+          if(dayMap4[sk4]!==undefined){dayMap4[sk4]+=Math.min(60,Math.round((hist4[h4i].time||0)/60));}
         }catch(e){}
       }
 
