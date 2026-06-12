@@ -851,6 +851,21 @@ body {
   transition: all var(--transition-base);
 }
 .dark-toggle:active { transform: scale(0.9); }
+/* ── SFX + QUESTION TRANSITIONS + PASS/FAIL FEEDBACK ── */
+@keyframes qIn{0%{opacity:0;transform:translateY(14px) scale(.985)}100%{opacity:1;transform:none}}
+.screen.active .card{animation:qIn .3s cubic-bezier(.22,1,.36,1) both}
+@keyframes fbPop{0%{transform:scale(.3);opacity:0}55%{transform:scale(1.15);opacity:1}100%{transform:scale(1);opacity:1}}
+@keyframes fbOut{to{opacity:0;transform:scale(1.22) translateY(-16px)}}
+@keyframes fbRing{0%{box-shadow:0 0 0 0 rgba(16,185,129,.5)}100%{box-shadow:0 0 0 70px rgba(16,185,129,0)}}
+@keyframes fbShakeX{0%,100%{transform:translateX(0)}20%{transform:translateX(-9px)}40%{transform:translateX(8px)}60%{transform:translateX(-6px)}80%{transform:translateX(4px)}}
+@keyframes fbFly{0%{transform:translate(-50%,-50%) scale(.6);opacity:1}100%{transform:translate(calc(-50% + var(--fx)),calc(-50% + var(--fy))) scale(1.15) rotate(var(--fr));opacity:0}}
+@keyframes fbDrop{0%{transform:translateY(-26px) scale(.7);opacity:0}50%{transform:translateY(6px) scale(1.06);opacity:1}100%{transform:translateY(0) scale(1)}}
+.fb-ov{position:fixed;inset:0;z-index:9990;display:flex;align-items:center;justify-content:center;pointer-events:none}
+.fb-chip{font-family:Sora,sans-serif;font-weight:900;border-radius:24px;padding:16px 28px;font-size:24px;display:flex;align-items:center;gap:12px;box-shadow:0 12px 40px rgba(0,0,0,.18)}
+.fb-correct{background:linear-gradient(135deg,#10B981,#34D399);color:#fff;animation:fbPop .32s cubic-bezier(.2,1.4,.4,1) both,fbRing .9s ease-out .1s,fbOut .35s ease-in .85s both}
+.fb-wrong{background:linear-gradient(135deg,#64748B,#94A3B8);color:#fff;animation:fbDrop .4s ease both,fbShakeX .45s ease .35s,fbOut .35s ease-in 1s both}
+.fb-bit{position:fixed;left:50%;top:50%;z-index:9991;pointer-events:none;animation:fbFly .8s ease-out forwards}
+
 /* ── CELEBRATION ENGINE ────────────────────────── */
 @keyframes starFall{0%{transform:translateY(-40px) rotate(0);opacity:1}100%{transform:translateY(110vh) rotate(540deg);opacity:0}}
 @keyframes giftShake{0%,100%{transform:rotate(0)}20%{transform:rotate(-12deg) scale(1.05)}40%{transform:rotate(10deg)}60%{transform:rotate(-8deg) scale(1.1)}80%{transform:rotate(6deg)}}
@@ -1427,7 +1442,7 @@ function renderCompute(){
 
 function answerCompute(chosen){
   var pr=_CT.probs[_CT.q];
-  var ok=(String(chosen)===String(pr.ans));
+  var ok=(String(chosen)===String(pr.ans));flashFeedback(ok);
   _CT.answers.push({q:pr.display,chosen:String(chosen),ans:String(pr.ans),ok:ok});
   if(ok){_CT.score++;_CT.consecutive++;if(_CT.consecutive>=3&&_CT.diffLevel<1){_CT.diffLevel++;_CT.consecutive=0;}}
   else{_CT.retry.push(pr);_CT.consecutive=0;if(_CT.consecutive<=-2&&_CT.diffLevel>-1)_CT.diffLevel--;}
@@ -4402,7 +4417,7 @@ function showCelebration(lid,grade){
   var e=emojis[Math.floor(Math.random()*emojis.length)];
   el('cel-msg').innerHTML='Next level unlocked! Keep going champion! '+e+e;
   el('cel-ov').style.display='block';
-  starShower(22);buzz();
+  starShower(22);buzz();sfxLevelUp();
   setTimeout(closeCel,5000);
 }
 function closeCel(){el('cel-ov').style.display='none';}
@@ -4463,7 +4478,7 @@ function showPrizeReveal(pid,unlockedCount){
       var g=document.getElementById('pr-gift'),pr=document.getElementById('pr-prize');
       if(g)g.style.display='none';
       if(pr)pr.style.display='block';
-      starShower(28);buzz([80,40,120]);
+      starShower(28);buzz([80,40,120]);sfxPrize();
       try{launchConfetti();}catch(e){}
     },1900);
     setTimeout(function(){if(ov.parentNode)ov.parentNode.removeChild(ov);},9000);
@@ -4473,6 +4488,93 @@ function maybePrizeReveal(pid,beforeTotal,afterTotal){
   try{
     var b=Math.floor(beforeTotal/PRIZE_TILE_COST),a=Math.floor(afterTotal/PRIZE_TILE_COST);
     if(a>b&&a<=48){setTimeout(function(){showPrizeReveal(pid,a);},1200);}
+  }catch(e){}
+}
+
+/* ═══════════════════════════════════════════
+   SOUND ENGINE (WebAudio — no files) + PASS/FAIL FEEDBACK
+═══════════════════════════════════════════ */
+var SFX={on:(function(){try{return localStorage.getItem('smart_sfx')!=='0';}catch(e){return true;}})(),ctx:null};
+function sfxToggle(){
+  SFX.on=!SFX.on;
+  try{localStorage.setItem('smart_sfx',SFX.on?'1':'0');}catch(e){}
+  var b=document.getElementById('sfx-btn');if(b)b.textContent=SFX.on?'\uD83D\uDD0A':'\uD83D\uDD07';
+  if(SFX.on)sfxCorrect();
+}
+function _actx(){
+  if(!SFX.ctx){try{SFX.ctx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){return null;}}
+  if(SFX.ctx&&SFX.ctx.state==='suspended'){try{SFX.ctx.resume();}catch(e){}}
+  return SFX.ctx;
+}
+function _tone(f0,f1,t0,dur,type,vol){
+  var c=_actx();if(!c)return;
+  try{
+    var o=c.createOscillator(),g=c.createGain();
+    o.type=type||'sine';
+    var T=c.currentTime+(t0||0);
+    o.frequency.setValueAtTime(f0,T);
+    if(f1&&f1!==f0)o.frequency.exponentialRampToValueAtTime(f1,T+dur);
+    g.gain.setValueAtTime(0.0001,T);
+    g.gain.exponentialRampToValueAtTime(vol||0.18,T+0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001,T+dur);
+    o.connect(g);g.connect(c.destination);
+    o.start(T);o.stop(T+dur+0.05);
+  }catch(e){}
+}
+function sfxCorrect(){
+  if(!SFX.on)return;
+  var v=Math.floor(Math.random()*3);
+  if(v===0){_tone(660,0,0,.09,'sine',.15);_tone(990,0,.09,.14,'sine',.15);}
+  else if(v===1){_tone(523,0,0,.08,'triangle',.16);_tone(659,0,.08,.08,'triangle',.16);_tone(784,0,.16,.16,'triangle',.16);}
+  else{_tone(880,1320,0,.18,'sine',.13);}
+}
+function sfxWrong(){
+  if(!SFX.on)return;
+  if(Math.random()<0.5){_tone(220,180,0,.18,'sine',.10);}
+  else{_tone(196,0,0,.12,'triangle',.09);_tone(165,0,.12,.18,'triangle',.09);}
+}
+function sfxLevelUp(){
+  if(!SFX.on)return;
+  var ar=[523,659,784,1047];
+  for(var i=0;i<ar.length;i++)_tone(ar[i],0,i*.09,.22,'triangle',.16);
+  _tone(2093,0,.36,.4,'sine',.07);
+}
+function sfxPrize(){
+  if(!SFX.on)return;
+  _tone(392,1568,0,.5,'sine',.11);
+  var ar=[784,988,1175,1568];
+  for(var i=0;i<ar.length;i++)_tone(ar[i],0,.4+i*.08,.3,'triangle',.13);
+}
+window.addEventListener('load',function(){var b=document.getElementById('sfx-btn');if(b&&!SFX.on)b.textContent='\uD83D\uDD07';});
+/* randomized pass/fail feedback bursts — never punishing on misses */
+var _FB_OK=[['\uD83C\uDF89','AWESOME!'],['\u2B50','NAILED IT!'],['\uD83D\uDD25','ON FIRE!'],['\uD83D\uDCAA','CRUSHED IT!'],['\uD83D\uDE80','BOOM!'],['\uD83E\uDD84','PERFECT!'],['\uD83C\uDFC0','SWISH!'],['\u2728','BRILLIANT!']];
+var _FB_NO=[['\uD83E\uDD14','Almost!'],['\uD83D\uDCAD','Good try!'],['\uD83C\uDF31','Keep growing!'],['\uD83E\uDDE0','You got this!'],['\uD83C\uDFAF','So close!']];
+var _fbLast=-1;
+function flashFeedback(ok){
+  try{
+    var pool=ok?_FB_OK:_FB_NO;
+    var i=Math.floor(Math.random()*pool.length);
+    if(i===_fbLast)i=(i+1)%pool.length; /* never the same twice in a row */
+    _fbLast=i;
+    var pick=pool[i];
+    var old=document.querySelector('.fb-ov');if(old&&old.parentNode)old.parentNode.removeChild(old);
+    var ov=document.createElement('div');ov.className='fb-ov';
+    ov.innerHTML='<div class="fb-chip '+(ok?'fb-correct':'fb-wrong')+'"><span style="font-size:32px">'+pick[0]+'</span><span>'+pick[1]+'</span></div>';
+    document.body.appendChild(ov);
+    if(ok){
+      var ems=['\u2B50','\u2728','\uD83C\uDF89'];
+      for(var k=0;k<8;k++){
+        var b=document.createElement('span');b.className='fb-bit';b.textContent=ems[k%3];
+        var ang=Math.PI*2*k/8+Math.random()*.5,dist=90+Math.random()*70;
+        b.style.fontSize=(14+Math.random()*14)+'px';
+        b.style.setProperty('--fx',Math.cos(ang)*dist+'px');
+        b.style.setProperty('--fy',Math.sin(ang)*dist+'px');
+        b.style.setProperty('--fr',(Math.random()*180-90)+'deg');
+        ov.appendChild(b);
+      }
+      sfxCorrect();buzz([25]);
+    }else{sfxWrong();}
+    setTimeout(function(){if(ov.parentNode)ov.parentNode.removeChild(ov);},1500);
   }catch(e){}
 }
 
@@ -4688,7 +4790,7 @@ function renderSpelling(){
 
 function answerSpelling(chosen){
   var pr=_SP.probs[_SP.q];
-  var ok=(chosen===pr.ans);
+  var ok=(chosen===pr.ans);flashFeedback(ok);
   _SP.answers.push({prompt:pr.prompt,chosen:chosen,ans:pr.ans,ok:ok});
   if(ok)_SP.score++;
   _SP.q++;
@@ -4877,7 +4979,7 @@ function renderWordProb(){
 
 function answerWordProb(chosen){
   var pr=_WP.probs[_WP.q];
-  var ok=(String(chosen)===String(pr.ans));
+  var ok=(String(chosen)===String(pr.ans));flashFeedback(ok);
   _WP.answers.push({q:pr.q,chosen:String(chosen),ans:String(pr.ans),ok:ok,exp:pr.exp||''});
   if(ok)_WP.score++;
   _WP.q++;
@@ -5109,7 +5211,7 @@ function renderGeometry(){
 
 function answerGeometry(chosen){
   var pr=_GEO.probs[_GEO.q];
-  var ok=(String(chosen)===String(pr.ans));
+  var ok=(String(chosen)===String(pr.ans));flashFeedback(ok);
   _GEO.answers.push({q:pr.q,chosen:String(chosen),ans:String(pr.ans),ok:ok,exp:pr.exp||''});
   if(ok)_GEO.score++;
   _GEO.q++;
@@ -5186,7 +5288,7 @@ function renderStats(){
 
 function answerStats(chosen){
   var pr=_STATS.probs[_STATS.q];
-  var ok=(String(chosen)===String(pr.ans));
+  var ok=(String(chosen)===String(pr.ans));flashFeedback(ok);
   _STATS.answers.push({q:pr.q,chosen:String(chosen),ans:String(pr.ans),ok:ok,exp:pr.exp||''});
   if(ok)_STATS.score++;
   _STATS.q++;
@@ -5380,7 +5482,7 @@ function renderGrammar(){
 
 function answerGrammar(chosen){
   var pr=_GR.probs[_GR.q];
-  var ok=(chosen===pr.ans);
+  var ok=(chosen===pr.ans);flashFeedback(ok);
   _GR.answers.push({q:pr.q,chosen:chosen,ans:pr.ans,ok:ok,exp:pr.exp||''});
   if(ok)_GR.score++;
   _GR.q++;
@@ -5600,7 +5702,7 @@ function renderVocab(){
 
 function answerVocab(chosen){
   var pr=_VB.probs[_VB.q];
-  var ok=(chosen===pr.ans);
+  var ok=(chosen===pr.ans);flashFeedback(ok);
   _VB.answers.push({q:pr.q,chosen:chosen,ans:pr.ans,ok:ok,exp:pr.exp||'',type:pr.type||''});
   if(ok)_VB.score++;
   _VB.q++;
@@ -6271,7 +6373,7 @@ function renderGate(){
 
 function answerGate(chosen){
   var pr=_GT.probs[_GT.q];
-  var ok=(chosen===pr.ans);
+  var ok=(chosen===pr.ans);flashFeedback(ok);
   _GT.answers.push({q:pr.q,chosen:chosen,ans:pr.ans,ok:ok,exp:pr.exp||'',battery:pr.battery||''});
   if(ok)_GT.score++;
   _GT.q++;
@@ -6430,7 +6532,7 @@ function renderGateSectionStart(qIdx){
 
 function answerGatePracticeTest(chosen){
   var pr=_GTP.probs[_GTP.q];
-  var ok=(chosen===pr.ans);
+  var ok=(chosen===pr.ans);flashFeedback(ok);
   _GTP.answers.push({q:pr.q,chosen:chosen,ans:pr.ans,ok:ok,exp:pr.exp||'',battery:pr.battery||''});
   if(ok)_GTP.score++;
   _GTP.q++;
@@ -6542,7 +6644,7 @@ function renderGateDrill(){
 
 function answerGateDrill(chosen){
   var pr=_GD.probs[_GD.q];
-  var ok=(chosen===pr.ans);
+  var ok=(chosen===pr.ans);flashFeedback(ok);
   _GD.answers.push({q:pr.q,chosen:chosen,ans:pr.ans,ok:ok,exp:pr.exp||''});
   if(ok)_GD.score++;
   _GD.q++;
@@ -7070,7 +7172,7 @@ function claimQuestBonus(grade,pid){
     localStorage.setItem('smart_pr_'+pid+'_pts',JSON.stringify(data));
     maybePrizeReveal(pid,data.total-25,data.total);
   }catch(e){}
-  try{launchConfetti();}catch(e){}
+  try{launchConfetti();sfxLevelUp();}catch(e){}
   renderCurriculum(grade,pid);
 }
 /* Prize board: every 150 total points reveals the next collectible */
@@ -7537,7 +7639,7 @@ function subDrill(){
     if(pr.ratioQ&&ua.endsWith(':'))ua=ua.slice(0,-1);
   }
   else{ua=parseInt(ST.inp,10);}
-  var ok=(String(ua)===String(correctAns));
+  var ok=(String(ua)===String(correctAns));flashFeedback(ok);
   ST.as[ST.q]=ua;
   var pc2=el('pc'),pa=el('pa');
   if(ok){
@@ -7822,7 +7924,7 @@ function answerWP(idx,chosen,correct){
   if(ST.wpAnswered)return;
   ST.wpAnswered=true;
   ST.as[ST.conceptIdx]=chosen;
-  var ok=(Number(chosen)===Number(correct));
+  var ok=(Number(chosen)===Number(correct));flashFeedback(ok);
   if(ok){ST.xp++;ST.streak++;}else{ST.streak=0;}
   /* highlight buttons */
   for(var i=0;i<4;i++){
@@ -11011,7 +11113,7 @@ function renderReadingQuestion(){
 function answerReading(chosen, correct){
   if(READING_ST.answered)return;
   READING_ST.answered=true;
-  var ok=(chosen===correct);
+  var ok=(chosen===correct);flashFeedback(ok);
   if(ok)READING_ST.score++;
   for(var i=0;i<4;i++){
     var b=document.getElementById('rc-'+i);
@@ -11070,7 +11172,7 @@ function buildVocabPool(bank){
   });
   shuffled.forEach(function(word,i){
     var type=usableTypes[i%usableTypes.length];
-    /* fallback if this word can't support the type */     if(type==='synonym'&&(!word.syn||!word.syn.length)) type='meaning';     if(type==='context'&&(!word.ex||!word.ex.length)) type='meaning';     pool.push({word:word, type:type, bank:bank});   });   return pool; }  function renderVocabQ(){   if(_vocabIdx>=_vocabPool.length){finishReading();return;}   READING_ST.answered=false;   var item=_vocabPool[_vocabIdx];   var word=item.word;   var type=item.type;   var bank=item.bank;   var gc=gradeConf(READING_ST.grade);   var prog=Math.round(_vocabIdx/_vocabPool.length*100);    var question='', promptLabel='', choices=[], correct=0, bigDisplay='';    if(type==='meaning'){     /* Word → Definition */     promptLabel='WHAT DOES THIS WORD MEAN?';     bigDisplay='<div style="font-family:Sora,sans-serif;font-size:44px;font-weight:900;color:var(--brand);letter-spacing:-1px;margin-bottom:10px">'+word.w+'</div>';     if(word.ex) bigDisplay+='<div style="font-size:13px;color:var(--text-tertiary);font-style:italic">"'+word.ex+'"</div>';     var wrongDefs=bank.filter(function(v){return v.w!==word.w;}).sort(function(){return Math.random()-0.5;}).slice(0,3).map(function(v){return v.def;});     choices=[word.def].concat(wrongDefs).sort(function(){return Math.random()-0.5;});     correct=choices.indexOf(word.def);    } else if(type==='reverse'){     /* Definition → Word */     promptLabel='WHICH WORD FITS THIS MEANING?';     bigDisplay='<div style="font-size:17px;font-weight:600;color:var(--text-primary);line-height:1.6;padding:0 4px">"'+word.def+'"</div>';     var wrongWords=bank.filter(function(v){return v.w!==word.w;}).sort(function(){return Math.random()-0.5;}).slice(0,3).map(function(v){return v.w;});     choices=[word.w].concat(wrongWords).sort(function(){return Math.random()-0.5;});     correct=choices.indexOf(word.w);    } else if(type==='synonym'){     /* Synonym pick */     var isSyn=Math.random()>0.5;     if(!word.ant||!word.ant.length) isSyn=true;     promptLabel=isSyn?'WHICH WORD IS A SYNONYM OF...':'WHICH WORD IS AN ANTONYM OF...';     bigDisplay='<div style="font-family:Sora,sans-serif;font-size:44px;font-weight:900;color:var(--brand);letter-spacing:-1px">'+word.w+'</div>';     var target=isSyn?word.syn:word.ant;     /* wrong choices: other words from bank */     var wrongSyns=bank.filter(function(v){return v.w!==word.w&&v.w!==target;}).sort(function(){return Math.random()-0.5;}).slice(0,3).map(function(v){return v.w;});     choices=[target].concat(wrongSyns).sort(function(){return Math.random()-0.5;});     correct=choices.indexOf(target);    } else {     /* Context clue — fill in the blank */     promptLabel='WHICH WORD COMPLETES THE SENTENCE?';     var blank=word.ex.replace(new RegExp('\\b'+word.w+'\\b','i'),'______');     /* if no replacement happened, use a generic sentence */     if(blank===word.ex) blank='She showed great ______ when she faced the challenge.';     bigDisplay='<div style="font-size:17px;font-weight:600;color:var(--text-primary);line-height:1.8;padding:4px">"'+blank+'"</div>';     var wrongCtx=bank.filter(function(v){return v.w!==word.w;}).sort(function(){return Math.random()-0.5;}).slice(0,3).map(function(v){return v.w;});     choices=[word.w].concat(wrongCtx).sort(function(){return Math.random()-0.5;});     correct=choices.indexOf(word.w);   }    /* type badge colors */   var typeMeta={     meaning: {label:'Meaning',  color:'#FF5C35', bg:'#FFF7F5'},     reverse: {label:'Definition →Word', color:'#8B5CF6', bg:'#F5F3FF'},     synonym: {label:'Synonym / Antonym', color:'#10B981', bg:'#F0FDF4'},     context: {label:'Context Clue', color:'#3B82F6', bg:'#EFF6FF'},   };   var tm=typeMeta[type]||typeMeta.meaning;    var h='<div class="hdr">'       +'<div style="float:left"><button class="bbtn" onclick="finishReading()">✕ Exit</button></div>'       +'<div style="text-align:center;padding-top:6px;font-size:13px;font-weight:700;color:'+gc.color+'">📝 Vocabulary · '+(_vocabIdx+1)+'/'+_vocabPool.length+'</div>'       +'<div style="clear:both"></div>'       +'<div style="height:4px;background:var(--bg-subtle);border-radius:2px;margin-top:8px">'       +'<div style="height:4px;width:'+prog+'%;background:'+gc.color+';border-radius:2px;transition:width .3s"></div>'       +'</div></div>';    h+='<div class="card card-raised" style="text-align:center;padding:28px 20px;margin-bottom:14px">'      +'<div style="display:inline-block;background:'+tm.bg+';color:'+tm.color+';border-radius:99px;padding:4px 14px;font-size:11px;font-weight:800;letter-spacing:1.5px;margin-bottom:16px">'+tm.label.toUpperCase()+'</div>'      +'<div style="font-size:11px;font-weight:700;letter-spacing:1.5px;color:var(--text-tertiary);margin-bottom:14px">'+promptLabel+'</div>'      +bigDisplay      +'</div>';    choices.forEach(function(ch,ci){     var ltr=['A','B','C','D'][ci];     h+='<button class="reading-choice" id="vc-'+ci+'" onclick="answerVocab('+ci+','+correct+')">'        +'<span style="background:var(--bg-subtle);border-radius:6px;padding:2px 8px;font-weight:700;margin-right:8px;font-size:12px;flex-shrink:0">'+ltr+'</span>'        +ch+'</button>';   });   h+='<div id="vocab-fb"></div>';   el('s-reading').innerHTML=h; go('s-reading');   READING_ST.total++; }  function answerVocab(chosen,correct){   if(READING_ST.answered)return;   READING_ST.answered=true;   var ok=(chosen===correct);   if(ok)READING_ST.score++;   for(var i=0;i<4;i++){     var b=document.getElementById('vc-'+i);     if(!b)continue;     if(i===correct)b.className='reading-choice correct';     else if(i===chosen&&!ok)b.className='reading-choice wrong';     b.onclick=null;   }   var item=_vocabPool[_vocabIdx];   var word=item.word;   var fb=document.getElementById('vocab-fb');   if(fb){     var extra='';     if(word.syn&&word.syn.length) extra+='<span style="margin-right:10px"><b>Synonym:</b> '+word.syn+'</span>';     if(word.ant&&word.ant.length) extra+='<span><b>Antonym:</b> '+word.ant+'</span>';     fb.innerHTML='<div style="background:'+(ok?'var(--green-light)':'var(--red-light)')+';border:1.5px solid '+(ok?'var(--green)':'var(--red)')+';border-radius:12px;padding:12px 16px;margin:12px 0">'       +'<div style="font-weight:700;color:'+(ok?'var(--green)':'var(--red)')+'">'+(ok?'✓ Correct! You know your words!':'✗ Not quite — the word is: <b>'+item.word.w+'</b>. Study the definition and try again!')+'</div>'       +(extra?'<div style="font-size:12px;color:var(--text-secondary);margin-top:6px">'+extra+'</div>':'')       +(word.def?'<div style="font-size:12px;color:var(--text-tertiary);margin-top:4px;font-style:italic">'+word.def+'</div>':'')       +'</div>'       +'<button onclick="nextVocabQ()" class="btn btn-primary">Next →</button>';   } }  function nextVocabQ(){   READING_ST.answered=false;   _vocabIdx++;   renderVocabQ(); } /* ─── ANALOGIES ─────────────────────────────── */ var _analogyPool=[], _analogyIdx=0;  function startAnalogyMode(){   var g=READING_ST.grade;   _analogyPool=ANALOGIES.filter(function(a){return a.grade<=g+1;})                          .sort(function(){return Math.random()-0.5;}).slice(0,20);   _analogyIdx=0;   renderAnalogyQ(); }  function renderAnalogyQ(){   if(_analogyIdx>=_analogyPool.length){finishReading();return;}   var item=_analogyPool[_analogyIdx];   var gc=gradeConf(READING_ST.grade);   var others=_analogyPool.filter(function(a){return a.d!==item.d;});   var wrongs=others.sort(function(){return Math.random()-0.5;}).slice(0,3).map(function(a){return a.d;});   var choices=[item.d].concat(wrongs).sort(function(){return Math.random()-0.5;});   var correct=choices.indexOf(item.d);    var h='<div class="hdr">'       +'<div style="float:left"><button class="bbtn" onclick="finishReading()">✕ Exit</button></div>'       +'<div style="text-align:center;padding-top:6px;font-size:13px;font-weight:700;color:'+gc.color+'">🔗 Analogies · '+(_analogyIdx+1)+'/'+_analogyPool.length+'</div>'       +'<div style="clear:both"></div></div>';    h+='<div class="card card-raised" style="text-align:center;padding:28px 20px;margin-bottom:16px">'      +'<div style="font-size:11px;font-weight:700;letter-spacing:2px;color:var(--text-tertiary);margin-bottom:18px">COMPLETE THE ANALOGY</div>'      +'<div style="font-family:Sora,sans-serif;font-size:20px;font-weight:800;color:var(--text-primary);line-height:1.6">'      +'<span style="color:var(--brand)">'+item.a+'</span> is to <span style="color:var(--brand)">'+item.b+'</span>'      +'<br><span style="font-size:15px;color:var(--text-tertiary);font-weight:400">as</span><br>'      +'<span style="color:#3B82F6">'+item.c+'</span> is to <span style="background:var(--bg-subtle);color:#3B82F6;padding:3px 14px;border-radius:8px;border:2px dashed #3B82F6">?</span>'      +'</div>'      +(item.cat?'<div style="font-size:11px;color:var(--text-tertiary);margin-top:14px;font-weight:600;letter-spacing:1px">'+item.cat.toUpperCase()+'</div>':'')      +'</div>';    choices.forEach(function(ch,ci){     var ltr=['A','B','C','D'][ci];     h+='<button class="reading-choice" id="an-'+ci+'" onclick="answerAnalogy('+ci+','+correct+')">'        +'<span style="background:var(--bg-subtle);border-radius:6px;padding:2px 8px;font-weight:700;margin-right:8px;font-size:12px">'+ltr+'</span>'        +ch+'</button>';   });   h+='<div id="analogy-fb"></div>';   el('s-reading').innerHTML=h; go('s-reading');   READING_ST.total++; }  function answerAnalogy(chosen,correct){   if(READING_ST.answered)return;   READING_ST.answered=true;   var ok=(chosen===correct);   if(ok)READING_ST.score++;   for(var i=0;i<4;i++){     var b=document.getElementById('an-'+i);     if(!b)continue;     if(i===correct)b.className='reading-choice correct';     else if(i===chosen&&!ok)b.className='reading-choice wrong';     b.onclick=null;   }   var item=_analogyPool[_analogyIdx];   var fb=document.getElementById('analogy-fb');   if(fb){     fb.innerHTML='<div style="background:'+(ok?'var(--green-light)':'var(--red-light)')+';border:1.5px solid '+(ok?'var(--green)':'var(--red)')+';border-radius:12px;padding:12px 16px;margin:12px 0">'       +'<b style="color:'+(ok?'var(--green)':'var(--red)')+'">'+(ok?'✓ Correct! Great pattern thinking!':'✗ Not quite — here is the correct pair:')+'</b>'       +'<div style="font-size:13px;color:var(--text-secondary);margin-top:4px">'+item.a+' → '+item.b+' &nbsp;::&nbsp; '+item.c+' → <b>'+item.d+'</b></div>'       +'</div>'       +'<button onclick="nextAnalogy()" class="btn btn-primary">Next →</button>';   } }  function nextAnalogy(){   READING_ST.answered=false;   _analogyIdx++;   renderAnalogyQ(); }  /* ─── FINISH READING SESSION ────────────────── */ function finishReading(){   var elapsed=Math.round((Date.now()-READING_ST.startTime)/1000);   var pct=READING_ST.total>0?Math.round(READING_ST.score/READING_ST.total*100):0;   var gc=gradeConf(READING_ST.grade);    /* log to history */   try{     addPoints(READING_ST.profileId||ST.profileId,READING_ST.grade,READING_ST.score,READING_ST.total);
+    /* fallback if this word can't support the type */     if(type==='synonym'&&(!word.syn||!word.syn.length)) type='meaning';     if(type==='context'&&(!word.ex||!word.ex.length)) type='meaning';     pool.push({word:word, type:type, bank:bank});   });   return pool; }  function renderVocabQ(){   if(_vocabIdx>=_vocabPool.length){finishReading();return;}   READING_ST.answered=false;   var item=_vocabPool[_vocabIdx];   var word=item.word;   var type=item.type;   var bank=item.bank;   var gc=gradeConf(READING_ST.grade);   var prog=Math.round(_vocabIdx/_vocabPool.length*100);    var question='', promptLabel='', choices=[], correct=0, bigDisplay='';    if(type==='meaning'){     /* Word → Definition */     promptLabel='WHAT DOES THIS WORD MEAN?';     bigDisplay='<div style="font-family:Sora,sans-serif;font-size:44px;font-weight:900;color:var(--brand);letter-spacing:-1px;margin-bottom:10px">'+word.w+'</div>';     if(word.ex) bigDisplay+='<div style="font-size:13px;color:var(--text-tertiary);font-style:italic">"'+word.ex+'"</div>';     var wrongDefs=bank.filter(function(v){return v.w!==word.w;}).sort(function(){return Math.random()-0.5;}).slice(0,3).map(function(v){return v.def;});     choices=[word.def].concat(wrongDefs).sort(function(){return Math.random()-0.5;});     correct=choices.indexOf(word.def);    } else if(type==='reverse'){     /* Definition → Word */     promptLabel='WHICH WORD FITS THIS MEANING?';     bigDisplay='<div style="font-size:17px;font-weight:600;color:var(--text-primary);line-height:1.6;padding:0 4px">"'+word.def+'"</div>';     var wrongWords=bank.filter(function(v){return v.w!==word.w;}).sort(function(){return Math.random()-0.5;}).slice(0,3).map(function(v){return v.w;});     choices=[word.w].concat(wrongWords).sort(function(){return Math.random()-0.5;});     correct=choices.indexOf(word.w);    } else if(type==='synonym'){     /* Synonym pick */     var isSyn=Math.random()>0.5;     if(!word.ant||!word.ant.length) isSyn=true;     promptLabel=isSyn?'WHICH WORD IS A SYNONYM OF...':'WHICH WORD IS AN ANTONYM OF...';     bigDisplay='<div style="font-family:Sora,sans-serif;font-size:44px;font-weight:900;color:var(--brand);letter-spacing:-1px">'+word.w+'</div>';     var target=isSyn?word.syn:word.ant;     /* wrong choices: other words from bank */     var wrongSyns=bank.filter(function(v){return v.w!==word.w&&v.w!==target;}).sort(function(){return Math.random()-0.5;}).slice(0,3).map(function(v){return v.w;});     choices=[target].concat(wrongSyns).sort(function(){return Math.random()-0.5;});     correct=choices.indexOf(target);    } else {     /* Context clue — fill in the blank */     promptLabel='WHICH WORD COMPLETES THE SENTENCE?';     var blank=word.ex.replace(new RegExp('\\b'+word.w+'\\b','i'),'______');     /* if no replacement happened, use a generic sentence */     if(blank===word.ex) blank='She showed great ______ when she faced the challenge.';     bigDisplay='<div style="font-size:17px;font-weight:600;color:var(--text-primary);line-height:1.8;padding:4px">"'+blank+'"</div>';     var wrongCtx=bank.filter(function(v){return v.w!==word.w;}).sort(function(){return Math.random()-0.5;}).slice(0,3).map(function(v){return v.w;});     choices=[word.w].concat(wrongCtx).sort(function(){return Math.random()-0.5;});     correct=choices.indexOf(word.w);   }    /* type badge colors */   var typeMeta={     meaning: {label:'Meaning',  color:'#FF5C35', bg:'#FFF7F5'},     reverse: {label:'Definition →Word', color:'#8B5CF6', bg:'#F5F3FF'},     synonym: {label:'Synonym / Antonym', color:'#10B981', bg:'#F0FDF4'},     context: {label:'Context Clue', color:'#3B82F6', bg:'#EFF6FF'},   };   var tm=typeMeta[type]||typeMeta.meaning;    var h='<div class="hdr">'       +'<div style="float:left"><button class="bbtn" onclick="finishReading()">✕ Exit</button></div>'       +'<div style="text-align:center;padding-top:6px;font-size:13px;font-weight:700;color:'+gc.color+'">📝 Vocabulary · '+(_vocabIdx+1)+'/'+_vocabPool.length+'</div>'       +'<div style="clear:both"></div>'       +'<div style="height:4px;background:var(--bg-subtle);border-radius:2px;margin-top:8px">'       +'<div style="height:4px;width:'+prog+'%;background:'+gc.color+';border-radius:2px;transition:width .3s"></div>'       +'</div></div>';    h+='<div class="card card-raised" style="text-align:center;padding:28px 20px;margin-bottom:14px">'      +'<div style="display:inline-block;background:'+tm.bg+';color:'+tm.color+';border-radius:99px;padding:4px 14px;font-size:11px;font-weight:800;letter-spacing:1.5px;margin-bottom:16px">'+tm.label.toUpperCase()+'</div>'      +'<div style="font-size:11px;font-weight:700;letter-spacing:1.5px;color:var(--text-tertiary);margin-bottom:14px">'+promptLabel+'</div>'      +bigDisplay      +'</div>';    choices.forEach(function(ch,ci){     var ltr=['A','B','C','D'][ci];     h+='<button class="reading-choice" id="vc-'+ci+'" onclick="answerVocabR('+ci+','+correct+')">'        +'<span style="background:var(--bg-subtle);border-radius:6px;padding:2px 8px;font-weight:700;margin-right:8px;font-size:12px;flex-shrink:0">'+ltr+'</span>'        +ch+'</button>';   });   h+='<div id="vocab-fb"></div>';   el('s-reading').innerHTML=h; go('s-reading');   READING_ST.total++; }  function answerVocabR(chosen,correct){   if(READING_ST.answered)return;   READING_ST.answered=true;   var ok=(chosen===correct);flashFeedback(ok);   if(ok)READING_ST.score++;   for(var i=0;i<4;i++){     var b=document.getElementById('vc-'+i);     if(!b)continue;     if(i===correct)b.className='reading-choice correct';     else if(i===chosen&&!ok)b.className='reading-choice wrong';     b.onclick=null;   }   var item=_vocabPool[_vocabIdx];   var word=item.word;   var fb=document.getElementById('vocab-fb');   if(fb){     var extra='';     if(word.syn&&word.syn.length) extra+='<span style="margin-right:10px"><b>Synonym:</b> '+word.syn+'</span>';     if(word.ant&&word.ant.length) extra+='<span><b>Antonym:</b> '+word.ant+'</span>';     fb.innerHTML='<div style="background:'+(ok?'var(--green-light)':'var(--red-light)')+';border:1.5px solid '+(ok?'var(--green)':'var(--red)')+';border-radius:12px;padding:12px 16px;margin:12px 0">'       +'<div style="font-weight:700;color:'+(ok?'var(--green)':'var(--red)')+'">'+(ok?'✓ Correct! You know your words!':'✗ Not quite — the word is: <b>'+item.word.w+'</b>. Study the definition and try again!')+'</div>'       +(extra?'<div style="font-size:12px;color:var(--text-secondary);margin-top:6px">'+extra+'</div>':'')       +(word.def?'<div style="font-size:12px;color:var(--text-tertiary);margin-top:4px;font-style:italic">'+word.def+'</div>':'')       +'</div>'       +'<button onclick="nextVocabQ()" class="btn btn-primary">Next →</button>';   } }  function nextVocabQ(){   READING_ST.answered=false;   _vocabIdx++;   renderVocabQ(); } /* ─── ANALOGIES ─────────────────────────────── */ var _analogyPool=[], _analogyIdx=0;  function startAnalogyMode(){   var g=READING_ST.grade;   _analogyPool=ANALOGIES.filter(function(a){return a.grade<=g+1;})                          .sort(function(){return Math.random()-0.5;}).slice(0,20);   _analogyIdx=0;   renderAnalogyQ(); }  function renderAnalogyQ(){   if(_analogyIdx>=_analogyPool.length){finishReading();return;}   var item=_analogyPool[_analogyIdx];   var gc=gradeConf(READING_ST.grade);   var others=_analogyPool.filter(function(a){return a.d!==item.d;});   var wrongs=others.sort(function(){return Math.random()-0.5;}).slice(0,3).map(function(a){return a.d;});   var choices=[item.d].concat(wrongs).sort(function(){return Math.random()-0.5;});   var correct=choices.indexOf(item.d);    var h='<div class="hdr">'       +'<div style="float:left"><button class="bbtn" onclick="finishReading()">✕ Exit</button></div>'       +'<div style="text-align:center;padding-top:6px;font-size:13px;font-weight:700;color:'+gc.color+'">🔗 Analogies · '+(_analogyIdx+1)+'/'+_analogyPool.length+'</div>'       +'<div style="clear:both"></div></div>';    h+='<div class="card card-raised" style="text-align:center;padding:28px 20px;margin-bottom:16px">'      +'<div style="font-size:11px;font-weight:700;letter-spacing:2px;color:var(--text-tertiary);margin-bottom:18px">COMPLETE THE ANALOGY</div>'      +'<div style="font-family:Sora,sans-serif;font-size:20px;font-weight:800;color:var(--text-primary);line-height:1.6">'      +'<span style="color:var(--brand)">'+item.a+'</span> is to <span style="color:var(--brand)">'+item.b+'</span>'      +'<br><span style="font-size:15px;color:var(--text-tertiary);font-weight:400">as</span><br>'      +'<span style="color:#3B82F6">'+item.c+'</span> is to <span style="background:var(--bg-subtle);color:#3B82F6;padding:3px 14px;border-radius:8px;border:2px dashed #3B82F6">?</span>'      +'</div>'      +(item.cat?'<div style="font-size:11px;color:var(--text-tertiary);margin-top:14px;font-weight:600;letter-spacing:1px">'+item.cat.toUpperCase()+'</div>':'')      +'</div>';    choices.forEach(function(ch,ci){     var ltr=['A','B','C','D'][ci];     h+='<button class="reading-choice" id="an-'+ci+'" onclick="answerAnalogy('+ci+','+correct+')">'        +'<span style="background:var(--bg-subtle);border-radius:6px;padding:2px 8px;font-weight:700;margin-right:8px;font-size:12px">'+ltr+'</span>'        +ch+'</button>';   });   h+='<div id="analogy-fb"></div>';   el('s-reading').innerHTML=h; go('s-reading');   READING_ST.total++; }  function answerAnalogy(chosen,correct){   if(READING_ST.answered)return;   READING_ST.answered=true;   var ok=(chosen===correct);flashFeedback(ok);   if(ok)READING_ST.score++;   for(var i=0;i<4;i++){     var b=document.getElementById('an-'+i);     if(!b)continue;     if(i===correct)b.className='reading-choice correct';     else if(i===chosen&&!ok)b.className='reading-choice wrong';     b.onclick=null;   }   var item=_analogyPool[_analogyIdx];   var fb=document.getElementById('analogy-fb');   if(fb){     fb.innerHTML='<div style="background:'+(ok?'var(--green-light)':'var(--red-light)')+';border:1.5px solid '+(ok?'var(--green)':'var(--red)')+';border-radius:12px;padding:12px 16px;margin:12px 0">'       +'<b style="color:'+(ok?'var(--green)':'var(--red)')+'">'+(ok?'✓ Correct! Great pattern thinking!':'✗ Not quite — here is the correct pair:')+'</b>'       +'<div style="font-size:13px;color:var(--text-secondary);margin-top:4px">'+item.a+' → '+item.b+' &nbsp;::&nbsp; '+item.c+' → <b>'+item.d+'</b></div>'       +'</div>'       +'<button onclick="nextAnalogy()" class="btn btn-primary">Next →</button>';   } }  function nextAnalogy(){   READING_ST.answered=false;   _analogyIdx++;   renderAnalogyQ(); }  /* ─── FINISH READING SESSION ────────────────── */ function finishReading(){   var elapsed=Math.round((Date.now()-READING_ST.startTime)/1000);   var pct=READING_ST.total>0?Math.round(READING_ST.score/READING_ST.total*100):0;   var gc=gradeConf(READING_ST.grade);    /* log to history */   try{     addPoints(READING_ST.profileId||ST.profileId,READING_ST.grade,READING_ST.score,READING_ST.total);
      addHist(READING_ST.grade,{       date:new Date().toISOString(),       lid:'READING_'+READING_ST.mode.toUpperCase(),       score:READING_ST.score,       time:elapsed,       subject:'reading',       total:READING_ST.total     });     syncToCloud(READING_ST.grade);   }catch(e){}    var modeLabel={story:'Reading',vocab:'Vocabulary',analogy:'Analogies'}[READING_ST.mode]||'Reading';   var emoji=pct>=90?'🏆':pct>=80?'⭐':pct>=60?'📖':'💪';    var h='<div class="hdr"><div style="float:left"><button class="bbtn" onclick="renderHome()">🏠 Home</button></div>'        +'<div style="text-align:center;padding-top:6px;font-size:14px;font-weight:700;color:'+gc.color+'">'+modeLabel+' Complete</div>'        +'<div style="clear:both"></div></div>';    h+='<div style="text-align:center;padding:24px 0 16px">'     +'<div style="font-size:56px;margin-bottom:8px">'+emoji+'</div>'     +'<div style="font-family:Sora,sans-serif;font-size:72px;font-weight:900;letter-spacing:-3px;color:var(--text-primary)">'+READING_ST.score+'<span style="font-size:28px;color:var(--text-tertiary);font-weight:400">/'+READING_ST.total+'</span></div>'     +'<div style="font-size:16px;color:var(--text-secondary);margin-top:4px">'+(pct>=90?'Outstanding! You are a reading star! 🌟':pct>=80?'Excellent work — keep it up! 🌟':pct>=60?'Good effort! Every page you read makes you smarter!':'Keep reading — you\'re building an amazing skill for life! 💪')+'</div>'
     +'</div>';
 
@@ -11162,7 +11264,7 @@ function startGrammarMode(grade,pid){
 }
 
 function renderGrammarQ(){
-  if(_grammarIdx>=_grammarPool.length){finishGrammar();return;}
+  if(_grammarIdx>=_grammarPool.length){finishGrammarR();return;}
   var item=_grammarPool[_grammarIdx];
   var gc=gradeConf(READING_ST.grade||1);
   var prog=_grammarIdx+1, total=_grammarPool.length;
@@ -11186,7 +11288,7 @@ function renderGrammarQ(){
   /* Answer choices */
   h+='<div id="grammar-choices">';
   for(var ci=0;ci<item.ch.length;ci++){
-    h+='<button class="reading-choice" id="gc-'+ci+'" onclick="answerGrammar('+ci+','+item.an+')">'
+    h+='<button class="reading-choice" id="gc-'+ci+'" onclick="answerGrammarR('+ci+','+item.an+')">'
       +'<span style="display:inline-block;width:28px;height:28px;border-radius:50%;background:#D9770618;color:#D97706;font-weight:800;font-size:13px;line-height:28px;margin-right:10px">'+['A','B','C','D'][ci]+'</span>'
       +item.ch[ci]+'</button>';
   }
@@ -11197,7 +11299,7 @@ function renderGrammarQ(){
   go('s-reading');
 }
 
-function answerGrammar(chosen,correct){
+function answerGrammarR(chosen,correct){
   /* Disable all buttons */
   for(var i=0;i<4;i++){
     var btn=document.getElementById('gc-'+i);
@@ -11216,7 +11318,7 @@ function answerGrammar(chosen,correct){
     }
   }
 
-  var ok=(chosen===correct);
+  var ok=(chosen===correct);flashFeedback(ok);
   if(ok) _grammarScore++;
 
   /* Record to history */
@@ -11242,7 +11344,7 @@ function nextGrammarQ(){
   renderGrammarQ();
 }
 
-function finishGrammar(){
+function finishGrammarR(){
   var total=_grammarPool.length;
   var pct=Math.round(_grammarScore/total*100);
   var grade=READING_ST.grade||1;
@@ -11332,7 +11434,7 @@ function answerPhonics(chosen,correct){
     else if(i===chosen&&chosen!==correct){btn.style.background='#FEF2F2';btn.style.borderColor='#EF4444';btn.style.color='#991B1B';}
     else{btn.style.opacity='0.45';}
   }
-  var ok=(chosen===correct);
+  var ok=(chosen===correct);flashFeedback(ok);
   if(ok)_phonicsScore++;
   var item=_phonicsPool[_phonicsIdx];
   var fb=document.getElementById('phonics-fb');
@@ -11421,7 +11523,7 @@ function answerSkills(chosen,correct){
     else if(i===chosen&&chosen!==correct){btn.style.background='#FEF2F2';btn.style.borderColor='#EF4444';btn.style.color='#991B1B';}
     else{btn.style.opacity='0.45';}
   }
-  var ok=(chosen===correct);
+  var ok=(chosen===correct);flashFeedback(ok);
   if(ok)_skillsScore++;
   var item=_skillsPool[_skillsIdx];
   var fb=document.getElementById('skills-fb');
@@ -12099,6 +12201,7 @@ if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostnam
   });
 }
 </script>
+<button class="dark-toggle" id="sfx-btn" onclick="sfxToggle()" title="Sound on/off" style="bottom:72px">🔊</button>
 <button class="dark-toggle" onclick="toggleDark()" id="dark-btn" title="Toggle dark mode">🌙</button>
 </body>
 </html>
