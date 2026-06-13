@@ -7364,7 +7364,7 @@ function renderCurriculum(grade,pid){
       var wok=wli===0||(cprog[wlvs[wli-1].id]&&cprog[wlvs[wli-1].id].passed);
       var wpp=cprog[wlv.id];
       var wbest=wpp?wpp.bestScore:null;
-      h+='<div class="lt'+(wok?'':' lk')+'" style="background:'+wlv.color+(wok?'22':'0d')+';border-color:'+wlv.color+(wok?'55':'22')+'" onclick="'+(wok?'startConceptLevel(\\\''+(pid)+'\\\',\\\''+(wlv.id)+'\\\')':'')+'">';      h+='<div style="font-size:16px;font-weight:800;color:'+wlv.color+'">'+wlv.nm+'</div>';
+      h+='<div class="lt'+(wok?'':' lk')+'" style="background:'+wlv.color+(wok?'22':'0d')+';border-color:'+wlv.color+(wok?'55':'22')+'" onclick="'+(wok?'startConceptLevel(\''+(pid)+'\',\''+(wlv.id)+'\')':'')+'">';      h+='<div style="font-size:16px;font-weight:800;color:'+wlv.color+'">'+wlv.nm+'</div>';
       h+='<div style="font-size:11px;color:var(--text-secondary);margin-top:2px">'+wlv.ds+'</div>';
       h+='<div style="font-size:11px;margin-top:4px;color:#FFD700">'+( wbest!==null?(wbest+'/20'):(wok?'Try it!':'Locked'))+'</div>';
       h+='</div>';
@@ -7625,6 +7625,10 @@ function renderDrill(){
   if(needSlash){
     h+='<div class="nr"><button class="nb" onclick="nslash()" style="font-size:24px;font-weight:900;width:66%">/</button><button class="nb nb-del" style="color:#EF4444;width:33%" onclick="nd()">⌫</button></div>';
   }
+  var needDecimal=(typeof _ansK==='number'&&_ansK%1!==0);
+  if(needDecimal){
+    h+='<div class="nr"><button class="nb" onclick="ndot()" style="font-size:24px;font-weight:900;width:66%">.</button><button class="nb nb-del" style="color:#EF4444;width:33%" onclick="nd()">⌫</button></div>';
+  }
   h+='</div>';
   /* time limit indicator */
   h+='<div style="text-align:center;margin-top:6px;font-size:11px;color:var(--text-tertiary)">Time limit: '+fmt(tl)+'</div>';
@@ -7651,6 +7655,13 @@ function nslash(){
   /* Only one slash, never first character */
   if(ST.inp&&ST.inp.indexOf('/')<0&&ST.inp!=='-'){
     ST.inp=ST.inp+'/';
+    var e=el('pa');if(e){e.innerHTML=ST.inp;}
+  }
+}
+function ndot(){
+  /* Only one decimal point */
+  if(ST.inp.indexOf('.')<0){
+    ST.inp=(ST.inp||'')+'.';
     var e=el('pa');if(e){e.innerHTML=ST.inp;}
   }
 }
@@ -7688,7 +7699,7 @@ function subDrill(){
     if(pr.ratioQ&&ua.endsWith(':'))ua=ua.slice(0,-1);
     if(ua.endsWith('/'))ua=ua.slice(0,-1);
   }
-  else{ua=parseInt(ST.inp,10);}
+  else{ua=(ST.inp.indexOf('.')>=0||(typeof correctAns==='number'&&correctAns%1!==0))?parseFloat(ST.inp):parseInt(ST.inp,10);}
   var ok=(String(ua)===String(correctAns));
   if(!ok&&pr.fracAns&&fracEq(ua,correctAns))ok=true; /* equivalent fractions count */
   flashFeedback(ok);
@@ -8832,7 +8843,7 @@ function drawVisual(pr, container){
 
   // Insert before numpad
   var np = container.querySelector('.np');
-  if(np){ container.insertBefore(mc.wrap, np); }
+  if(np && np.parentNode){ np.parentNode.insertBefore(mc.wrap, np); }
   else { container.appendChild(mc.wrap); }
 }
 
