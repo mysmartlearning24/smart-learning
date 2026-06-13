@@ -972,6 +972,7 @@ body {
 <!-- Firebase (loads after layout/paint; main script below still runs after it, preserving init order) -->
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 
 <!-- Explanation modal -->
 <div id="mo-xp" class="mo"><div class="mi" id="mo-body"></div></div>
@@ -1010,6 +1011,8 @@ function initFirebase(){
     else{fbApp=firebase.apps[0];}
     db=firebase.firestore();
     window._smartDB=db;
+    /* anonymous auth — pairs with Firestore rules requiring request.auth != null */
+    try{if(firebase.auth)firebase.auth().signInAnonymously().catch(function(e2){console.log('anon auth:',e2&&e2.code);});}catch(e3){}
     console.log('Firebase connected');
   }catch(e){console.log('Firebase init error:',e);db=null;}
 }
@@ -1862,8 +1865,27 @@ function pullFromCloud(callback){
     .catch(function(e){console.log('pullFromCloud profiles:',e);s2=true;checkDone();});
 }
 
-function getPin(){try{return localStorage.getItem('smart_pin')||'1234';}catch(e){return'1234';}}
-function setPin(pin){try{localStorage.setItem('smart_pin',pin);}catch(e){}}
+function getPin(){try{return localStorage.getItem('smart_pin')||'1234';}catch(e){return'1234';}} /* legacy fallback only */
+var PIN_HASH_DEFAULT='03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4'; /* sha256('1234') */
+function _ensurePinHash(){
+  try{
+    var h=localStorage.getItem('smart_pin_h');
+    if(h)return Promise.resolve(h);
+    var legacy=localStorage.getItem('smart_pin');
+    return sha256(legacy||'1234').then(function(hh){
+      if(hh){try{localStorage.setItem('smart_pin_h',hh);if(legacy)localStorage.removeItem('smart_pin');}catch(e){}return hh;}
+      return null;
+    });
+  }catch(e){return Promise.resolve(null);}
+}
+function setPin(pin){
+  sha256(pin).then(function(h){
+    try{
+      if(h){localStorage.setItem('smart_pin_h',h);localStorage.removeItem('smart_pin');}
+      else{localStorage.setItem('smart_pin',pin);}
+    }catch(e){}
+  });
+}
 var pinCallback=null;
 var pinMode='verify'; /* verify or set */
 
@@ -1926,8 +1948,16 @@ function updatePinDisplay(){
   d.innerHTML=shown;
 }
 function checkPin(){
-  var correct=getPin();
-  if(window._pinEntry===correct){
+  _verifyPin(window._pinEntry).then(function(good){_checkPinResult(good);});
+}
+function _verifyPin(entry){
+  return _ensurePinHash().then(function(stored){
+    if(stored===null)return String(entry)===getPin();
+    return sha256(String(entry)).then(function(h){return h===stored;});
+  });
+}
+function _checkPinResult(good){
+  if(good){
     _pinVerified=true;
     var m=document.getElementById('pin-modal');if(m){m.parentNode.removeChild(m);}
     if(pinCallback){var cb=pinCallback;pinCallback=null;cb();}
@@ -10163,10 +10193,20 @@ var ANALOGIES = [{"a": "hot", "b": "cold", "c": "fast", "d": "slow", "cat": "Ant
    MULTI-FAMILY ACCOUNT SYSTEM
 ═══════════════════════════════════════════ */
 
-/* Master credentials — change these */
-var MASTER_USER = 'ricky';
-var MASTER_PASS = 'Smart2025!';
-var MASTER_PIN  = '1234'; /* existing parent PIN */
+/* Master credentials — stored only as a SHA-256 hash; plaintext never ships to the client */
+var MASTER_HASH = 'ac72344f08d76b62dbc8ede46d5801e696e3b714d12eecaa156efa7ff8b9643e';
+function sha256(s){
+  try{
+    if(window.crypto&&crypto.subtle&&window.TextEncoder){
+      return crypto.subtle.digest('SHA-256',new TextEncoder().encode(String(s))).then(function(buf){
+        var u=new Uint8Array(buf),h='';
+        for(var i=0;i<u.length;i++){h+=('0'+u[i].toString(16)).slice(-2);}
+        return h;
+      });
+    }
+  }catch(e){}
+  return Promise.resolve(null); /* no Web Crypto (file://) — callers fall back */
+}
 
 /* Current session */
 var SESSION = {
@@ -10287,12 +10327,32 @@ function doLogin(){
   errEl.style.display='none';
   var fam=(window._loginFamilies||[])[_selectedFamilyIdx];
   if(!fam){errEl.style.display='block';errEl.textContent='Family not found. Please reload.';return;}
-  if(fam.password!==pass){
+  var _famBad=function(){
     errEl.style.display='block';errEl.textContent='Incorrect password. Try again.';
     document.getElementById('li-pass').value='';
     document.getElementById('li-pass').focus();
+  };
+  if(fam.pwHash){
+    sha256(pass).then(function(h){
+      if(h===null){errEl.style.display='block';errEl.textContent='Secure login requires HTTPS.';return;}
+      if(h===fam.pwHash){_famLoginSuccess(fam,errEl);}
+      else{_famBad();}
+    });
     return;
   }
+  if(fam.password!==pass){_famBad();return;}
+  /* legacy plaintext matched — silently migrate this family to a hash */
+  sha256(pass).then(function(h){
+    try{
+      if(h&&db){db.collection('families').doc(fam.id).update({pwHash:h,password:firebase.firestore.FieldValue.delete()}).catch(function(){});}
+    }catch(e){}
+    _famLoginSuccess(fam,errEl);
+  });
+
+}
+
+
+function _famLoginSuccess(fam,errEl){
   if(fam.active===false){errEl.style.display='block';errEl.textContent='This account has been deactivated.';return;}
   SESSION={familyId:fam.id,familyName:fam.name,isMaster:false,maxKids:fam.maxKids||3};
   saveSession();
@@ -10301,8 +10361,6 @@ function doLogin(){
   setupCloudListener();
   renderHome();
 }
-
-
 function doMasterLogin(){
   var muEl=document.getElementById('li-muser');
   var mpEl=document.getElementById('li-mpass');
@@ -10311,14 +10369,17 @@ function doMasterLogin(){
   var user=(muEl.value||'').trim().toLowerCase();
   var pass=(mpEl.value||'').trim();
   if(!user||!pass){if(errEl){errEl.style.display='block';errEl.textContent='Please enter both fields.';}return;}
-  if(user===MASTER_USER.toLowerCase()&&pass===MASTER_PASS){
+  sha256(user+"|"+pass).then(function(h){
+    if(h===null){if(errEl){errEl.style.display='block';errEl.textContent='Secure login requires HTTPS.';}return;}
+    if(h===MASTER_HASH){
     SESSION={familyId:'master',familyName:'Master Account',isMaster:true,maxKids:99};
     saveSession();
     if(!window._smartDB){try{initFirebase();}catch(e){}}
     renderHome();
-  } else {
-    if(errEl){errEl.style.display='block';errEl.textContent='Incorrect credentials. Try again.';}
-  }
+    } else {
+      if(errEl){errEl.style.display='block';errEl.textContent='Incorrect credentials. Try again.';}
+    }
+  });
 }
 
 
@@ -10355,8 +10416,11 @@ function familyKey(key){
 function createFamily(name, username, password, maxKids, plan){
   var db=window._smartDB;if(!db)return Promise.reject('no db');
   var id='fam_'+Date.now();
-  var famData={id:id,name:name,username:username.toLowerCase(),password:password,maxKids:parseInt(maxKids)||3,plan:plan||'family',active:true,createdAt:new Date().toISOString()};
-  return db.collection('families').doc(id).set(famData).then(function(){return famData;});
+  return sha256(password).then(function(h){
+    var famData={id:id,name:name,username:username.toLowerCase(),maxKids:parseInt(maxKids)||3,plan:plan||'family',active:true,createdAt:new Date().toISOString()};
+    if(h){famData.pwHash=h;}else{famData.password=password;}
+    return db.collection('families').doc(id).set(famData).then(function(){return famData;});
+  });
 }
 
 /* ── Master: load all families ── */
@@ -10508,7 +10572,7 @@ function adminLoginAs(famId, famName){
 
   if(!confirm(msg)) return;
 
-  /* Merge: add master profiles that don't already exist in family */   var existingIds = familyProfiles.map(function(p){return p.id;});   var added = 0;   masterProfiles.forEach(function(p){     if(existingIds.indexOf(p.id) < 0){       familyProfiles.push(p);       added++;       /* Copy progress and history for each profile */       ['p','h','av'].forEach(function(suffix){         var val = localStorage.getItem('smart_'+p.id+'_'+suffix);         if(val) localStorage.setItem('smart_'+p.id+'_'+suffix, val);       });     }   });    localStorage.setItem(familyKey, JSON.stringify(familyProfiles));    /* Update maxKids in Firestore to match profile count if needed */   var db = window._smartDB;   if(db && familyProfiles.length > 0){     db.collection('families').doc(famId).update({       maxKids: Math.max(familyProfiles.length, 3)     }).catch(function(){});   }    alert('Done! Moved '+added+' profile(s) to '+famName+'. Click View as Family to see them.');   }  function revealPw(fi){   var fams = window.FAMS||[];   if(!fams[fi]) return;   /* id in HTML is pw-disp-N, btn is pw-btn-N */   var display = document.getElementById('pw-disp-'+fi);   var btn = document.getElementById('pw-btn-'+fi);   if(!display) return;   if(display.textContent === '••••••'){     display.textContent = fams[fi].password||'(not set)';     if(btn) btn.textContent = '🙈';     if(btn) btn.title = 'Hide password';   } else {     display.textContent = '••••••';     if(btn) btn.textContent = '👁';     if(btn) btn.title = 'Show password';   } }  function togglePwVis(inputId, btn){   var inp = document.getElementById(inputId);   if(!inp) return;   if(inp.type === 'password'){     inp.type = 'text';     btn.textContent = '🙈';   } else {     inp.type = 'password';     btn.textContent = '👁';   } }  function adminReturnToMaster(){   SESSION.familyId='master';   SESSION.familyName='Master Account';   SESSION.isMaster=true;   SESSION.maxKids=99;   saveSession();   renderAdmin(); }  /* Migrate profiles from one storage key to another */ function migrateProfilesToFamily(fromKey, toKey){   var data = localStorage.getItem(fromKey);   if(!data){ alert('No profiles found at: '+fromKey); return false; }   var profiles = JSON.parse(data);   if(!profiles || !profiles.length){ alert('No profiles to migrate.'); return false; }   /* Also migrate each profile's progress and history */
+  /* Merge: add master profiles that don't already exist in family */   var existingIds = familyProfiles.map(function(p){return p.id;});   var added = 0;   masterProfiles.forEach(function(p){     if(existingIds.indexOf(p.id) < 0){       familyProfiles.push(p);       added++;       /* Copy progress and history for each profile */       ['p','h','av'].forEach(function(suffix){         var val = localStorage.getItem('smart_'+p.id+'_'+suffix);         if(val) localStorage.setItem('smart_'+p.id+'_'+suffix, val);       });     }   });    localStorage.setItem(familyKey, JSON.stringify(familyProfiles));    /* Update maxKids in Firestore to match profile count if needed */   var db = window._smartDB;   if(db && familyProfiles.length > 0){     db.collection('families').doc(famId).update({       maxKids: Math.max(familyProfiles.length, 3)     }).catch(function(){});   }    alert('Done! Moved '+added+' profile(s) to '+famName+'. Click View as Family to see them.');   }  function revealPw(fi){   var fams = window.FAMS||[];   if(!fams[fi]) return;   /* id in HTML is pw-disp-N, btn is pw-btn-N */   var display = document.getElementById('pw-disp-'+fi);   var btn = document.getElementById('pw-btn-'+fi);   if(!display) return;   if(display.textContent === '••••••'){     display.textContent = fams[fi].password||(fams[fi].pwHash?'(secured — set a new one to change)':'(not set)');     if(btn) btn.textContent = '🙈';     if(btn) btn.title = 'Hide password';   } else {     display.textContent = '••••••';     if(btn) btn.textContent = '👁';     if(btn) btn.title = 'Show password';   } }  function togglePwVis(inputId, btn){   var inp = document.getElementById(inputId);   if(!inp) return;   if(inp.type === 'password'){     inp.type = 'text';     btn.textContent = '🙈';   } else {     inp.type = 'password';     btn.textContent = '👁';   } }  function adminReturnToMaster(){   SESSION.familyId='master';   SESSION.familyName='Master Account';   SESSION.isMaster=true;   SESSION.maxKids=99;   saveSession();   renderAdmin(); }  /* Migrate profiles from one storage key to another */ function migrateProfilesToFamily(fromKey, toKey){   var data = localStorage.getItem(fromKey);   if(!data){ alert('No profiles found at: '+fromKey); return false; }   var profiles = JSON.parse(data);   if(!profiles || !profiles.length){ alert('No profiles to migrate.'); return false; }   /* Also migrate each profile's progress and history */
   profiles.forEach(function(p){
     var pid = p.id;
     ['p','h','av'].forEach(function(suffix){
@@ -10562,7 +10626,14 @@ function adminEditFamily(famId){
 function adminSaveFamily(famId){
   var updates={name:el('ef-name').value.trim(),maxKids:parseInt(el('ef-kids').value)||3,plan:el('ef-plan').value};
   var newPass=(el('ef-pass').value||'').trim();
-  if(newPass)updates.password=newPass;
+  if(newPass){
+    sha256(newPass).then(function(h){
+      if(h){updates.pwHash=h;updates.password=firebase.firestore.FieldValue.delete();}
+      else{updates.password=newPass;}
+      updateFamily(famId,updates).then(function(){renderAdmin();});
+    });
+    return;
+  }
   updateFamily(famId,updates).then(function(){renderAdmin();});
 }
 
