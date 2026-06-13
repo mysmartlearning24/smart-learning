@@ -7590,6 +7590,11 @@ function renderDrill(){
   if(needColon){
     h+='<div class="nr"><button class="nb" onclick="ncolon()" style="font-size:22px;font-weight:900;width:66%">:</button><button class="nb nb-del" style="color:#EF4444;width:33%" onclick="nd()">⌫</button></div>';
   }
+  var _ansK=pr.mf?pr.ans2:pr.an;
+  var needSlash=(typeof _ansK==='string'&&String(_ansK).indexOf('/')>=0);
+  if(needSlash){
+    h+='<div class="nr"><button class="nb" onclick="nslash()" style="font-size:24px;font-weight:900;width:66%">/</button><button class="nb nb-del" style="color:#EF4444;width:33%" onclick="nd()">⌫</button></div>';
+  }
   h+='</div>';
   /* time limit indicator */
   h+='<div style="text-align:center;margin-top:6px;font-size:11px;color:var(--text-tertiary)">Time limit: '+fmt(tl)+'</div>';
@@ -7612,6 +7617,21 @@ function ncolon(){
     var e=el('pa');if(e){e.innerHTML=ST.inp;}
   }
 }
+function nslash(){
+  /* Only one slash, never first character */
+  if(ST.inp&&ST.inp.indexOf('/')<0&&ST.inp!=='-'){
+    ST.inp=ST.inp+'/';
+    var e=el('pa');if(e){e.innerHTML=ST.inp;}
+  }
+}
+function fracEq(ua,ca){
+  /* numeric equivalence for simple a/b fractions: typing 6/8 counts when the answer is 3/4 */
+  var m1=/^(\d+)\/(\d+)$/.exec(String(ua)),m2=/^(\d+)\/(\d+)$/.exec(String(ca));
+  if(!m1||!m2)return false;
+  var a1=+m1[1],b1=+m1[2],c1=+m2[1],d1=+m2[2];
+  if(!b1||!d1)return false;
+  return a1*d1===c1*b1;
+}
 function nd(){
   ST.inp=ST.inp.slice(0,-1);
   var e=el('pa');if(e){e.innerHTML=ST.inp||'?';}
@@ -7632,19 +7652,20 @@ function subDrill(){
   var correctAns=pr.mf?pr.ans2:pr.an;
   /* handle string answers (fractions, ratios) */
   var ua;
-  if(pr.fracAns||pr.ratioQ||pr.o==='time_colon'){
-    /* For ratio: ST.inp is like "8:1" — clean it up */
+  if(pr.fracAns||pr.ratioQ||pr.o==='time_colon'||(typeof correctAns==='string'&&String(correctAns).indexOf('/')>=0)){
+    /* string answers: ratios, times, fractions, mixed numbers */
     ua=ST.inp.trim();
-    /* Remove any trailing colon (incomplete input) */
     if(pr.ratioQ&&ua.endsWith(':'))ua=ua.slice(0,-1);
+    if(ua.endsWith('/'))ua=ua.slice(0,-1);
   }
   else{ua=parseInt(ST.inp,10);}
-  var ok=(String(ua)===String(correctAns));flashFeedback(ok);
+  var ok=(String(ua)===String(correctAns));
+  if(!ok&&pr.fracAns&&fracEq(ua,correctAns))ok=true; /* equivalent fractions count */
+  flashFeedback(ok);
   ST.as[ST.q]=ua;
   var pc2=el('pc'),pa=el('pa');
   if(ok){
     ST.xp++;ST.streak++;
-    soundCorrect();
     if(pc2){pc2.className='pc correct do-bounce';}
     if(pa){pa.style.color='#00c864';pa.innerHTML='&#10003;';}
     checkCheer(ST.xp, ST.streak);
