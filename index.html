@@ -26,6 +26,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="color-scheme" content="light dark">
 <title>SMART v5.5</title>
 <script>
 /* Early error handler — catches Firebase SDK failures before main script runs */
@@ -360,6 +361,7 @@ body {
   font-weight: 800;
   min-height: 60px;
   color: var(--brand);
+  -webkit-text-fill-color: var(--brand);
   letter-spacing: -1.5px;
   margin-top: 4px;
 }
@@ -2399,7 +2401,7 @@ function dueReviewCount(grade,pid,my){
   else if(lid==='M1'){
   var m0fmts=['2 × __N__ = ?','__N__ × 2 = ?','What is __N__ times 2?',
     '2 groups of __N__ equals?','What comes after __PREV__ when counting by 2s?',
-    '2 + 2 + 2... (__N__ times) = ?','Product of __N__ and 2?'];
+    'How many is __N__ groups of 2?','Product of __N__ and 2?'];
   for(var a0=0;a0<=12;a0++){
     var fmt0=m0fmts[a0%m0fmts.length].replace(/__N__/g,a0).replace(/__PREV__/g,a0*2-2<0?0:a0*2-2).replace(/__ANS__/g,a0*2);
     combos.push({a:a0,b:2,o:'x',an:a0*2});
@@ -2409,7 +2411,7 @@ function dueReviewCount(grade,pid,my){
   else if(lid==='M2'){
   var m1fmts=['3 × __N__ = ?','__N__ × 3 = ?','What is __N__ times 3?',
     '3 groups of __N__ equals?','What comes after __PREV__ when counting by 3s?',
-    '3 + 3 + 3... (__N__ times) = ?','Product of __N__ and 3?'];
+    'How many is __N__ groups of 3?','Product of __N__ and 3?'];
   for(var a1=0;a1<=12;a1++){
     var fmt1=m1fmts[a1%m1fmts.length].replace(/__N__/g,a1).replace(/__PREV__/g,a1*3-3<0?0:a1*3-3).replace(/__ANS__/g,a1*3);
     combos.push({a:a1,b:3,o:'x',an:a1*3});
@@ -2419,7 +2421,7 @@ function dueReviewCount(grade,pid,my){
   else if(lid==='M3'){
   var m2fmts=['4 × __N__ = ?','__N__ × 4 = ?','What is __N__ times 4?',
     '4 groups of __N__ equals?','What comes after __PREV__ when counting by 4s?',
-    '4 + 4 + 4... (__N__ times) = ?','Product of __N__ and 4?'];
+    'How many is __N__ groups of 4?','Product of __N__ and 4?'];
   for(var a2=0;a2<=12;a2++){
     var fmt2=m2fmts[a2%m2fmts.length].replace(/__N__/g,a2).replace(/__PREV__/g,a2*4-4<0?0:a2*4-4).replace(/__ANS__/g,a2*4);
     combos.push({a:a2,b:4,o:'x',an:a2*4});
@@ -7708,7 +7710,7 @@ function subDrill(){
   if(ok){
     ST.xp++;ST.streak++;
     if(pc2){pc2.className='pc correct do-bounce';}
-    if(pa){pa.style.color='#00c864';pa.innerHTML='&#10003;';}
+    if(pa){pa.style.color='#00c864';pa.style.webkitTextFillColor='#00c864';pa.innerHTML='&#10003;';}
     checkCheer(ST.xp, ST.streak);
     ST.inp='';setTimeout(nextDrillQ,420);
   } else {
@@ -7716,7 +7718,7 @@ function subDrill(){
     if(pc2){pc2.className='pc wrong do-shake';}
     if(pa){
       var showGiven = (curPr&&curPr.ratioQ&&ua==='') ? '(blank)' : String(ua);
-      pa.style.color='#ff5050';pa.innerHTML=showGiven+' &#10007;';
+      pa.style.color='#ff5050';pa.style.webkitTextFillColor='#ff5050';pa.innerHTML=showGiven+' &#10007;';
     }
     curPr=pr;setTimeout(showXP,720);
   }
