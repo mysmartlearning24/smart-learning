@@ -1092,13 +1092,17 @@ function getWeekStr(){
 function getPoints(pid){
   try{
     var raw=localStorage.getItem('smart_pr_'+pid+'_pts');
-    var data=raw?JSON.parse(raw):{total:0,weekly:0,weekOf:''};
+    var data=raw?JSON.parse(raw):{total:0,weekly:0,weekOf:'',mathTotal:0,readTotal:0,mathWeekly:0,readWeekly:0};
+    if(!data.mathTotal)data.mathTotal=0;
+    if(!data.readTotal)data.readTotal=0;
+    if(!data.mathWeekly)data.mathWeekly=0;
+    if(!data.readWeekly)data.readWeekly=0;
     var wk=getWeekStr();
-    if(data.weekOf!==wk){data.weekly=0;data.weekOf=wk;localStorage.setItem('smart_pr_'+pid+'_pts',JSON.stringify(data));}
+    if(data.weekOf!==wk){data.weekly=0;data.mathWeekly=0;data.readWeekly=0;data.weekOf=wk;localStorage.setItem('smart_pr_'+pid+'_pts',JSON.stringify(data));}
     return data;
   }catch(e){return{total:0,weekly:0,weekOf:getWeekStr()};}
 }
-function addPoints(pid,grade,correct,total){
+function addPoints(pid,grade,correct,total,subject){
   if(!correct||correct<=0)return 0;
   var each=grade<=2?1:grade<=4?2:grade<=6?3:4;
   var earned=correct*each;
@@ -1109,6 +1113,13 @@ function addPoints(pid,grade,correct,total){
   data.total=(data.total||0)+earned;
   data.weekly=(data.weekly||0)+earned;
   data.weekOf=getWeekStr();
+  if(subject==='reading'){
+    data.readTotal=(data.readTotal||0)+earned;
+    data.readWeekly=(data.readWeekly||0)+earned;
+  } else {
+    data.mathTotal=(data.mathTotal||0)+earned;
+    data.mathWeekly=(data.mathWeekly||0)+earned;
+  }
   try{localStorage.setItem('smart_pr_'+pid+'_pts',JSON.stringify(data));}catch(e){}
   try{maybePrizeReveal(pid,data.total-earned,data.total);}catch(e){}
   return earned;
@@ -1621,7 +1632,7 @@ function finishCompute(){
   var elapsed=Math.round((Date.now()-_CT.startTime)/1000);
   var score=_CT.score,pid=_CT.pid,grade=_CT.grade;
   var st=updateStreak(pid);
-  var _earnedPts=addPoints(pid,grade,score,10);
+  var _earnedPts=addPoints(pid,grade,score,10,'math');
   addHist(grade,{date:new Date().toISOString(),lid:'compute_g'+grade,score:score,time:elapsed,
     ans:_CT.answers,mode:'compute',subject:'arithmetic',total:10,streakAfter:st.count},pid);
   syncToCloud(grade);
@@ -4833,7 +4844,7 @@ function finishSpelling(){
   var elapsed=Math.round((Date.now()-_SP.startTime)/1000);
   var score=_SP.score,pid=_SP.pid,grade=_SP.grade;
   var st=updateStreak(pid);
-  var earnedPts=addPoints(pid,grade,score,10);
+  var earnedPts=addPoints(pid,grade,score,10,'reading');
   addHist(grade,{date:new Date().toISOString(),lid:'spelling_g'+grade,score:score,time:elapsed,mode:'spelling',subject:'literacy',total:10,streakAfter:st.count,_ansTmp:_SP.answers},pid);
   syncToCloud(grade);
   var gc=gradeConf(grade);
@@ -5022,7 +5033,7 @@ function finishWordProbs(){
   var elapsed=Math.round((Date.now()-_WP.startTime)/1000);
   var score=_WP.score,pid=_WP.pid,grade=_WP.grade;
   var st=updateStreak(pid);
-  var earnedPts=addPoints(pid,grade,score,10);
+  var earnedPts=addPoints(pid,grade,score,10,'math');
   addHist(grade,{date:new Date().toISOString(),lid:'wordprobs_g'+grade,score:score,time:elapsed,mode:'wordprobs',subject:'math',total:10,streakAfter:st.count,_ansTmp:_WP.answers},pid);
   syncToCloud(grade);
   var gc=gradeConf(grade);
@@ -5254,7 +5265,7 @@ function finishGeometry(){
   var elapsed=Math.round((Date.now()-_GEO.startTime)/1000);
   var score=_GEO.score,pid=_GEO.pid,grade=_GEO.grade;
   var st=updateStreak(pid);
-  var earnedPts=addPoints(pid,grade,score,10);
+  var earnedPts=addPoints(pid,grade,score,10,'math');
   addHist(grade,{date:new Date().toISOString(),lid:'geo_g'+grade,score:score,time:elapsed,mode:'geometry',subject:'math',total:10,streakAfter:st.count,_ansTmp:_GEO.answers},pid);
   syncToCloud(grade);
   var gc=gradeConf(grade);
@@ -5331,7 +5342,7 @@ function finishStats(){
   var elapsed=Math.round((Date.now()-_STATS.startTime)/1000);
   var score=_STATS.score,pid=_STATS.pid,grade=_STATS.grade;
   var st=updateStreak(pid);
-  var earnedPts=addPoints(pid,grade,score,10);
+  var earnedPts=addPoints(pid,grade,score,10,'math');
   addHist(grade,{date:new Date().toISOString(),lid:'stats_g'+grade,score:score,time:elapsed,mode:'statistics',subject:'math',total:10,streakAfter:st.count,_ansTmp:_STATS.answers},pid);
   syncToCloud(grade);
   var gc=gradeConf(grade);
@@ -5525,7 +5536,7 @@ function finishGrammar(){
   var elapsed=Math.round((Date.now()-_GR.startTime)/1000);
   var score=_GR.score,pid=_GR.pid,grade=_GR.grade;
   var st=updateStreak(pid);
-  var earnedPts=addPoints(pid,grade,score,10);
+  var earnedPts=addPoints(pid,grade,score,10,'reading');
   addHist(grade,{date:new Date().toISOString(),lid:'grammar_g'+grade,score:score,time:elapsed,mode:'grammar',subject:'literacy',total:10,streakAfter:st.count,_ansTmp:_GR.answers},pid);
   syncToCloud(grade);
   var gc=gradeConf(grade);
@@ -5745,7 +5756,7 @@ function finishVocab(){
   var elapsed=Math.round((Date.now()-_VB.startTime)/1000);
   var score=_VB.score,pid=_VB.pid,grade=_VB.grade;
   var st=updateStreak(pid);
-  var earnedPts=addPoints(pid,grade,score,10);
+  var earnedPts=addPoints(pid,grade,score,10,'reading');
   addHist(grade,{date:new Date().toISOString(),lid:'vocab_g'+grade,score:score,time:elapsed,mode:'vocab',subject:'literacy',total:10,streakAfter:st.count,_ansTmp:_VB.answers},pid);
   syncToCloud(grade);
   var gc=gradeConf(grade);
@@ -6416,7 +6427,7 @@ function finishGate(){
   var elapsed=Math.round((Date.now()-_GT.startTime)/1000);
   var score=_GT.score,pid=_GT.pid,grade=_GT.grade;
   var st=updateStreak(pid);
-  var earnedPts=addPoints(pid,grade,score,15);
+  var earnedPts=addPoints(pid,grade,score,15,'math');
   addHist(grade,{date:new Date().toISOString(),lid:'gate_g'+grade,score:score,time:elapsed,mode:'gate',subject:'gifted',total:15,streakAfter:st.count},pid);
   syncToCloud(grade);
   var gc=gradeConf(grade);
@@ -6575,7 +6586,7 @@ function finishGatePracticeTest(){
   var elapsed=Math.round((Date.now()-_GTP.startTime)/1000);
   var score=_GTP.score,pid=_GTP.pid,grade=_GTP.grade;
   var st=updateStreak(pid);
-  var earnedPts=addPoints(pid,grade,score,45);
+  var earnedPts=addPoints(pid,grade,score,45,'math');
   addHist(grade,{date:new Date().toISOString(),lid:'gate_pt_g'+grade,score:score,time:elapsed,mode:'gate_practice',subject:'gifted',total:45,streakAfter:st.count},pid);
   syncToCloud(grade);
   var gc=gradeConf(grade);
@@ -6687,7 +6698,7 @@ function finishGateDrill(){
   var elapsed=Math.round((Date.now()-_GD.startTime)/1000);
   var score=_GD.score,pid=_GD.pid,grade=_GD.grade;
   var total=_GD.probs.length;
-  var earnedPts=addPoints(pid,grade,score,total);
+  var earnedPts=addPoints(pid,grade,score,total,'math');
   addHist(grade,{date:new Date().toISOString(),lid:'gate_drill_'+_GD.drillType+'_g'+grade,score:score,time:elapsed,mode:'gate_drill',subject:'gifted',total:total},pid);
   syncToCloud(grade);
   var gc=gradeConf(grade);
@@ -6975,11 +6986,13 @@ function renderHome(){
     h+='<div style="font-size:10px;color:var(--text-tertiary)">mastered</div>';
     var _st=getStreak(pid);if(_st.count>=2){h+='<div style="font-size:12px;font-weight:700;color:#F59E0B;margin-top:3px">🔥 '+_st.count+'d</div>';}
     var _cpts=getPoints(pid);var _crank=getRankInfo(_cpts.total||0);
+    var _mathW=_cpts.mathWeekly||0,_readW=_cpts.readWeekly||0;
     h+='<div style="margin-top:5px;display:flex;align-items:center;gap:6px">';
     h+='<span style="font-size:11px;font-weight:700;color:#6366F1">'+(_cpts.weekly||0)+' pts this week</span>';
     h+='<span style="font-size:11px;color:'+_crank.color+';font-weight:600">· '+_crank.icon+' '+_crank.title+'</span>';
     h+='</div>';
-    h+='</div></div>';
+        if(_mathW||_readW){h+='<div style="display:flex;gap:10px;margin-top:2px"><span style="font-size:10px;color:var(--text-tertiary)">📐 '+_mathW+' math</span><span style="font-size:10px;color:var(--text-tertiary)">📚 '+_readW+' reading</span></div>';}
+h+='</div></div>';
 
     /* Daily 3-day boxes */
     h+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">';
@@ -7185,8 +7198,10 @@ function getQuestState(grade,pid){
     var e=hist[i];if(!e||!e.date)continue;
     var d=new Date(e.date);if(_ymd(d)!==tk)continue;
     var subj=e.subject||'';
-    if(subj==='math'||subj==='arithmetic'||subj==='gifted')math=true;
-    if(subj==='reading'||subj==='literacy')read=true;
+    var _qtot=e.total||(e.mode==='drill'?40:10);
+    var _qmin=_qtot>0?Math.ceil(_qtot*0.5):1;
+    if((subj==='math'||subj==='arithmetic'||subj==='gifted')&&typeof e.score==='number'&&e.score>=_qmin)math=true;
+    if((subj==='reading'||subj==='literacy')&&typeof e.score==='number'&&e.score>=_qmin)read=true;
     var tot=e.total||(e.mode==='drill'?40:10);
     if(typeof e.score==='number'&&tot>0&&e.score/tot>=0.9)ace=true;
   }
@@ -7225,7 +7240,9 @@ function renderPrizeBoard(grade,pid){
   var next=(unlocked+1)*PRIZE_TILE_COST;
   var prog=Math.round((pts-unlocked*PRIZE_TILE_COST)/PRIZE_TILE_COST*100);
   h+='<div class="card" style="text-align:center;margin-bottom:14px">';
+  var _pMath=getPoints(pid).mathTotal||0,_pRead=getPoints(pid).readTotal||0;
   h+='<div style="font-size:13px;color:var(--text-secondary)">You have <strong style="color:'+gc.color+'">'+pts+' points</strong> &mdash; '+Math.min(unlocked,48)+' of 48 prizes unlocked</div>';
+  if(_pMath||_pRead){h+='<div style="font-size:11px;color:var(--text-tertiary);margin-top:4px">📐 Math: '+_pMath+' pts &nbsp;·&nbsp; 📚 Reading: '+_pRead+' pts</div>';}
   if(unlocked<48){
     h+='<div class="pbar" style="margin-top:10px"><div class="pbar-f" style="width:'+prog+'%;background:'+gc.color+'"></div></div>';
     var nr8=prizeRarity(unlocked);
@@ -7423,7 +7440,7 @@ function startDrill(){
     ST.probs=[];for(var i=0;i<Q;i++){ST.probs.push({a:rnd(1,20),b:rnd(1,10),o:'+',an:0});}
   }
   for(var i=0;i<Q;i++){ST.as.push(null);}
-  ST.q=0;ST.inp='';ST.t0=Date.now();ST.elapsed=0;ST.xp=0;ST.streak=0;
+  ST.q=0;ST.inp='';ST.t0=Date.now();ST.elapsed=0;ST.xp=0;ST.streak=0;ST.activeTime=0;ST._qStart=0;
   clearInterval(ST.tint);
   ST.tint=setInterval(function(){
     ST.elapsed=Math.floor((Date.now()-ST.t0)/1000);
@@ -7463,7 +7480,7 @@ function renderDrill(){
   }
 
   var h='<div class="hdr"><div style="float:left"><button class="bbtn" onclick="quitDrill()">Quit</button></div>';
-  h+='<div style="float:right"><span class="tb" id="tmr">&#9203; '+fmt(ST.elapsed)+'</span></div>';
+  h+='<div style="float:right"><span class="tb" id="tmr">&#9203; '+fmt(ST.elapsed)+'</span><span id="idle-cnt" style="display:none;font-size:12px;font-weight:800;background:#FEF3C7;border-radius:8px;padding:2px 8px;margin-left:6px"></span></div>';
   h+='<div style="text-align:center;padding-top:6px;font-size:15px;font-weight:700;color:'+catColor+'">'+ST.lid+' &nbsp;·&nbsp; Q '+(ST.q+1)+'/'+Q+'</div>';
   h+='<div style="clear:both"></div></div>';
   /* XP percentage — needed for standard bar in else block */
@@ -7640,6 +7657,7 @@ function renderDrill(){
   if(curPr&&curPr.draw){
     drawVisual(curPr, el('s-drill'));
   }
+  _startIdleTimer();
 }
 
 function ni(v){
@@ -7690,6 +7708,7 @@ function toggleNeg(){
 }
 
 function subDrill(){
+  _clearIdleTimer();
   if(!ST.inp)return;
   var pr=ST.probs[ST.q];
   var correctAns=pr.mf?pr.ans2:pr.an;
@@ -7742,6 +7761,7 @@ function nextDrillQ(){
   else{ST.q++;ST.inp='';renderDrill();}
 }
 function quitDrill(){
+  _clearIdleTimer();
   clearInterval(ST.tint);
   el('mo-xp').style.display='none';
   /* save partial session if at least 5 questions done */
@@ -7751,18 +7771,67 @@ function quitDrill(){
       var correctAns=ST.probs[i].mf?ST.probs[i].ans2:ST.probs[i].an;
       if(String(ST.as[i])===String(correctAns))score++;
     }
-    addHist(ST.grade,{date:new Date().toISOString(),lid:ST.lid,score:score,time:ST.elapsed,ans:[],mode:'drill',partial:true,qDone:ST.q,subject:'math'});
+    addHist(ST.grade,{date:new Date().toISOString(),lid:ST.lid,score:score,time:(ST.activeTime>0?Math.min(ST.activeTime,ST.elapsed):ST.elapsed),ans:[],mode:'drill',partial:true,qDone:ST.q,subject:'math'});
     syncToCloud(ST.grade);
   }
   renderCurriculum(ST.grade);
 }
+/* ═══════════════════════════════════════════
+   PER-QUESTION IDLE TIMER (anti-cheat)
+═══════════════════════════════════════════ */
+var _IDLE_LIMIT = 90;
+var _idleTimer = null;
+
+function _startIdleTimer(){
+  _clearIdleTimer();
+  ST._qStart = Date.now();
+  var left = _IDLE_LIMIT;
+  _idleTimer = setInterval(function(){
+    left--;
+    var ic = el('idle-cnt');
+    if(ic){
+      if(left > 0 && left <= 15){
+        ic.style.display='';
+        ic.textContent='⏱ '+left+'s';
+        ic.style.color=left<=5?'#EF4444':'#F59E0B';
+      } else { ic.style.display='none'; }
+    }
+    if(left<=0){ _clearIdleTimer(); _autoSkipQuestion(); }
+  }, 1000);
+}
+
+function _clearIdleTimer(){
+  if(_idleTimer){ clearInterval(_idleTimer); _idleTimer=null; }
+  var ic=el('idle-cnt'); if(ic) ic.style.display='none';
+  if(ST._qStart){
+    var spent=Math.floor((Date.now()-ST._qStart)/1000);
+    ST.activeTime=(ST.activeTime||0)+Math.min(spent,_IDLE_LIMIT);
+    ST._qStart=0;
+  }
+}
+
+function _autoSkipQuestion(){
+  ST.as[ST.q]=null;
+  ST.streak=0;
+  var pc2=el('pc'),pa=el('pa');
+  if(pc2){ pc2.className='pc wrong do-shake'; }
+  if(pa){ pa.style.color='#F59E0B';pa.style.webkitTextFillColor='#F59E0B';pa.innerHTML='⏱ Time up'; }
+  try{flashFeedback(false);}catch(e){}
+  ST.inp='';
+  setTimeout(function(){
+    if(ST.q+1>=Q_DRILL){ finishDrill(); }
+    else{ ST.q++;ST.inp='';renderDrill(); }
+  }, 700);
+}
+
 
 /* ═══════════════════════════════════════════
    FINISH DRILL
 ═══════════════════════════════════════════ */
 function finishDrill(){
+  _clearIdleTimer();
   clearInterval(ST.tint);
-  var time=ST.elapsed,score=0,i;
+  var time=ST.activeTime>0?Math.min(ST.activeTime,ST.elapsed):ST.elapsed,score=0,i;
   for(i=0;i<ST.probs.length;i++){
     var correctAns=ST.probs[i].mf?ST.probs[i].ans2:ST.probs[i].an;
     if(String(ST.as[i])===String(correctAns))score++;
@@ -7794,7 +7863,15 @@ function finishDrill(){
   }
   /* Track streak and total for sticker milestones */
   var _histEntry={date:new Date().toISOString(),lid:lid,score:score,time:time,ans:ansLog,mode:'drill',subject:'math',total:ST.probs.length,streak:ST.streak};
-  addPoints(ST.profileId,ST.grade,score,ST.probs.length);
+  /* Replay cap: first 3 completions per level per day earn points */
+  var _todayKey=new Date().toISOString().slice(0,10);
+  var _rpcKey='smart_rpc_'+ST.profileId+'_'+_todayKey;
+  var _rpcData={};try{_rpcData=JSON.parse(localStorage.getItem(_rpcKey)||'{}');}catch(e){}
+  var _rpcN=(_rpcData[ST.lid]||0);
+  _rpcData[ST.lid]=_rpcN+1;
+  try{localStorage.setItem(_rpcKey,JSON.stringify(_rpcData));}catch(e){}
+  addPoints(ST.profileId,ST.grade,_rpcN<3?score:0,ST.probs.length,'math');
+  _histEntry.replayN=_rpcN;
   addHist(ST.grade,_histEntry);
   /* Check for new stickers */
   var _prevStickers=getEarnedStickers(ST.profileId,ST.grade);
@@ -11277,8 +11354,14 @@ function buildVocabPool(bank){
   });
   shuffled.forEach(function(word,i){
     var type=usableTypes[i%usableTypes.length];
-    /* fallback if this word can't support the type */     if(type==='synonym'&&(!word.syn||!word.syn.length)) type='meaning';     if(type==='context'&&(!word.ex||!word.ex.length)) type='meaning';     pool.push({word:word, type:type, bank:bank});   });   return pool; }  function renderVocabQ(){   if(_vocabIdx>=_vocabPool.length){finishReading();return;}   READING_ST.answered=false;   var item=_vocabPool[_vocabIdx];   var word=item.word;   var type=item.type;   var bank=item.bank;   var gc=gradeConf(READING_ST.grade);   var prog=Math.round(_vocabIdx/_vocabPool.length*100);    var question='', promptLabel='', choices=[], correct=0, bigDisplay='';    if(type==='meaning'){     /* Word → Definition */     promptLabel='WHAT DOES THIS WORD MEAN?';     bigDisplay='<div style="font-family:Sora,sans-serif;font-size:44px;font-weight:900;color:var(--brand);letter-spacing:-1px;margin-bottom:10px">'+word.w+'</div>';     if(word.ex) bigDisplay+='<div style="font-size:13px;color:var(--text-tertiary);font-style:italic">"'+word.ex+'"</div>';     var wrongDefs=bank.filter(function(v){return v.w!==word.w;}).sort(function(){return Math.random()-0.5;}).slice(0,3).map(function(v){return v.def;});     choices=[word.def].concat(wrongDefs).sort(function(){return Math.random()-0.5;});     correct=choices.indexOf(word.def);    } else if(type==='reverse'){     /* Definition → Word */     promptLabel='WHICH WORD FITS THIS MEANING?';     bigDisplay='<div style="font-size:17px;font-weight:600;color:var(--text-primary);line-height:1.6;padding:0 4px">"'+word.def+'"</div>';     var wrongWords=bank.filter(function(v){return v.w!==word.w;}).sort(function(){return Math.random()-0.5;}).slice(0,3).map(function(v){return v.w;});     choices=[word.w].concat(wrongWords).sort(function(){return Math.random()-0.5;});     correct=choices.indexOf(word.w);    } else if(type==='synonym'){     /* Synonym pick */     var isSyn=Math.random()>0.5;     if(!word.ant||!word.ant.length) isSyn=true;     promptLabel=isSyn?'WHICH WORD IS A SYNONYM OF...':'WHICH WORD IS AN ANTONYM OF...';     bigDisplay='<div style="font-family:Sora,sans-serif;font-size:44px;font-weight:900;color:var(--brand);letter-spacing:-1px">'+word.w+'</div>';     var target=isSyn?word.syn:word.ant;     /* wrong choices: other words from bank */     var wrongSyns=bank.filter(function(v){return v.w!==word.w&&v.w!==target;}).sort(function(){return Math.random()-0.5;}).slice(0,3).map(function(v){return v.w;});     choices=[target].concat(wrongSyns).sort(function(){return Math.random()-0.5;});     correct=choices.indexOf(target);    } else {     /* Context clue — fill in the blank */     promptLabel='WHICH WORD COMPLETES THE SENTENCE?';     var blank=word.ex.replace(new RegExp('\\b'+word.w+'\\b','i'),'______');     /* if no replacement happened, use a generic sentence */     if(blank===word.ex) blank='She showed great ______ when she faced the challenge.';     bigDisplay='<div style="font-size:17px;font-weight:600;color:var(--text-primary);line-height:1.8;padding:4px">"'+blank+'"</div>';     var wrongCtx=bank.filter(function(v){return v.w!==word.w;}).sort(function(){return Math.random()-0.5;}).slice(0,3).map(function(v){return v.w;});     choices=[word.w].concat(wrongCtx).sort(function(){return Math.random()-0.5;});     correct=choices.indexOf(word.w);   }    /* type badge colors */   var typeMeta={     meaning: {label:'Meaning',  color:'#FF5C35', bg:'#FFF7F5'},     reverse: {label:'Definition →Word', color:'#8B5CF6', bg:'#F5F3FF'},     synonym: {label:'Synonym / Antonym', color:'#10B981', bg:'#F0FDF4'},     context: {label:'Context Clue', color:'#3B82F6', bg:'#EFF6FF'},   };   var tm=typeMeta[type]||typeMeta.meaning;    var h='<div class="hdr">'       +'<div style="float:left"><button class="bbtn" onclick="finishReading()">✕ Exit</button></div>'       +'<div style="text-align:center;padding-top:6px;font-size:13px;font-weight:700;color:'+gc.color+'">📝 Vocabulary · '+(_vocabIdx+1)+'/'+_vocabPool.length+'</div>'       +'<div style="clear:both"></div>'       +'<div style="height:4px;background:var(--bg-subtle);border-radius:2px;margin-top:8px">'       +'<div style="height:4px;width:'+prog+'%;background:'+gc.color+';border-radius:2px;transition:width .3s"></div>'       +'</div></div>';    h+='<div class="card card-raised" style="text-align:center;padding:28px 20px;margin-bottom:14px">'      +'<div style="display:inline-block;background:'+tm.bg+';color:'+tm.color+';border-radius:99px;padding:4px 14px;font-size:11px;font-weight:800;letter-spacing:1.5px;margin-bottom:16px">'+tm.label.toUpperCase()+'</div>'      +'<div style="font-size:11px;font-weight:700;letter-spacing:1.5px;color:var(--text-tertiary);margin-bottom:14px">'+promptLabel+'</div>'      +bigDisplay      +'</div>';    choices.forEach(function(ch,ci){     var ltr=['A','B','C','D'][ci];     h+='<button class="reading-choice" id="vc-'+ci+'" onclick="answerVocabR('+ci+','+correct+')">'        +'<span style="background:var(--bg-subtle);border-radius:6px;padding:2px 8px;font-weight:700;margin-right:8px;font-size:12px;flex-shrink:0">'+ltr+'</span>'        +ch+'</button>';   });   h+='<div id="vocab-fb"></div>';   el('s-reading').innerHTML=h; go('s-reading');   READING_ST.total++; }  function answerVocabR(chosen,correct){   if(READING_ST.answered)return;   READING_ST.answered=true;   var ok=(chosen===correct);flashFeedback(ok);   if(ok)READING_ST.score++;   for(var i=0;i<4;i++){     var b=document.getElementById('vc-'+i);     if(!b)continue;     if(i===correct)b.className='reading-choice correct';     else if(i===chosen&&!ok)b.className='reading-choice wrong';     b.onclick=null;   }   var item=_vocabPool[_vocabIdx];   var word=item.word;   var fb=document.getElementById('vocab-fb');   if(fb){     var extra='';     if(word.syn&&word.syn.length) extra+='<span style="margin-right:10px"><b>Synonym:</b> '+word.syn+'</span>';     if(word.ant&&word.ant.length) extra+='<span><b>Antonym:</b> '+word.ant+'</span>';     fb.innerHTML='<div style="background:'+(ok?'var(--green-light)':'var(--red-light)')+';border:1.5px solid '+(ok?'var(--green)':'var(--red)')+';border-radius:12px;padding:12px 16px;margin:12px 0">'       +'<div style="font-weight:700;color:'+(ok?'var(--green)':'var(--red)')+'">'+(ok?'✓ Correct! You know your words!':'✗ Not quite — the word is: <b>'+item.word.w+'</b>. Study the definition and try again!')+'</div>'       +(extra?'<div style="font-size:12px;color:var(--text-secondary);margin-top:6px">'+extra+'</div>':'')       +(word.def?'<div style="font-size:12px;color:var(--text-tertiary);margin-top:4px;font-style:italic">'+word.def+'</div>':'')       +'</div>'       +'<button onclick="nextVocabQ()" class="btn btn-primary">Next →</button>';   } }  function nextVocabQ(){   READING_ST.answered=false;   _vocabIdx++;   renderVocabQ(); } /* ─── ANALOGIES ─────────────────────────────── */ var _analogyPool=[], _analogyIdx=0;  function startAnalogyMode(){   var g=READING_ST.grade;   _analogyPool=ANALOGIES.filter(function(a){return a.grade<=g+1;})                          .sort(function(){return Math.random()-0.5;}).slice(0,20);   _analogyIdx=0;   renderAnalogyQ(); }  function renderAnalogyQ(){   if(_analogyIdx>=_analogyPool.length){finishReading();return;}   var item=_analogyPool[_analogyIdx];   var gc=gradeConf(READING_ST.grade);   var others=_analogyPool.filter(function(a){return a.d!==item.d;});   var wrongs=others.sort(function(){return Math.random()-0.5;}).slice(0,3).map(function(a){return a.d;});   var choices=[item.d].concat(wrongs).sort(function(){return Math.random()-0.5;});   var correct=choices.indexOf(item.d);    var h='<div class="hdr">'       +'<div style="float:left"><button class="bbtn" onclick="finishReading()">✕ Exit</button></div>'       +'<div style="text-align:center;padding-top:6px;font-size:13px;font-weight:700;color:'+gc.color+'">🔗 Analogies · '+(_analogyIdx+1)+'/'+_analogyPool.length+'</div>'       +'<div style="clear:both"></div></div>';    h+='<div class="card card-raised" style="text-align:center;padding:28px 20px;margin-bottom:16px">'      +'<div style="font-size:11px;font-weight:700;letter-spacing:2px;color:var(--text-tertiary);margin-bottom:18px">COMPLETE THE ANALOGY</div>'      +'<div style="font-family:Sora,sans-serif;font-size:20px;font-weight:800;color:var(--text-primary);line-height:1.6">'      +'<span style="color:var(--brand)">'+item.a+'</span> is to <span style="color:var(--brand)">'+item.b+'</span>'      +'<br><span style="font-size:15px;color:var(--text-tertiary);font-weight:400">as</span><br>'      +'<span style="color:#3B82F6">'+item.c+'</span> is to <span style="background:var(--bg-subtle);color:#3B82F6;padding:3px 14px;border-radius:8px;border:2px dashed #3B82F6">?</span>'      +'</div>'      +(item.cat?'<div style="font-size:11px;color:var(--text-tertiary);margin-top:14px;font-weight:600;letter-spacing:1px">'+item.cat.toUpperCase()+'</div>':'')      +'</div>';    choices.forEach(function(ch,ci){     var ltr=['A','B','C','D'][ci];     h+='<button class="reading-choice" id="an-'+ci+'" onclick="answerAnalogy('+ci+','+correct+')">'        +'<span style="background:var(--bg-subtle);border-radius:6px;padding:2px 8px;font-weight:700;margin-right:8px;font-size:12px">'+ltr+'</span>'        +ch+'</button>';   });   h+='<div id="analogy-fb"></div>';   el('s-reading').innerHTML=h; go('s-reading');   READING_ST.total++; }  function answerAnalogy(chosen,correct){   if(READING_ST.answered)return;   READING_ST.answered=true;   var ok=(chosen===correct);flashFeedback(ok);   if(ok)READING_ST.score++;   for(var i=0;i<4;i++){     var b=document.getElementById('an-'+i);     if(!b)continue;     if(i===correct)b.className='reading-choice correct';     else if(i===chosen&&!ok)b.className='reading-choice wrong';     b.onclick=null;   }   var item=_analogyPool[_analogyIdx];   var fb=document.getElementById('analogy-fb');   if(fb){     fb.innerHTML='<div style="background:'+(ok?'var(--green-light)':'var(--red-light)')+';border:1.5px solid '+(ok?'var(--green)':'var(--red)')+';border-radius:12px;padding:12px 16px;margin:12px 0">'       +'<b style="color:'+(ok?'var(--green)':'var(--red)')+'">'+(ok?'✓ Correct! Great pattern thinking!':'✗ Not quite — here is the correct pair:')+'</b>'       +'<div style="font-size:13px;color:var(--text-secondary);margin-top:4px">'+item.a+' → '+item.b+' &nbsp;::&nbsp; '+item.c+' → <b>'+item.d+'</b></div>'       +'</div>'       +'<button onclick="nextAnalogy()" class="btn btn-primary">Next →</button>';   } }  function nextAnalogy(){   READING_ST.answered=false;   _analogyIdx++;   renderAnalogyQ(); }  /* ─── FINISH READING SESSION ────────────────── */ function finishReading(){   var elapsed=Math.round((Date.now()-READING_ST.startTime)/1000);   var pct=READING_ST.total>0?Math.round(READING_ST.score/READING_ST.total*100):0;   var gc=gradeConf(READING_ST.grade);    /* log to history */   try{     addPoints(READING_ST.profileId||ST.profileId,READING_ST.grade,READING_ST.score,READING_ST.total);
-     addHist(READING_ST.grade,{       date:new Date().toISOString(),       lid:'READING_'+READING_ST.mode.toUpperCase(),       score:READING_ST.score,       time:elapsed,       subject:'reading',       total:READING_ST.total     });     syncToCloud(READING_ST.grade);   }catch(e){}    var modeLabel={story:'Reading',vocab:'Vocabulary',analogy:'Analogies'}[READING_ST.mode]||'Reading';   var emoji=pct>=90?'🏆':pct>=80?'⭐':pct>=60?'📖':'💪';    var h='<div class="hdr"><div style="float:left"><button class="bbtn" onclick="renderHome()">🏠 Home</button></div>'        +'<div style="text-align:center;padding-top:6px;font-size:14px;font-weight:700;color:'+gc.color+'">'+modeLabel+' Complete</div>'        +'<div style="clear:both"></div></div>';    h+='<div style="text-align:center;padding:24px 0 16px">'     +'<div style="font-size:56px;margin-bottom:8px">'+emoji+'</div>'     +'<div style="font-family:Sora,sans-serif;font-size:72px;font-weight:900;letter-spacing:-3px;color:var(--text-primary)">'+READING_ST.score+'<span style="font-size:28px;color:var(--text-tertiary);font-weight:400">/'+READING_ST.total+'</span></div>'     +'<div style="font-size:16px;color:var(--text-secondary);margin-top:4px">'+(pct>=90?'Outstanding! You are a reading star! 🌟':pct>=80?'Excellent work — keep it up! 🌟':pct>=60?'Good effort! Every page you read makes you smarter!':'Keep reading — you\'re building an amazing skill for life! 💪')+'</div>'
+    /* fallback if this word can't support the type */     if(type==='synonym'&&(!word.syn||!word.syn.length)) type='meaning';     if(type==='context'&&(!word.ex||!word.ex.length)) type='meaning';     pool.push({word:word, type:type, bank:bank});   });   return pool; }  function renderVocabQ(){   if(_vocabIdx>=_vocabPool.length){finishReading();return;}   READING_ST.answered=false;   var item=_vocabPool[_vocabIdx];   var word=item.word;   var type=item.type;   var bank=item.bank;   var gc=gradeConf(READING_ST.grade);   var prog=Math.round(_vocabIdx/_vocabPool.length*100);    var question='', promptLabel='', choices=[], correct=0, bigDisplay='';    if(type==='meaning'){     /* Word → Definition */     promptLabel='WHAT DOES THIS WORD MEAN?';     bigDisplay='<div style="font-family:Sora,sans-serif;font-size:44px;font-weight:900;color:var(--brand);letter-spacing:-1px;margin-bottom:10px">'+word.w+'</div>';     if(word.ex) bigDisplay+='<div style="font-size:13px;color:var(--text-tertiary);font-style:italic">"'+word.ex+'"</div>';     var wrongDefs=bank.filter(function(v){return v.w!==word.w;}).sort(function(){return Math.random()-0.5;}).slice(0,3).map(function(v){return v.def;});     choices=[word.def].concat(wrongDefs).sort(function(){return Math.random()-0.5;});     correct=choices.indexOf(word.def);    } else if(type==='reverse'){     /* Definition → Word */     promptLabel='WHICH WORD FITS THIS MEANING?';     bigDisplay='<div style="font-size:17px;font-weight:600;color:var(--text-primary);line-height:1.6;padding:0 4px">"'+word.def+'"</div>';     var wrongWords=bank.filter(function(v){return v.w!==word.w;}).sort(function(){return Math.random()-0.5;}).slice(0,3).map(function(v){return v.w;});     choices=[word.w].concat(wrongWords).sort(function(){return Math.random()-0.5;});     correct=choices.indexOf(word.w);    } else if(type==='synonym'){     /* Synonym pick */     var isSyn=Math.random()>0.5;     if(!word.ant||!word.ant.length) isSyn=true;     promptLabel=isSyn?'WHICH WORD IS A SYNONYM OF...':'WHICH WORD IS AN ANTONYM OF...';     bigDisplay='<div style="font-family:Sora,sans-serif;font-size:44px;font-weight:900;color:var(--brand);letter-spacing:-1px">'+word.w+'</div>';     var target=isSyn?word.syn:word.ant;     /* wrong choices: other words from bank */     var wrongSyns=bank.filter(function(v){return v.w!==word.w&&v.w!==target;}).sort(function(){return Math.random()-0.5;}).slice(0,3).map(function(v){return v.w;});     choices=[target].concat(wrongSyns).sort(function(){return Math.random()-0.5;});     correct=choices.indexOf(target);    } else {     /* Context clue — fill in the blank */     promptLabel='WHICH WORD COMPLETES THE SENTENCE?';     var blank=word.ex.replace(new RegExp('\\b'+word.w+'\\b','i'),'______');     /* if no replacement happened, use a generic sentence */     if(blank===word.ex) blank='She showed great ______ when she faced the challenge.';     bigDisplay='<div style="font-size:17px;font-weight:600;color:var(--text-primary);line-height:1.8;padding:4px">"'+blank+'"</div>';     var wrongCtx=bank.filter(function(v){return v.w!==word.w;}).sort(function(){return Math.random()-0.5;}).slice(0,3).map(function(v){return v.w;});     choices=[word.w].concat(wrongCtx).sort(function(){return Math.random()-0.5;});     correct=choices.indexOf(word.w);   }    /* type badge colors */   var typeMeta={     meaning: {label:'Meaning',  color:'#FF5C35', bg:'#FFF7F5'},     reverse: {label:'Definition →Word', color:'#8B5CF6', bg:'#F5F3FF'},     synonym: {label:'Synonym / Antonym', color:'#10B981', bg:'#F0FDF4'},     context: {label:'Context Clue', color:'#3B82F6', bg:'#EFF6FF'},   };   var tm=typeMeta[type]||typeMeta.meaning;    var h='<div class="hdr">'       +'<div style="float:left"><button class="bbtn" onclick="finishReading()">✕ Exit</button></div>'       +'<div style="text-align:center;padding-top:6px;font-size:13px;font-weight:700;color:'+gc.color+'">📝 Vocabulary · '+(_vocabIdx+1)+'/'+_vocabPool.length+'</div>'       +'<div style="clear:both"></div>'       +'<div style="height:4px;background:var(--bg-subtle);border-radius:2px;margin-top:8px">'       +'<div style="height:4px;width:'+prog+'%;background:'+gc.color+';border-radius:2px;transition:width .3s"></div>'       +'</div></div>';    h+='<div class="card card-raised" style="text-align:center;padding:28px 20px;margin-bottom:14px">'      +'<div style="display:inline-block;background:'+tm.bg+';color:'+tm.color+';border-radius:99px;padding:4px 14px;font-size:11px;font-weight:800;letter-spacing:1.5px;margin-bottom:16px">'+tm.label.toUpperCase()+'</div>'      +'<div style="font-size:11px;font-weight:700;letter-spacing:1.5px;color:var(--text-tertiary);margin-bottom:14px">'+promptLabel+'</div>'      +bigDisplay      +'</div>';    choices.forEach(function(ch,ci){     var ltr=['A','B','C','D'][ci];     h+='<button class="reading-choice" id="vc-'+ci+'" onclick="answerVocabR('+ci+','+correct+')">'        +'<span style="background:var(--bg-subtle);border-radius:6px;padding:2px 8px;font-weight:700;margin-right:8px;font-size:12px;flex-shrink:0">'+ltr+'</span>'        +ch+'</button>';   });   h+='<div id="vocab-fb"></div>';   el('s-reading').innerHTML=h; go('s-reading');   READING_ST.total++; }  function answerVocabR(chosen,correct){   if(READING_ST.answered)return;   READING_ST.answered=true;   var ok=(chosen===correct);flashFeedback(ok);   if(ok)READING_ST.score++;   for(var i=0;i<4;i++){     var b=document.getElementById('vc-'+i);     if(!b)continue;     if(i===correct)b.className='reading-choice correct';     else if(i===chosen&&!ok)b.className='reading-choice wrong';     b.onclick=null;   }   var item=_vocabPool[_vocabIdx];   var word=item.word;   var fb=document.getElementById('vocab-fb');   if(fb){     var extra='';     if(word.syn&&word.syn.length) extra+='<span style="margin-right:10px"><b>Synonym:</b> '+word.syn+'</span>';     if(word.ant&&word.ant.length) extra+='<span><b>Antonym:</b> '+word.ant+'</span>';     fb.innerHTML='<div style="background:'+(ok?'var(--green-light)':'var(--red-light)')+';border:1.5px solid '+(ok?'var(--green)':'var(--red)')+';border-radius:12px;padding:12px 16px;margin:12px 0">'       +'<div style="font-weight:700;color:'+(ok?'var(--green)':'var(--red)')+'">'+(ok?'✓ Correct! You know your words!':'✗ Not quite — the word is: <b>'+item.word.w+'</b>. Study the definition and try again!')+'</div>'       +(extra?'<div style="font-size:12px;color:var(--text-secondary);margin-top:6px">'+extra+'</div>':'')       +(word.def?'<div style="font-size:12px;color:var(--text-tertiary);margin-top:4px;font-style:italic">'+word.def+'</div>':'')       +'</div>'       +'<button onclick="nextVocabQ()" class="btn btn-primary">Next →</button>';   } }  function nextVocabQ(){   READING_ST.answered=false;   _vocabIdx++;   renderVocabQ(); } /* ─── ANALOGIES ─────────────────────────────── */ var _analogyPool=[], _analogyIdx=0;  function startAnalogyMode(){   var g=READING_ST.grade;   _analogyPool=ANALOGIES.filter(function(a){return a.grade<=g+1;})                          .sort(function(){return Math.random()-0.5;}).slice(0,20);   _analogyIdx=0;   renderAnalogyQ(); }  function renderAnalogyQ(){   if(_analogyIdx>=_analogyPool.length){finishReading();return;}   var item=_analogyPool[_analogyIdx];   var gc=gradeConf(READING_ST.grade);   var others=_analogyPool.filter(function(a){return a.d!==item.d;});   var wrongs=others.sort(function(){return Math.random()-0.5;}).slice(0,3).map(function(a){return a.d;});   var choices=[item.d].concat(wrongs).sort(function(){return Math.random()-0.5;});   var correct=choices.indexOf(item.d);    var h='<div class="hdr">'       +'<div style="float:left"><button class="bbtn" onclick="finishReading()">✕ Exit</button></div>'       +'<div style="text-align:center;padding-top:6px;font-size:13px;font-weight:700;color:'+gc.color+'">🔗 Analogies · '+(_analogyIdx+1)+'/'+_analogyPool.length+'</div>'       +'<div style="clear:both"></div></div>';    h+='<div class="card card-raised" style="text-align:center;padding:28px 20px;margin-bottom:16px">'      +'<div style="font-size:11px;font-weight:700;letter-spacing:2px;color:var(--text-tertiary);margin-bottom:18px">COMPLETE THE ANALOGY</div>'      +'<div style="font-family:Sora,sans-serif;font-size:20px;font-weight:800;color:var(--text-primary);line-height:1.6">'      +'<span style="color:var(--brand)">'+item.a+'</span> is to <span style="color:var(--brand)">'+item.b+'</span>'      +'<br><span style="font-size:15px;color:var(--text-tertiary);font-weight:400">as</span><br>'      +'<span style="color:#3B82F6">'+item.c+'</span> is to <span style="background:var(--bg-subtle);color:#3B82F6;padding:3px 14px;border-radius:8px;border:2px dashed #3B82F6">?</span>'      +'</div>'      +(item.cat?'<div style="font-size:11px;color:var(--text-tertiary);margin-top:14px;font-weight:600;letter-spacing:1px">'+item.cat.toUpperCase()+'</div>':'')      +'</div>';    choices.forEach(function(ch,ci){     var ltr=['A','B','C','D'][ci];     h+='<button class="reading-choice" id="an-'+ci+'" onclick="answerAnalogy('+ci+','+correct+')">'        +'<span style="background:var(--bg-subtle);border-radius:6px;padding:2px 8px;font-weight:700;margin-right:8px;font-size:12px">'+ltr+'</span>'        +ch+'</button>';   });   h+='<div id="analogy-fb"></div>';   el('s-reading').innerHTML=h; go('s-reading');   READING_ST.total++; }  function answerAnalogy(chosen,correct){   if(READING_ST.answered)return;   READING_ST.answered=true;   var ok=(chosen===correct);flashFeedback(ok);   if(ok)READING_ST.score++;   for(var i=0;i<4;i++){     var b=document.getElementById('an-'+i);     if(!b)continue;     if(i===correct)b.className='reading-choice correct';     else if(i===chosen&&!ok)b.className='reading-choice wrong';     b.onclick=null;   }   var item=_analogyPool[_analogyIdx];   var fb=document.getElementById('analogy-fb');   if(fb){     fb.innerHTML='<div style="background:'+(ok?'var(--green-light)':'var(--red-light)')+';border:1.5px solid '+(ok?'var(--green)':'var(--red)')+';border-radius:12px;padding:12px 16px;margin:12px 0">'       +'<b style="color:'+(ok?'var(--green)':'var(--red)')+'">'+(ok?'✓ Correct! Great pattern thinking!':'✗ Not quite — here is the correct pair:')+'</b>'       +'<div style="font-size:13px;color:var(--text-secondary);margin-top:4px">'+item.a+' → '+item.b+' &nbsp;::&nbsp; '+item.c+' → <b>'+item.d+'</b></div>'       +'</div>'       +'<button onclick="nextAnalogy()" class="btn btn-primary">Next →</button>';   } }  function nextAnalogy(){   READING_ST.answered=false;   _analogyIdx++;   renderAnalogyQ(); }  /* ─── FINISH READING SESSION ────────────────── */ function finishReading(){   var elapsed=Math.round((Date.now()-READING_ST.startTime)/1000);   var pct=READING_ST.total>0?Math.round(READING_ST.score/READING_ST.total*100):0;   var gc=gradeConf(READING_ST.grade);    /* log to history */
+  try{
+    var _rPid=READING_ST.profileId||ST.profileId||'';
+    addPoints(_rPid,READING_ST.grade,READING_ST.score,READING_ST.total,'reading');
+    addHist(READING_ST.grade,{date:new Date().toISOString(),lid:'READING_'+READING_ST.mode.toUpperCase(),score:READING_ST.score,time:elapsed,subject:'reading',total:READING_ST.total,mode:'reading'},_rPid);
+    updateStreak(_rPid);
+    syncToCloud(READING_ST.grade);
+  }catch(e){}    var modeLabel={story:'Reading',vocab:'Vocabulary',analogy:'Analogies'}[READING_ST.mode]||'Reading';   var emoji=pct>=90?'🏆':pct>=80?'⭐':pct>=60?'📖':'💪';    var h='<div class="hdr"><div style="float:left"><button class="bbtn" onclick="renderHome()">🏠 Home</button></div>'        +'<div style="text-align:center;padding-top:6px;font-size:14px;font-weight:700;color:'+gc.color+'">'+modeLabel+' Complete</div>'        +'<div style="clear:both"></div></div>';    h+='<div style="text-align:center;padding:24px 0 16px">'     +'<div style="font-size:56px;margin-bottom:8px">'+emoji+'</div>'     +'<div style="font-family:Sora,sans-serif;font-size:72px;font-weight:900;letter-spacing:-3px;color:var(--text-primary)">'+READING_ST.score+'<span style="font-size:28px;color:var(--text-tertiary);font-weight:400">/'+READING_ST.total+'</span></div>'     +'<div style="font-size:16px;color:var(--text-secondary);margin-top:4px">'+(pct>=90?'Outstanding! You are a reading star! 🌟':pct>=80?'Excellent work — keep it up! 🌟':pct>=60?'Good effort! Every page you read makes you smarter!':'Keep reading — you\'re building an amazing skill for life! 💪')+'</div>'
     +'</div>';
 
   h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">';
@@ -11455,11 +11538,13 @@ function finishGrammarR(){
   var grade=READING_ST.grade||1;
   var pid=READING_ST.profileId||'';
 
-  /* Save to history */
+  /* Award points + save history */
   if(pid){
-    var h4=loadHist(grade,pid)||[];
-    h4.push({lid:'READING_GRAMMAR',date:Date.now(),time:0,score:_grammarScore,total:total,ok:pct>=70?1:0});
-    saveHist(grade,h4,pid);
+    var _grElapsed=Math.round((Date.now()-(READING_ST.startTime||Date.now()))/1000);
+    addPoints(pid,grade,_grammarScore,total,'reading');
+    addHist(grade,{date:new Date().toISOString(),lid:'READING_GRAMMAR',score:_grammarScore,
+      time:_grElapsed,subject:'reading',total:total,mode:'reading'},pid);
+    updateStreak(pid); syncToCloud(grade);
   }
 
   var gc=gradeConf(grade);
@@ -11554,6 +11639,18 @@ function answerPhonics(chosen,correct){
 function nextPhonicsQ(){ renderPhonicsQ(); }
 function finishPhonics(){
   var total=_phonicsPool.length, pct=Math.round(_phonicsScore/total*100);
+  /* Award points + save history */
+  try{
+    var _phPid=READING_ST.profileId||ST.profileId||'';
+    var _phGrade=READING_ST.grade||1;
+    var _phElapsed=Math.round((Date.now()-(READING_ST.startTime||Date.now()))/1000);
+    if(_phPid){
+      addPoints(_phPid,_phGrade,_phonicsScore,total,'reading');
+      addHist(_phGrade,{date:new Date().toISOString(),lid:'READING_PHONICS',score:_phonicsScore,
+        time:_phElapsed,subject:'reading',total:total,mode:'reading'},_phPid);
+      updateStreak(_phPid); syncToCloud(_phGrade);
+    }
+  }catch(e){}
   var emoji=pct>=90?'🏆':pct>=70?'⭐':'📚';
   var phonMsg=pct>=90?'Perfect! Your phonics skills are superstar level! 🏆':
     pct>=70?'Great job! Strong phonics = strong reading! ⭐':
@@ -11643,6 +11740,18 @@ function answerSkills(chosen,correct){
 function nextSkillsQ(){ renderSkillsQ(); }
 function finishSkills(){
   var total=_skillsPool.length, pct=Math.round(_skillsScore/total*100);
+  /* Award points + save history */
+  try{
+    var _skPid=READING_ST.profileId||ST.profileId||'';
+    var _skGrade=READING_ST.grade||1;
+    var _skElapsed=Math.round((Date.now()-(READING_ST.startTime||Date.now()))/1000);
+    if(_skPid){
+      addPoints(_skPid,_skGrade,_skillsScore,total,'reading');
+      addHist(_skGrade,{date:new Date().toISOString(),lid:'READING_SKILLS',score:_skillsScore,
+        time:_skElapsed,subject:'reading',total:total,mode:'reading'},_skPid);
+      updateStreak(_skPid); syncToCloud(_skGrade);
+    }
+  }catch(e){}
   var emoji=pct>=90?'🏆':pct>=70?'⭐':'📚';
   var skillMsg=pct>=90?'Incredible! You think like a real literary scholar! 🏆':
     pct>=70?'Strong reading skills! You can find evidence and analyze text like a pro! ⭐':
@@ -12093,6 +12202,7 @@ function getDrillDirections(o, display){
 }
 
 function tapChoice(val){
+  _clearIdleTimer();
   ST.inp = String(val);
   subDrill();
 }
