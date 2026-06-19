@@ -1115,10 +1115,16 @@ function getPoints(pid){
     if(!data.readTotal)data.readTotal=0;
     if(!data.mathWeekly)data.mathWeekly=0;
     if(!data.readWeekly)data.readWeekly=0;
+    /* One-time migration: backfill pre-Task28 totals into math buckets */
+    if(!data._ptMigrated){
+      if((data.total||0)>0&&data.mathTotal===0&&data.readTotal===0){data.mathTotal=data.total;}
+      if((data.weekly||0)>0&&data.mathWeekly===0&&data.readWeekly===0){data.mathWeekly=data.weekly;}
+      data._ptMigrated=true;
+    }
     var wk=getWeekStr();
     if(data.weekOf!==wk){data.weekly=0;data.mathWeekly=0;data.readWeekly=0;data.weekOf=wk;localStorage.setItem('smart_pr_'+pid+'_pts',JSON.stringify(data));}
     return data;
-  }catch(e){return{total:0,weekly:0,weekOf:getWeekStr()};}
+  }catch(e){return{total:0,weekly:0,weekOf:getWeekStr(),mathTotal:0,readTotal:0,mathWeekly:0,readWeekly:0,_ptMigrated:true};}
 }
 function addPoints(pid,grade,correct,total,subject){
   if(!correct||correct<=0)return 0;
@@ -7009,7 +7015,7 @@ function renderHome(){
     h+='<span style="font-size:11px;font-weight:700;color:#6366F1">'+(_cpts.weekly||0)+' pts this week</span>';
     h+='<span style="font-size:11px;color:'+_crank.color+';font-weight:600">· '+_crank.icon+' '+_crank.title+'</span>';
     h+='</div>';
-        if(_mathW||_readW){h+='<div style="display:flex;gap:10px;margin-top:2px"><span style="font-size:10px;color:var(--text-tertiary)">📐 '+_mathW+' math</span><span style="font-size:10px;color:var(--text-tertiary)">📚 '+_readW+' reading</span></div>';}
+        if(_cpts.weekly>0){var _mbr='';if(_mathW>0)_mbr+='<span style="font-size:10px;color:var(--text-tertiary)">📐 '+_mathW+' math</span>';if(_mathW>0&&_readW>0)_mbr+='<span style="font-size:10px;color:var(--text-tertiary)"> · </span>';if(_readW>0)_mbr+='<span style="font-size:10px;color:var(--text-tertiary)">📚 '+_readW+' reading</span>';if(_mbr)h+='<div style="display:flex;gap:4px;margin-top:2px;align-items:center">'+_mbr+'</div>';}
 h+='</div></div>';
 
     /* Daily 3-day boxes */
@@ -7260,7 +7266,7 @@ function renderPrizeBoard(grade,pid){
   h+='<div class="card" style="text-align:center;margin-bottom:14px">';
   var _pMath=getPoints(pid).mathTotal||0,_pRead=getPoints(pid).readTotal||0;
   h+='<div style="font-size:13px;color:var(--text-secondary)">You have <strong style="color:'+gc.color+'">'+pts+' points</strong> &mdash; '+Math.min(unlocked,48)+' of 48 prizes unlocked</div>';
-  if(_pMath||_pRead){h+='<div style="font-size:11px;color:var(--text-tertiary);margin-top:4px">📐 Math: '+_pMath+' pts &nbsp;·&nbsp; 📚 Reading: '+_pRead+' pts</div>';}
+  if(pts>0){var _pbr='';if(_pMath>0)_pbr+='📐 Math: '+_pMath+' pts';if(_pMath>0&&_pRead>0)_pbr+=' &nbsp;·&nbsp; ';if(_pRead>0)_pbr+='📚 Reading: '+_pRead+' pts';if(_pbr)h+='<div style="font-size:11px;color:var(--text-tertiary);margin-top:4px">'+_pbr+'</div>';}
   if(unlocked<48){
     h+='<div class="pbar" style="margin-top:10px"><div class="pbar-f" style="width:'+prog+'%;background:'+gc.color+'"></div></div>';
     var nr8=prizeRarity(unlocked);
