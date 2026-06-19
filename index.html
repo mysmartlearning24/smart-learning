@@ -7015,7 +7015,7 @@ function renderHome(){
     h+='<span style="font-size:11px;font-weight:700;color:#6366F1">'+(_cpts.weekly||0)+' pts this week</span>';
     h+='<span style="font-size:11px;color:'+_crank.color+';font-weight:600">· '+_crank.icon+' '+_crank.title+'</span>';
     h+='</div>';
-        if(_cpts.weekly>0){var _mbr='';if(_mathW>0)_mbr+='<span style="font-size:10px;color:var(--text-tertiary)">📐 '+_mathW+' math</span>';if(_mathW>0&&_readW>0)_mbr+='<span style="font-size:10px;color:var(--text-tertiary)"> · </span>';if(_readW>0)_mbr+='<span style="font-size:10px;color:var(--text-tertiary)">📚 '+_readW+' reading</span>';if(_mbr)h+='<div style="display:flex;gap:4px;margin-top:2px;align-items:center">'+_mbr+'</div>';}
+        h+='<div style="display:flex;gap:6px;margin-top:2px;align-items:center"><span style="font-size:10px;color:var(--text-tertiary)">📐 '+_mathW+' math</span><span style="font-size:10px;color:var(--text-tertiary)"> · </span><span style="font-size:10px;color:var(--text-tertiary)">📚 '+_readW+' reading</span></div>';
 h+='</div></div>';
 
     /* Daily 3-day boxes */
