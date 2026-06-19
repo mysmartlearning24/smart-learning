@@ -1,6 +1,6 @@
 /* SMART Learning service worker — instant repeat loads + offline support */
-var CACHE='smart-app-v1';
-var CDN_CACHE='smart-cdn-v1';
+var CACHE='smart-app-v2';
+var CDN_CACHE='smart-cdn-v2';
 self.addEventListener('install',function(e){self.skipWaiting();});
 self.addEventListener('activate',function(e){
   e.waitUntil(caches.keys().then(function(keys){
