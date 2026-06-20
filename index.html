@@ -27,7 +27,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="color-scheme" content="light dark">
-<title>SMART v6.10</title>
+<title>SMART v6.12</title>
 <script>
 /* Early error handler — catches Firebase SDK failures before main script runs */
 window.onerror=function(msg,src,line,col,err){
@@ -16051,3 +16051,208 @@ function finishWritingMode(){
 }
 
 
+/* ── Reading Hub ── */
+function renderReadingHub(grade, pid){
+  READING_ST.grade=grade||ST.grade||1;
+  READING_ST.profileId=pid||ST.profileId||'';
+  var gc=gradeConf(grade);
+  var stories=getStoriesForGrade(grade);
+
+  var h='<div class="hdr"><div style="float:left"><button class="bbtn" onclick="renderCurriculum('+grade+',\''+pid+'\')">← Back</button></div>'
+       +'<div style="text-align:center;padding-top:6px;font-size:16px;font-weight:700;color:'+gc.color+'">📚 Language Arts</div>'
+       +'<div style="clear:both"></div></div>';
+
+  h+='<div style="text-align:center;padding:16px 0 20px">'
+    +'<div style="font-size:13px;color:var(--text-tertiary);font-weight:600;letter-spacing:1px">'+gc.label.toUpperCase()+' GRADE</div>'
+    +'<div style="font-size:14px;color:var(--text-secondary);margin-top:4px">'+stories.length+' stor'+(stories.length===1?'y':'ies')+' · Vocabulary · Analogies</div>'
+    +'</div>';
+
+  /* 3 mode cards */
+  var modes=[
+    {key:'story',icon:'📖',title:'Reading Comprehension',sub:stories.length+' grade-level stories with questions',color:gc.color,bg:gc.color+'18'},
+    {key:'vocab',icon:'📝',title:'Vocabulary',sub:'Learn definitions, synonyms & antonyms',color:'#3B82F6',bg:'#3B82F618'},
+    {key:'analogy',icon:'🔗',title:'Analogies',sub:'SAT-style: A is to B as C is to ?',color:'#8B5CF6',bg:'#8B5CF618'},
+    {key:'grammar',icon:'✏️',title:'Grammar',sub:getGrammarPool(grade).length+' questions · K-8 ELA skills',color:'#D97706',bg:'#D9770618'},
+    {key:'phonics',icon:'🔤',title:'Phonics & Spelling',sub:getPhonicsPool(grade).length+' questions · sounds, blends, patterns',color:'#059669',bg:'#05966918',gradeMax:2},
+    {key:'skills',icon:'🎯',title:'Reading Skills',sub:getSkillsPool(grade).length+' passages · inference, main idea, analysis',color:'#DC2626',bg:'#DC262618'},
+  ];
+
+  modes.forEach(function(m){
+    if(m.gradeMax && grade > m.gradeMax) return; /* hide grade-restricted modes */
+    h+='<div class="card" style="margin-bottom:12px;padding:18px 20px;display:flex;align-items:center;gap:16px;cursor:pointer;border:1.5px solid '+m.color+'22" onclick="startReadingMode('+grade+',\''+pid+'\',\''+m.key+'\')">'
+       +'<div style="width:52px;height:52px;background:'+m.bg+';border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0">'+m.icon+'</div>'
+       +'<div style="flex:1">'
+       +'<div style="font-family:Sora,sans-serif;font-size:16px;font-weight:700;color:var(--text-primary)">'+m.title+'</div>'
+       +'<div style="font-size:13px;color:var(--text-secondary);margin-top:2px">'+m.sub+'</div>'
+       +'</div>'
+       +'<div style="font-size:22px;color:'+m.color+'">›</div>'
+       +'</div>';
+  });
+
+  el('s-reading').innerHTML=h;
+  go('s-reading');
+}
+
+function renderReadingQuestion(){
+  var pool  = READING_ST.storyPool;
+  var story = pool[READING_ST.storyIdx];
+  if(!story){ finishReading(); return; }
+  var q = story.qs[READING_ST.questionIdx];
+  if(!q){ finishReading(); return; }
+
+  READING_ST.answered = false;
+  var gc  = gradeConf(READING_ST.grade);
+  var qNum = READING_ST.questionIdx+1;
+  var qTot = story.qs.length;
+  var prog = Math.round((qNum-1)/qTot*100);
+
+  var h='<div class="hdr">'
+      +'<div style="float:left"><button class="bbtn" onclick="finishReading()">✕ Exit</button></div>'
+      +'<div style="text-align:center;padding-top:6px;font-size:13px;font-weight:700;color:'+gc.color+'">📖 Reading · '+qNum+' / '+qTot+'</div>'
+      +'<div style="clear:both"></div>'
+      +'<div style="height:4px;background:var(--bg-subtle);border-radius:2px;margin-top:8px">'
+      +'<div style="height:4px;width:'+prog+'%;background:'+gc.color+';border-radius:2px;transition:width .3s"></div>'
+      +'</div></div>';
+
+  /* passage */
+  h+='<div class="reading-card">'
+     +'<div class="story-title">'+story.title+'</div>'
+     +'<div style="font-size:14px;line-height:1.9;color:var(--text-primary)">'+story.text.replace(/\n/g,'<br>')+'</div>';
+  if(story.vocab&&story.vocab.length){
+    h+='<div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border)">'
+       +'<div style="font-size:10px;font-weight:700;letter-spacing:1px;color:var(--text-tertiary);margin-bottom:6px">VOCABULARY</div>';
+    story.vocab.forEach(function(v){
+      h+='<div style="font-size:13px;margin-bottom:3px;color:var(--text-secondary)"><b style="color:var(--brand)">'+v.w+'</b> — '+v.d+'</div>';
+    });
+    h+='</div>';
+  }
+  h+='</div>';
+
+  /* question + choices */
+  h+='<div class="card" style="text-align:left;margin-bottom:12px">'
+     +'<div style="font-size:15px;font-weight:600;color:var(--text-primary);line-height:1.5;margin-bottom:14px">'+q.q+'</div>';
+  q.ch.forEach(function(choice,ci){
+    var ltr=['A','B','C','D'][ci];
+    h+='<button class="reading-choice" id="rc-'+ci+'" onclick="answerReading('+ci+','+q.an+')">'
+       +'<span style="background:var(--bg-subtle);border-radius:6px;padding:2px 8px;font-weight:700;margin-right:8px;font-size:12px;flex-shrink:0">'+ltr+'</span>'
+       +choice+'</button>';
+  });
+  h+='</div><div id="reading-feedback"></div>';
+
+  el('s-reading').innerHTML=h;
+  go('s-reading');
+  READING_ST.total++;
+}
+
+function tapChoice(val){
+  ST.inp = String(val);
+  subDrill();
+}
+
+function manualSync(){
+  var btn=document.getElementById('sync-btn');
+  if(btn){btn.innerHTML='☁ Syncing...';btn.disabled=true;btn.style.opacity='0.7';}
+  if(!db){
+    if(btn){btn.innerHTML='✗ No cloud connection';btn.style.color='#DC2626';btn.disabled=false;}
+    return;
+  }
+  var profiles=loadProfiles();
+  if(!profiles.length||!SESSION.familyId||SESSION.familyId==='master'){
+    if(btn){btn.innerHTML='✗ Nothing to sync';btn.disabled=false;}
+    return;
+  }
+  var famId=SESSION.familyId;
+
+  /* ONLY sync profiles that have actual history on THIS device */
+  /* This prevents Jaivin's tablet from touching Harveen's cloud data */
+  var toSync=profiles.filter(function(p){
+    if(!p.id||!p.name) return false;
+    var hist=localStorage.getItem('smart_pr_'+p.id+'_h');
+    var prog=localStorage.getItem('smart_pr_'+p.id+'_p');
+    return (hist&&hist.length>10)||(prog&&prog.length>10);
+  });
+
+  if(!toSync.length){
+    /* Nothing to push, but still pull from cloud to get other devices\'s data */
+    pullFromCloud(function(changed){
+      if(btn){
+        if(changed){
+          _lastCloudPull=0;
+          btn.innerHTML='✓ Updated from cloud';
+          btn.style.background='#ECFDF5';btn.style.color='#065F46';btn.style.borderColor='#6EE7B7';
+          renderHome();
+        } else {
+          btn.innerHTML='✓ Already up to date';
+          btn.style.color='#065F46';
+        }
+        btn.disabled=false;btn.style.opacity='1';
+      }
+    });
+    return;
+  }
+
+  var writes=0, errors=0, total=toSync.length;
+
+  toSync.forEach(function(p){
+    var hist=localStorage.getItem('smart_pr_'+p.id+'_h');
+    var prog=localStorage.getItem('smart_pr_'+p.id+'_p');
+    /* Build the Firestore document — only include fields we actually have */
+    var safeName=p.name.toLowerCase().replace(/[^a-z0-9]/g,'_');
+    var profileData={};
+    profileData[safeName+'_name']=p.name;
+    profileData[safeName+'_grade']=p.grade||1;
+    profileData[safeName+'_sync']=Date.now();
+    if(hist){profileData[safeName+'_history']=hist;}
+    if(prog){profileData[safeName+'_progress']=prog;}
+
+    function onWrite(){ writes++; checkDone(); }
+    function onError(e){ errors++; console.log('Sync error:',e); checkDone(); }
+    function checkDone(){
+      if(writes+errors<total) return;
+      if(btn){
+        if(errors===0){
+          btn.innerHTML='✓ Synced '+writes+' profile'+(writes>1?'s':'');
+          btn.style.background='#ECFDF5';btn.style.color='#065F46';btn.style.borderColor='#6EE7B7';
+        } else {
+          btn.innerHTML='⚠ '+writes+' ok, '+errors+' failed — check connection';
+          btn.style.color='#DC2626';
+        }
+        btn.disabled=false;btn.style.opacity='1';
+      }
+    }
+
+    /* Write to a single family document — no profile ID matching needed */
+    db.collection('family_progress').doc(famId)
+      .set(profileData,{merge:true}).then(onWrite).catch(onError);
+  });
+
+  /* After push, pull from cloud to ensure this device has all data from other devices */
+  setTimeout(function(){
+    pullFromCloud(function(changed){
+      var btn2=document.getElementById('sync-btn');
+      if(changed&&btn2){
+        _lastCloudPull=0;/* allow re-render */
+        btn2.innerHTML='✓ Synced & updated from cloud';
+        btn2.style.background='#ECFDF5';btn2.style.color='#065F46';btn2.style.borderColor='#6EE7B7';
+      }
+    });
+  }, 1500);
+}
+initDarkMode();
+try{
+  if(loadSession()){
+    setupCloudListener();
+    renderHome();
+  } else {
+    go('s-login');
+    initLoginScreen();
+  }
+}
+catch(e){
+  document.body.style.cssText='background:#0d1117;color:#fff;padding:30px;font-family:sans-serif;';
+  document.body.innerHTML='<h2 style="color:#ff5050">Error</h2><pre style="color:#FFD700;font-size:11px;margin-top:12px;white-space:pre-wrap">'+String(e)+'\n'+(e.stack||'')+'</pre>';
+}
+</script>
+<button class="dark-toggle" onclick="toggleDark()" id="dark-btn" title="Toggle dark mode">🌙</button>
+</body>
+</html>
