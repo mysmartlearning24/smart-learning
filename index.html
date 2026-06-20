@@ -12683,6 +12683,7 @@ function _generateReportCard(pid,grade,hist4,prog4){
     var s=hist4[i];
     if(!s||!s.date)continue;
     if(new Date(s.date)<cutoff)continue;
+    if((s.score===0||s.score===undefined)&&(s.time===0||s.time===undefined||s.time===null))continue;
     var subj=s.mode||s.subject||'compute';
     if(!subjectMap[subj])subjectMap[subj]={score:0,total:0,sessions:0};
     subjectMap[subj].score+=s.score||0;
@@ -12943,6 +12944,7 @@ function renderReportsInner(grade,pid){
     var modeLabel={compute:'Math',reading:'Reading',spelling:'Spelling',wordprob:'Word Probs',geometry:'Geometry',stats:'Statistics',grammar:'Grammar',concept:'Concept',drill:'Drill'};
     for(var i=0;i<lim;i++){
       var x=h[i];
+      if((x.score===0||x.score===undefined)&&(x.time===0||x.time===undefined||x.time===null))continue;
       var d2=new Date(x.date);
       var ds=(d2.getMonth()+1)+'/'+d2.getDate();
       var hr=d2.getHours();var ampm=hr>=12?'pm':'am';hr=hr%12;if(hr===0)hr=12;
