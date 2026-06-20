@@ -27,7 +27,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="color-scheme" content="light dark">
-<title>SMART v6.12</title>
+<title>SMART v6.13</title>
 <script>
 /* Early error handler — catches Firebase SDK failures before main script runs */
 window.onerror=function(msg,src,line,col,err){
@@ -16102,6 +16102,7 @@ function finishWritingMode(){
 
 /* ── Reading Hub ── */
 function renderReadingHub(grade, pid){
+  try{
   READING_ST.grade=grade||ST.grade||1;
   READING_ST.profileId=pid||ST.profileId||'';
   var gc=gradeConf(grade);
@@ -16150,6 +16151,7 @@ function renderReadingHub(grade, pid){
   h+='<div style="height:32px"></div>';
   el('s-reading').innerHTML=h;
   go('s-reading');
+  }catch(e){el('s-reading').innerHTML='<div style="padding:20px"><b style="color:red">LA Hub Error — please report:</b><pre>'+String(e)+'</pre></div>';go('s-reading');}
 }
 
 function renderReadingQuestion(){
