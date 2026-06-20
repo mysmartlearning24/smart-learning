@@ -16103,6 +16103,7 @@ function finishWritingMode(){
 /* ── Reading Hub ── */
 function renderReadingHub(grade, pid){
   try{
+  console.log('renderReadingHub called',grade,pid);
   READING_ST.grade=grade||ST.grade||1;
   READING_ST.profileId=pid||ST.profileId||'';
   var gc=gradeConf(grade);
@@ -16151,7 +16152,7 @@ function renderReadingHub(grade, pid){
   h+='<div style="height:32px"></div>';
   el('s-reading').innerHTML=h;
   go('s-reading');
-  }catch(e){el('s-reading').innerHTML='<div style="padding:20px"><b style="color:red">LA Hub Error — please report:</b><pre>'+String(e)+'</pre></div>';go('s-reading');}
+  }catch(e){alert('LA Hub crash: '+String(e.message||e));}
 }
 
 function renderReadingQuestion(){
@@ -16363,6 +16364,8 @@ function buildLACurriculum(grade){
 
 
 function startLALevel(grade, pid, catId, lvIdx){
+  console.log('startLALevel',grade,pid,catId,lvIdx);
+  try{
   var curriculum=buildLACurriculum(grade);
   var cat=null;for(var i=0;i<curriculum.length;i++){if(curriculum[i].id===catId){cat=curriculum[i];break;}}
   if(!cat||!cat.lv[lvIdx])return;
@@ -16389,6 +16392,7 @@ function startLALevel(grade, pid, catId, lvIdx){
     READING_ST.score=0;READING_ST.total=0;READING_ST.startTime=Date.now();
     renderReadingQuestion();go('s-reading');
   }
+  }catch(e){alert('LA Level crash: '+String(e.message||e));}
 }
 
 
