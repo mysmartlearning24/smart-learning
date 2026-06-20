@@ -16240,6 +16240,92 @@ function manualSync(){
     });
   }, 1500);
 }
+
+/* ── Reading Engine (restored) ── */
+
+function getStoriesForGrade(g){
+  var gs=String(g);
+  if(STORIES[gs]&&STORIES[gs].length) return STORIES[gs];
+  /* fallback to adjacent grade */
+  for(var d=1;d<=3;d++){
+    if(STORIES[String(g-d)]&&STORIES[String(g-d)].length) return STORIES[String(g-d)];
+    if(STORIES[String(g+d)]&&STORIES[String(g+d)].length) return STORIES[String(g+d)];
+  }
+  return [];
+}
+
+function startReadingMode(grade, pid, mode){
+  READING_ST.grade = grade||ST.grade||1;
+  READING_ST.profileId = pid||ST.profileId||'';
+  READING_ST.mode = mode||'story';
+  READING_ST.score = 0;
+  READING_ST.total = 0;
+  READING_ST.answered = false;
+  READING_ST.startTime = Date.now();
+  if(mode==='vocab')      { startVocabMode(); return; }
+  if(mode==='analogy')    { startAnalogyMode(); return; }
+  if(mode==='grammar')    { startGrammarMode(grade,pid); return; }
+  if(mode==='phonics')    { startPhonicsMode(grade,pid); return; }
+  if(mode==='skills')     { startSkillsMode(grade,pid); return; }
+  /* story mode */
+  var pool = getStoriesForGrade(READING_ST.grade);
+  if(!pool.length){ alert('No stories yet for this grade. Coming soon!'); return; }
+  READING_ST.storyPool = pool.slice().sort(function(){return Math.random()-0.5;});
+  READING_ST.storyIdx = 0;
+  READING_ST.questionIdx = 0;
+  renderReadingQuestion();
+}
+
+function nextReadingQ(){
+  READING_ST.questionIdx++;
+  var story=READING_ST.storyPool[READING_ST.storyIdx];
+  if(READING_ST.questionIdx>=story.qs.length){
+    READING_ST.storyIdx++;
+    READING_ST.questionIdx=0;
+    if(READING_ST.storyIdx>=READING_ST.storyPool.length){ finishReading(); return; }
+  }
+  renderReadingQuestion();
+}
+
+function answerReading(chosen, correct){
+  if(READING_ST.answered)return;
+  READING_ST.answered=true;
+  var ok=(chosen===correct);
+  if(ok)READING_ST.score++;
+  for(var i=0;i<4;i++){
+    var b=document.getElementById('rc-'+i);
+    if(!b)continue;
+    if(i===correct)b.className='reading-choice correct';
+    else if(i===chosen&&!ok)b.className='reading-choice wrong';
+    b.onclick=null;
+  }
+  var story=READING_ST.storyPool[READING_ST.storyIdx];
+  var q=story.qs[READING_ST.questionIdx];
+  var fb=document.getElementById('reading-feedback');
+  if(fb){
+    fb.innerHTML='<div style="background:'+(ok?'var(--green-light)':'var(--red-light)')+';border:1.5px solid '+(ok?'var(--green)':'var(--red)')+';border-radius:12px;padding:12px 16px;margin-bottom:12px">'
+      +'<div style="font-weight:700;color:'+(ok?'var(--green)':'var(--red)')+'">'+(ok?'✓ Correct! Well done!':'✗ Not quite — the correct answer was:')+'</div>'
+      +(ok?'':'<div style="font-size:13px;color:var(--text-secondary);margin-top:4px">Answer: <b>'+q.ch[correct]+'</b></div>')
+      +'</div>'
+      +'<button onclick="nextReadingQ()" class="btn btn-primary">Next →</button>';
+  }
+}
+
+function finishReading(){   var elapsed=Math.round((Date.now()-READING_ST.startTime)/1000);   var pct=READING_ST.total>0?Math.round(READING_ST.score/READING_ST.total*100):0;   var gc=gradeConf(READING_ST.grade);    /* log to history */   try{     addPoints(READING_ST.profileId||ST.profileId,READING_ST.grade,READING_ST.score,READING_ST.total);
+     addHist(READING_ST.grade,{       date:new Date().toISOString(),       lid:'READING_'+READING_ST.mode.toUpperCase(),       score:READING_ST.score,       time:elapsed,       subject:'reading',       total:READING_ST.total     });     syncToCloud(READING_ST.grade);   }catch(e){}    var modeLabel={story:'Reading',vocab:'Vocabulary',analogy:'Analogies'}[READING_ST.mode]||'Reading';   var emoji=pct>=90?'🏆':pct>=80?'⭐':pct>=60?'📖':'💪';    var h='<div class="hdr"><div style="float:left"><button class="bbtn" onclick="renderHome()">🏠 Home</button></div>'        +'<div style="text-align:center;padding-top:6px;font-size:14px;font-weight:700;color:'+gc.color+'">'+modeLabel+' Complete</div>'        +'<div style="clear:both"></div></div>';    h+='<div style="text-align:center;padding:24px 0 16px">'     +'<div style="font-size:56px;margin-bottom:8px">'+emoji+'</div>'     +'<div style="font-family:Sora,sans-serif;font-size:72px;font-weight:900;letter-spacing:-3px;color:var(--text-primary)">'+READING_ST.score+'<span style="font-size:28px;color:var(--text-tertiary);font-weight:400">/'+READING_ST.total+'</span></div>'     +'<div style="font-size:16px;color:var(--text-secondary);margin-top:4px">'+(pct>=90?'Outstanding! You are a reading star! 🌟':pct>=80?'Excellent work — keep it up! 🌟':pct>=60?'Good effort! Every page you read makes you smarter!':'Keep reading — you\'re building an amazing skill for life! 💪')+'</div>'
+    +'</div>';
+
+  h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">';
+  h+='<button class="hb btn-primary" onclick="startReadingMode('+READING_ST.grade+',\''+READING_ST.profileId+'\',\'story\')">📖 Stories</button>';
+  h+='<button class="hb btn-primary" onclick="startReadingMode('+READING_ST.grade+',\''+READING_ST.profileId+'\',\'vocab\')" style="background:#3B82F6">📝 Vocab</button>';
+  h+='<button class="hb btn-primary" onclick="startReadingMode('+READING_ST.grade+',\''+READING_ST.profileId+'\',\'analogy\')" style="background:#8B5CF6">🔗 Analogies</button>';
+  h+='<button class="hb" style="background:var(--bg-subtle);color:var(--text-secondary)" onclick="renderCurriculum('+READING_ST.grade+',\''+READING_ST.profileId+'\')">📚 Math</button>';
+  h+='</div>';
+
+  el('s-reading').innerHTML=h;
+  go('s-reading');
+}
+
 initDarkMode();
 try{
   if(loadSession()){
