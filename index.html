@@ -16105,39 +16105,49 @@ function renderReadingHub(grade, pid){
   READING_ST.grade=grade||ST.grade||1;
   READING_ST.profileId=pid||ST.profileId||'';
   var gc=gradeConf(grade);
-  var stories=getStoriesForGrade(grade);
+  var prog=loadLAProg(grade,pid);
+  var curriculum=buildLACurriculum(grade);
 
   var h='<div class="hdr"><div style="float:left"><button class="bbtn" onclick="renderCurriculum('+grade+',\''+pid+'\')">← Back</button></div>'
        +'<div style="text-align:center;padding-top:6px;font-size:16px;font-weight:700;color:'+gc.color+'">📚 Language Arts</div>'
        +'<div style="clear:both"></div></div>';
+  h+='<div style="padding:6px 0 2px;text-align:center;font-size:11px;color:var(--text-tertiary);font-weight:700;letter-spacing:.5px;text-transform:uppercase">'+gc.label+' · Tap a level to begin</div>';
 
-  h+='<div style="text-align:center;padding:16px 0 20px">'
-    +'<div style="font-size:13px;color:var(--text-tertiary);font-weight:600;letter-spacing:1px">'+gc.label.toUpperCase()+' GRADE</div>'
-    +'<div style="font-size:14px;color:var(--text-secondary);margin-top:4px">'+stories.length+' stor'+(stories.length===1?'y':'ies')+' · Vocabulary · Analogies</div>'
-    +'</div>';
+  curriculum.forEach(function(cat){
+    if(!cat.lv||!cat.lv.length)return;
+    var passed=0;
+    cat.lv.forEach(function(lv){if(prog[lv.id]&&prog[lv.id].passed)passed++;});
+    var pct=Math.round(passed/cat.lv.length*100);
 
-  /* 3 mode cards */
-  var modes=[
-    {key:'story',icon:'📖',title:'Reading Comprehension',sub:stories.length+' grade-level stories with questions',color:gc.color,bg:gc.color+'18'},
-    {key:'vocab',icon:'📝',title:'Vocabulary',sub:'Learn definitions, synonyms & antonyms',color:'#3B82F6',bg:'#3B82F618'},
-    {key:'analogy',icon:'🔗',title:'Analogies',sub:'SAT-style: A is to B as C is to ?',color:'#8B5CF6',bg:'#8B5CF618'},
-    {key:'grammar',icon:'✏️',title:'Grammar',sub:getGrammarPool(grade).length+' questions · K-8 ELA skills',color:'#D97706',bg:'#D9770618'},
-    {key:'phonics',icon:'🔤',title:'Phonics & Spelling',sub:getPhonicsPool(grade).length+' questions · sounds, blends, patterns',color:'#059669',bg:'#05966918',gradeMax:2},
-    {key:'skills',icon:'🎯',title:'Reading Skills',sub:getSkillsPool(grade).length+' passages · inference, main idea, analysis',color:'#DC2626',bg:'#DC262618'},
-  ];
+    h+='<div style="margin:14px 0 0">';
+    h+='<div style="display:flex;align-items:center;gap:8px;padding:0 2px;margin-bottom:5px">';
+    h+='<span style="font-size:17px">'+cat.icon+'</span>';
+    h+='<span style="font-size:14px;font-weight:800;color:var(--text-primary);flex:1">'+cat.nm+'</span>';
+    h+='<span style="font-size:12px;font-weight:700;color:'+cat.color+'">'+passed+'/'+cat.lv.length+'</span>';
+    h+='</div>';
+    h+='<div style="background:var(--bg-subtle);border-radius:99px;height:5px;margin-bottom:8px;overflow:hidden">';
+    h+='<div style="width:'+pct+'%;background:'+cat.color+';height:100%;border-radius:99px;transition:width .4s"></div></div>';
 
-  modes.forEach(function(m){
-    if(m.gradeMax && grade > m.gradeMax) return; /* hide grade-restricted modes */
-    h+='<div class="card" style="margin-bottom:12px;padding:18px 20px;display:flex;align-items:center;gap:16px;cursor:pointer;border:1.5px solid '+m.color+'22" onclick="startReadingMode('+grade+',\''+pid+'\',\''+m.key+'\')">'
-       +'<div style="width:52px;height:52px;background:'+m.bg+';border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0">'+m.icon+'</div>'
-       +'<div style="flex:1">'
-       +'<div style="font-family:Sora,sans-serif;font-size:16px;font-weight:700;color:var(--text-primary)">'+m.title+'</div>'
-       +'<div style="font-size:13px;color:var(--text-secondary);margin-top:2px">'+m.sub+'</div>'
-       +'</div>'
-       +'<div style="font-size:22px;color:'+m.color+'">›</div>'
-       +'</div>';
+    h+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:8px">';
+    cat.lv.forEach(function(lv,idx){
+      var lvP=prog[lv.id];
+      var isPass=lvP&&lvP.passed;
+      var isTried=lvP&&!lvP.passed;
+      var isLocked=idx>0&&!prog[cat.lv[idx-1].id];
+      var bg=isPass?cat.color+'22':isTried?'#FEF3C715':'var(--surface)';
+      var border=isPass?'1.5px solid '+cat.color:isTried?'1.5px solid #F59E0B':'1.5px solid var(--border)';
+      var oc=isLocked?'':' onclick="startLALevel('+grade+',\''+pid+'\',\''+cat.id+'\','+idx+')"';
+      var badge=isPass?'<span style="font-size:11px;color:'+cat.color+';font-weight:800">\u2713 '+lvP.score+'/'+lvP.total+'</span>'
+               :isTried?'<span style="font-size:11px;color:#F59E0B;font-weight:700">'+lvP.score+'/'+lvP.total+'</span>'
+               :isLocked?'<span style="font-size:11px;color:var(--text-tertiary)">\ud83d\udd12</span>'
+               :'<span style="font-size:11px;color:var(--text-tertiary)">Start</span>';
+      h+='<div'+oc+' style="background:'+bg+';border:'+border+';border-radius:12px;padding:10px 12px;cursor:'+(isLocked?'default':'pointer')+';opacity:'+(isLocked?'.4':'1')+'">';
+      h+='<div style="font-size:12px;font-weight:700;color:var(--text-primary);line-height:1.3;margin-bottom:4px">'+lv.nm+'</div>';
+      h+=badge+'</div>';
+    });
+    h+='</div></div>';
   });
-
+  h+='<div style="height:32px"></div>';
   el('s-reading').innerHTML=h;
   go('s-reading');
 }
