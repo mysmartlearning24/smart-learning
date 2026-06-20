@@ -6737,6 +6737,22 @@ function answerGrammar(chosen){
 
 function finishGrammar(){
   _clearIdleTimer();
+  if(_LA_ACTIVE&&_LA_ACTIVE.mode==='grammar_level'){
+    var _la=_LA_ACTIVE;_LA_ACTIVE=null;
+    var _score=_GR.score,_total=_GR.probs.length;
+    markLALevel(_la.grade,_la.pid,_la.levelId,_score,_total);
+    addPoints(_la.pid,_la.grade,_score,_total,'reading');syncToCloud(_la.grade);
+    var _pct=Math.round(_score/_total*100);var _gc2=gradeConf(_la.grade);
+    var _h='<div class="hdr"><div style="float:left"><button class="bbtn" onclick="renderReadingHub('+_la.grade+',\''+ _la.pid+'\')">← Hub</button></div>'
+        +'<div style="text-align:center;padding-top:6px;font-size:16px;font-weight:700;color:#D97706">✏️ Grammar Complete!</div><div style="clear:both"></div></div>';
+    _h+='<div class="card" style="text-align:center;padding:28px 24px;margin-top:8px">';
+    _h+='<div style="font-size:52px;margin-bottom:8px">'+(_pct>=90?'🏆':_pct>=70?'⭐':'📝')+'</div>';
+    _h+='<div style="font-size:40px;font-weight:900;color:#D97706;font-family:Sora,sans-serif">'+_score+'/'+_total+'</div>';
+    _h+='<div style="font-size:15px;color:var(--text-secondary);margin-top:4px">'+_pct+'%'+(_pct>=70?' · Level Passed! ✓':'')+'</div></div>';
+    _h+='<div class="rbx"><button class="hb" style="background:#D97706;color:#fff" onclick="startLALevel('+_la.grade+',\''+_la.pid+'\',\''+_la.catId+'\','+_la.lvIdx+')">↩ Retry</button>';
+    _h+='<button class="hb" style="background:var(--bg);border:1.5px solid var(--border)" onclick="renderReadingHub('+_la.grade+',\''+ _la.pid+'\')">🏠 Hub</button></div>';
+    el('s-grammar').innerHTML=_h;return;
+  }
   var elapsed=Math.round((Date.now()-_GR.startTime)/1000);
   var score=_GR.score,pid=_GR.pid,grade=_GR.grade;
   var st=updateStreak(pid);
@@ -7117,6 +7133,22 @@ function answerVocab(chosen){
 }
 
 function finishVocab(){
+  if(_LA_ACTIVE&&_LA_ACTIVE.mode==='vocab_level'){
+    var _la=_LA_ACTIVE;_LA_ACTIVE=null;
+    var _score=_VB.score,_total=_VB.probs.length;
+    markLALevel(_la.grade,_la.pid,_la.levelId,_score,_total);
+    addPoints(_la.pid,_la.grade,_score,_total,'reading');syncToCloud(_la.grade);
+    var _pct=Math.round(_score/_total*100);
+    var _h='<div class="hdr"><div style="float:left"><button class="bbtn" onclick="renderReadingHub('+_la.grade+',\''+ _la.pid+'\')">← Hub</button></div>'
+        +'<div style="text-align:center;padding-top:6px;font-size:16px;font-weight:700;color:#10B981">🔤 Vocab Complete!</div><div style="clear:both"></div></div>';
+    _h+='<div class="card" style="text-align:center;padding:28px 24px;margin-top:8px">';
+    _h+='<div style="font-size:52px;margin-bottom:8px">'+(_pct>=90?'🏆':_pct>=70?'⭐':'📚')+'</div>';
+    _h+='<div style="font-size:40px;font-weight:900;color:#10B981;font-family:Sora,sans-serif">'+_score+'/'+_total+'</div>';
+    _h+='<div style="font-size:15px;color:var(--text-secondary);margin-top:4px">'+_pct+'%'+(_pct>=70?' · Level Passed! ✓':'')+'</div></div>';
+    _h+='<div class="rbx"><button class="hb" style="background:#10B981;color:#fff" onclick="startLALevel('+_la.grade+',\''+_la.pid+'\',\''+_la.catId+'\','+_la.lvIdx+')">↩ Retry</button>';
+    _h+='<button class="hb" style="background:var(--bg);border:1.5px solid var(--border)" onclick="renderReadingHub('+_la.grade+',\''+ _la.pid+'\')">🏠 Hub</button></div>';
+    el('s-vocab').innerHTML=_h;return;
+  }
   var elapsed=Math.round((Date.now()-_VB.startTime)/1000);
   var score=_VB.score,pid=_VB.pid,grade=_VB.grade;
   var st=updateStreak(pid);
@@ -16034,6 +16066,21 @@ function answerWriting(chosen){
 
 function finishWritingMode(){
   var grade=READING_ST.grade,pid=READING_ST.profileId;
+  if(_LA_ACTIVE&&_LA_ACTIVE.mode==='writing_level'){
+    var _la=_LA_ACTIVE;_LA_ACTIVE=null;
+    markLALevel(_la.grade,_la.pid,_la.levelId,_writingScore,_writingPool.length);
+    addPoints(_la.pid,_la.grade,_writingScore,_writingPool.length,'reading');syncToCloud(_la.grade);
+    var _pct=Math.round(_writingScore/_writingPool.length*100);
+    var _h='<div class="hdr"><div style="float:left"><button class="bbtn" onclick="renderReadingHub('+_la.grade+',\''+ _la.pid+'\')">← Hub</button></div>'
+        +'<div style="text-align:center;padding-top:6px;font-size:16px;font-weight:700;color:#7C3AED">📝 Writing Complete!</div><div style="clear:both"></div></div>';
+    _h+='<div class="card" style="text-align:center;padding:28px 24px;margin-top:8px">';
+    _h+='<div style="font-size:52px;margin-bottom:8px">'+(_pct>=90?'🏆':_pct>=70?'⭐':'✍️')+'</div>';
+    _h+='<div style="font-size:40px;font-weight:900;color:#7C3AED;font-family:Sora,sans-serif">'+_writingScore+'/'+_writingPool.length+'</div>';
+    _h+='<div style="font-size:15px;color:var(--text-secondary);margin-top:4px">'+_pct+'%'+(_pct>=70?' · Level Passed! ✓':'')+'</div></div>';
+    _h+='<div class="rbx"><button class="hb" style="background:#7C3AED;color:#fff" onclick="startLALevel('+_la.grade+',\''+_la.pid+'\',\''+_la.catId+'\','+_la.lvIdx+')">↩ Retry</button>';
+    _h+='<button class="hb" style="background:var(--bg);border:1.5px solid var(--border)" onclick="renderReadingHub('+_la.grade+',\''+ _la.pid+'\')">🏠 Hub</button></div>';
+    el('s-grammar').innerHTML=_h;return;
+  }
   var gc=gradeConf(grade);
   var score=_writingScore,total=_writingPool.length;
   addPoints(pid,grade,score,total,'writing');
@@ -16241,6 +16288,98 @@ function manualSync(){
   }, 1500);
 }
 
+
+/* ═══════════════════════════════════════════
+   LANGUAGE ARTS PROGRESSION HUB
+═══════════════════════════════════════════ */
+
+var _LA_ACTIVE = null;
+
+function loadLAProg(grade, pid){
+  try{ return JSON.parse(localStorage.getItem('smart_la_'+grade+'_'+pid)||'{}'); }catch(e){ return {}; }
+}
+function saveLAProg(grade, pid, prog){
+  try{ localStorage.setItem('smart_la_'+grade+'_'+pid, JSON.stringify(prog)); }catch(e){}
+}
+function markLALevel(grade, pid, levelId, score, total){
+  var prog = loadLAProg(grade, pid);
+  var passed = score >= Math.ceil(total * 0.7);
+  if(!prog[levelId] || passed){
+    prog[levelId] = {score:score, total:total, passed:passed, date:new Date().toISOString()};
+  }
+  saveLAProg(grade, pid, prog);
+}
+
+function writingBandForGrade(g){
+  return g<=1?'k1':g<=3?'23':g<=5?'45':g<=7?'67':'8';
+}
+
+function buildLACurriculum(grade){
+  var gramPool = (GRAMMAR_BANK&&GRAMMAR_BANK[grade])||[];
+  var band = writingBandForGrade(grade);
+  var writPool = (WRITING_BANK&&WRITING_BANK[band])||[];
+  var stories = getStoriesForGrade(grade);
+  var vocabPool = (VOCAB_GAME_BANK&&VOCAB_GAME_BANK[grade])||[];
+
+  /* Grammar: 15 per batch */
+  var gramLevels=[];
+  for(var gi=0;gi<gramPool.length;gi+=15){
+    gramLevels.push({id:'LAG'+grade+'_'+Math.floor(gi/15),nm:'Grammar · Level '+(Math.floor(gi/15)+1),mode:'grammar_level',pool:gramPool.slice(gi,gi+15)});
+  }
+  /* Writing: one per unique cat */
+  var writCats=[],seen={};
+  for(var wi=0;wi<writPool.length;wi++){var cat=writPool[wi].cat||'Writing';if(!seen[cat]){seen[cat]=1;writCats.push(cat);}}
+  var writLevels=writCats.map(function(cat,idx){
+    return {id:'LAW'+grade+'_'+idx,nm:cat,mode:'writing_level',pool:writPool.filter(function(q){return q.cat===cat;})};
+  });
+  /* Stories: one per story */
+  var storyLevels=stories.map(function(s,idx){
+    return {id:'LAR'+grade+'_'+idx,nm:s.title,mode:'story_level',story:s};
+  });
+  /* Vocab: 10 per batch */
+  var vocabLevels=[];
+  for(var vi=0;vi<vocabPool.length;vi+=10){
+    vocabLevels.push({id:'LAV'+grade+'_'+Math.floor(vi/10),nm:'Vocabulary · Set '+(Math.floor(vi/10)+1),mode:'vocab_level',pool:vocabPool.slice(vi,vi+10)});
+  }
+  return [
+    {id:'la_gram',nm:'Grammar',icon:'✏️',color:'#D97706',lv:gramLevels},
+    {id:'la_writ',nm:'Writing Skills',icon:'📝',color:'#7C3AED',lv:writLevels},
+    {id:'la_read',nm:'Reading Stories',icon:'📖',color:'#3B82F6',lv:storyLevels},
+    {id:'la_vocab',nm:'Vocabulary',icon:'🔤',color:'#10B981',lv:vocabLevels}
+  ];
+}
+
+
+function startLALevel(grade, pid, catId, lvIdx){
+  var curriculum=buildLACurriculum(grade);
+  var cat=null;for(var i=0;i<curriculum.length;i++){if(curriculum[i].id===catId){cat=curriculum[i];break;}}
+  if(!cat||!cat.lv[lvIdx])return;
+  var lv=cat.lv[lvIdx];
+  _LA_ACTIVE={grade:grade,pid:pid,catId:catId,lvIdx:lvIdx,levelId:lv.id,mode:lv.mode};
+
+  if(lv.mode==='grammar_level'){
+    var pool=lv.pool.slice().sort(function(){return Math.random()-.5;}).slice(0,Math.min(10,lv.pool.length));
+    _GR={q:0,probs:pool,answers:[],grade:grade,pid:pid,startTime:Date.now(),score:0};
+    go('s-grammar');renderGrammar();
+  } else if(lv.mode==='writing_level'){
+    READING_ST.grade=grade;READING_ST.profileId=pid;
+    _writingPool=lv.pool.slice().sort(function(){return Math.random()-.5;}).slice(0,Math.min(10,lv.pool.length));
+    _writingIdx=0;_writingScore=0;
+    renderWritingQ();go('s-grammar');
+  } else if(lv.mode==='vocab_level'){
+    var vpool=lv.pool.slice().sort(function(){return Math.random()-.5;});
+    _VB={q:0,probs:vpool,answers:[],grade:grade,pid:pid,startTime:Date.now(),score:0};
+    go('s-vocab');renderVocab();
+  } else if(lv.mode==='story_level'){
+    READING_ST.grade=grade;READING_ST.profileId=pid;
+    READING_ST.mode='story';READING_ST.storyPool=[lv.story];
+    READING_ST.storyIdx=0;READING_ST.questionIdx=0;
+    READING_ST.score=0;READING_ST.total=0;READING_ST.startTime=Date.now();
+    renderReadingQuestion();go('s-reading');
+  }
+}
+
+
 /* ── Reading Engine (restored) ── */
 
 function getStoriesForGrade(g){
@@ -16311,7 +16450,24 @@ function answerReading(chosen, correct){
   }
 }
 
-function finishReading(){   var elapsed=Math.round((Date.now()-READING_ST.startTime)/1000);   var pct=READING_ST.total>0?Math.round(READING_ST.score/READING_ST.total*100):0;   var gc=gradeConf(READING_ST.grade);    /* log to history */   try{     addPoints(READING_ST.profileId||ST.profileId,READING_ST.grade,READING_ST.score,READING_ST.total);
+function finishReading(){
+  if(_LA_ACTIVE&&_LA_ACTIVE.mode==='story_level'){
+    var _la=_LA_ACTIVE;_LA_ACTIVE=null;
+    markLALevel(_la.grade,_la.pid,_la.levelId,READING_ST.score,READING_ST.total||READING_ST.storyPool[0].qs.length);
+    addPoints(_la.pid,_la.grade,READING_ST.score,READING_ST.total||5,'reading');syncToCloud(_la.grade);
+    var _pct=READING_ST.total?Math.round(READING_ST.score/READING_ST.total*100):100;
+    var _gc2=gradeConf(_la.grade);
+    var _h='<div class="hdr"><div style="float:left"><button class="bbtn" onclick="renderReadingHub('+_la.grade+',\''+ _la.pid+'\')">← Hub</button></div>'
+        +'<div style="text-align:center;padding-top:6px;font-size:16px;font-weight:700;color:'+_gc2.color+'">📖 Story Complete!</div><div style="clear:both"></div></div>';
+    _h+='<div class="card" style="text-align:center;padding:28px 24px;margin-top:8px">';
+    _h+='<div style="font-size:52px;margin-bottom:8px">'+(_pct>=90?'🏆':_pct>=70?'⭐':'📚')+'</div>';
+    _h+='<div style="font-size:40px;font-weight:900;color:'+_gc2.color+';font-family:Sora,sans-serif">'+READING_ST.score+'/'+(READING_ST.total||'?')+'</div>';
+    _h+='<div style="font-size:15px;color:var(--text-secondary);margin-top:4px">'+_pct+'%'+(_pct>=70?' · Level Passed! ✓':'')+'</div></div>';
+    _h+='<div class="rbx"><button class="hb" style="background:'+_gc2.color+';color:#fff" onclick="startLALevel('+_la.grade+',\''+_la.pid+'\',\''+_la.catId+'\','+_la.lvIdx+')">↩ Retry</button>';
+    _h+='<button class="hb" style="background:var(--bg);border:1.5px solid var(--border)" onclick="renderReadingHub('+_la.grade+',\''+ _la.pid+'\')">🏠 Hub</button></div>';
+    el('s-reading').innerHTML=_h;return;
+  }
+  var elapsed=Math.round((Date.now()-READING_ST.startTime)/1000);   var pct=READING_ST.total>0?Math.round(READING_ST.score/READING_ST.total*100):0;   var gc=gradeConf(READING_ST.grade);    /* log to history */   try{     addPoints(READING_ST.profileId||ST.profileId,READING_ST.grade,READING_ST.score,READING_ST.total);
      addHist(READING_ST.grade,{       date:new Date().toISOString(),       lid:'READING_'+READING_ST.mode.toUpperCase(),       score:READING_ST.score,       time:elapsed,       subject:'reading',       total:READING_ST.total     });     syncToCloud(READING_ST.grade);   }catch(e){}    var modeLabel={story:'Reading',vocab:'Vocabulary',analogy:'Analogies'}[READING_ST.mode]||'Reading';   var emoji=pct>=90?'🏆':pct>=80?'⭐':pct>=60?'📖':'💪';    var h='<div class="hdr"><div style="float:left"><button class="bbtn" onclick="renderHome()">🏠 Home</button></div>'        +'<div style="text-align:center;padding-top:6px;font-size:14px;font-weight:700;color:'+gc.color+'">'+modeLabel+' Complete</div>'        +'<div style="clear:both"></div></div>';    h+='<div style="text-align:center;padding:24px 0 16px">'     +'<div style="font-size:56px;margin-bottom:8px">'+emoji+'</div>'     +'<div style="font-family:Sora,sans-serif;font-size:72px;font-weight:900;letter-spacing:-3px;color:var(--text-primary)">'+READING_ST.score+'<span style="font-size:28px;color:var(--text-tertiary);font-weight:400">/'+READING_ST.total+'</span></div>'     +'<div style="font-size:16px;color:var(--text-secondary);margin-top:4px">'+(pct>=90?'Outstanding! You are a reading star! 🌟':pct>=80?'Excellent work — keep it up! 🌟':pct>=60?'Good effort! Every page you read makes you smarter!':'Keep reading — you\'re building an amazing skill for life! 💪')+'</div>'
     +'</div>';
 
