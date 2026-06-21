@@ -908,6 +908,94 @@ body {
   .screen.active{display:block!important;max-width:100%!important;padding:0!important}
   .card,.card-raised{box-shadow:none!important;border:1px solid #ddd!important;page-break-inside:avoid}
 }
+
+/* ══ SCREEN TRANSITIONS ══════════════════════════════ */
+@keyframes screenSlideIn{
+  0%{opacity:0;transform:translateY(18px) scale(.98)}
+  100%{opacity:1;transform:translateY(0) scale(1)}
+}
+@keyframes screenSlideInLeft{
+  0%{opacity:0;transform:translateX(-24px)}
+  100%{opacity:1;transform:translateX(0)}
+}
+.screen.active{
+  animation:screenSlideIn .28s cubic-bezier(.22,1,.36,1) both;
+}
+
+/* ══ CARD STAGGER ════════════════════════════════════ */
+@keyframes cardStagger{
+  0%{opacity:0;transform:translateY(20px) scale(.97)}
+  100%{opacity:1;transform:translateY(0) scale(1)}
+}
+.screen.active .card:nth-child(1){animation:cardStagger .3s .04s cubic-bezier(.22,1,.36,1) both}
+.screen.active .card:nth-child(2){animation:cardStagger .3s .08s cubic-bezier(.22,1,.36,1) both}
+.screen.active .card:nth-child(3){animation:cardStagger .3s .12s cubic-bezier(.22,1,.36,1) both}
+.screen.active .card:nth-child(4){animation:cardStagger .3s .16s cubic-bezier(.22,1,.36,1) both}
+.screen.active .card:nth-child(5){animation:cardStagger .3s .20s cubic-bezier(.22,1,.36,1) both}
+.screen.active .card:nth-child(n+6){animation:cardStagger .3s .24s cubic-bezier(.22,1,.36,1) both}
+
+/* ══ LEVEL TILE ENTRANCE ═════════════════════════════ */
+@keyframes tileIn{
+  0%{opacity:0;transform:scale(.82) translateY(10px)}
+  60%{transform:scale(1.04) translateY(-2px)}
+  100%{opacity:1;transform:scale(1) translateY(0)}
+}
+.screen.active .lt{animation:tileIn .32s cubic-bezier(.34,1.56,.64,1) both}
+.screen.active .lg .lt:nth-child(1){animation-delay:.05s}
+.screen.active .lg .lt:nth-child(2){animation-delay:.09s}
+.screen.active .lg .lt:nth-child(3){animation-delay:.13s}
+.screen.active .lg .lt:nth-child(4){animation-delay:.17s}
+.screen.active .lg .lt:nth-child(5){animation-delay:.21s}
+.screen.active .lg .lt:nth-child(6){animation-delay:.25s}
+.screen.active .lg .lt:nth-child(n+7){animation-delay:.29s}
+
+/* ══ PROGRESS BAR ANIMATE ════════════════════════════ */
+.pbar-f{animation:barGrow .7s .15s cubic-bezier(.25,1,.5,1) both}
+@keyframes barGrow{from{width:0!important}}
+
+/* ══ BUTTON RIPPLE ═══════════════════════════════════ */
+.btn,.bbtn,.hb{position:relative;overflow:hidden}
+@keyframes ripple{
+  0%{transform:scale(0);opacity:.35}
+  100%{transform:scale(4);opacity:0}
+}
+.ripple-circle{
+  position:absolute;border-radius:50%;
+  width:80px;height:80px;margin:-40px;
+  background:rgba(255,255,255,.45);
+  pointer-events:none;
+  animation:ripple .55s ease-out forwards;
+}
+
+/* ══ BOUNCE-IN for headers/scores ════════════════════ */
+@keyframes bounceIn{
+  0%{transform:scale(0);opacity:0}
+  55%{transform:scale(1.18);opacity:1}
+  75%{transform:scale(.94)}
+  100%{transform:scale(1)}
+}
+.score-reveal{animation:bounceIn .5s cubic-bezier(.34,1.56,.64,1) both}
+
+/* ══ SHIMMER SKELETON (loading) ══════════════════════ */
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+.skeleton{
+  background:linear-gradient(90deg,var(--bg-subtle) 25%,var(--border) 50%,var(--bg-subtle) 75%);
+  background-size:200%;
+  animation:shimmer 1.4s infinite;
+  border-radius:8px;
+}
+
+/* ══ TAB SLIDE ═══════════════════════════════════════ */
+@keyframes tabContentIn{
+  0%{opacity:0;transform:translateX(12px)}
+  100%{opacity:1;transform:translateX(0)}
+}
+.tab-content-show{animation:tabContentIn .2s ease-out both}
+
+/* ══ ENHANCED BUTTON ACTIVE ══════════════════════════ */
+.lt:active{transform:scale(.92)!important;transition:transform .08s!important}
+.hb:active{transform:scale(.95)!important;transition:transform .08s!important}
+.bbtn:active{transform:scale(.93)!important;transition:transform .08s!important}
 </style>
 </head>
 <body>
@@ -2021,9 +2109,29 @@ var _curScreen='s-home'; /* tracks the active screen — updated by go() */
 function go(id){
   var all=document.querySelectorAll('.screen');
   for(var i=0;i<all.length;i++){all[i].className='screen';}
-  var e=el(id);if(e){e.className='screen active';window.scrollTo(0,0);}
+  var e=el(id);
+  if(e){
+    e.className='screen';
+    void e.offsetWidth; /* force reflow so animation restarts */
+    e.className='screen active';
+    window.scrollTo(0,0);
+  }
   _curScreen=id;
 }
+/* ── Ripple on tap ── */
+document.addEventListener('click',function(ev){
+  var t=ev.target;
+  var btn=t.closest('.btn,.bbtn,.hb,.lt:not(.lk)');
+  if(!btn)return;
+  var r=document.createElement('span');
+  r.className='ripple-circle';
+  var rect=btn.getBoundingClientRect();
+  r.style.left=(ev.clientX-rect.left-40)+'px';
+  r.style.top=(ev.clientY-rect.top-40)+'px';
+  btn.appendChild(r);
+  setTimeout(function(){r.remove();},600);
+},{passive:true});
+
 
 /* ═══════════════════════════════════════════
    PROFILE SYSTEM
@@ -4446,6 +4554,7 @@ var ST={
 };
 var READING_ST={grade:1,profileId:'',mode:'story',score:0,total:0,startTime:0,answered:false,storyPool:[],storyIdx:0,questionIdx:0};
 var curPr=null;
+var _lastTab={};
 
 /* ═══════════════════════════════════════════
    CELEBRATIONS
@@ -11588,6 +11697,7 @@ h+='</div></div>';
   h+='<button class="btn btn-secondary" onclick="renderAddProfile()" style="margin-bottom:12px">&#43; Add Profile</button>';
   h+='<button class="btn btn-secondary" onclick="renderParentDash()">&#128202; Parent Dashboard</button>';
   el('s-home').innerHTML=h;go('s-home');
+  setTimeout(function(){Object.keys(_lastTab).forEach(function(p){if(_lastTab[p]==='reading')switchCardTab(p,'reading');});},30);
 }
 
 function selectProfile(idx){
@@ -11654,6 +11764,7 @@ function renderAddProfile(){
   h+='<button class="btn btn-primary" onclick="createNewProfile()" style="margin-bottom:12px">Create Profile</button>';
   h+='<button class="btn btn-secondary" onclick="renderHome()">Cancel</button>';
   el('s-home').innerHTML=h;go('s-home');
+  setTimeout(function(){Object.keys(_lastTab).forEach(function(p){if(_lastTab[p]==='reading')switchCardTab(p,'reading');});},30);
   window._newGrade=1;
 }
 
@@ -15311,14 +15422,17 @@ function switchCardTab(pid, subject){
   for(var i=0;i<profiles.length;i++){if(profiles[i].id===pid){prof=profiles[i];break;}}
   var grade=prof?prof.grade:1;
   var pgc=gradeConf(grade);
+  _lastTab[pid]=subject;
   if(subject==='math'){
     mathContent.style.display='block'; readContent.style.display='none';
+    mathContent.classList.remove('tab-content-show');void mathContent.offsetWidth;mathContent.classList.add('tab-content-show');
     mathTab.style.background=pgc.color; mathTab.style.color='#fff';
     readTab.style.background='var(--bg-subtle)'; readTab.style.color='var(--text-tertiary)';
     startBtn.textContent='▶ Start Math'; startBtn.style.background=pgc.color;
     startBtn.onclick=function(e){e.stopPropagation();var profs=loadProfiles();for(var j=0;j<profs.length;j++){if(profs[j].id===pid){selectProfile(j);return;}}};
   } else {
     mathContent.style.display='none'; readContent.style.display='block';
+    readContent.classList.remove('tab-content-show');void readContent.offsetWidth;readContent.classList.add('tab-content-show');
     mathTab.style.background='var(--bg-subtle)'; mathTab.style.color='var(--text-tertiary)';
     readTab.style.background='#3B82F6'; readTab.style.color='#fff';
     startBtn.textContent='📖 Start Language Arts'; startBtn.style.background='#3B82F6';
@@ -16121,7 +16235,7 @@ function renderReadingHub(grade, pid){
   var overallPct=totalLv>0?Math.round(passedLv/totalLv*100):0;
 
   /* header */
-  var h='<div class="hdr"><div style="float:left"><button class="bbtn" onclick="renderHome()">Back</button></div>';
+  var h='<div class="hdr"><div style="float:left"><button class="bbtn" onclick="_lastTab[\''+ pid +'\']='+'"reading";renderHome()">Back</button></div>';
   h+='<div style="float:right"><button class="bbtn" onclick="renderPrizeBoard('+grade+',\''+pid+'\')">🎁</button></div>';
   h+='<div style="text-align:center;padding-top:6px;font-size:17px;font-weight:700;color:#3B82F6">📚 Language Arts</div>';
   h+='<div style="clear:both"></div></div>';
