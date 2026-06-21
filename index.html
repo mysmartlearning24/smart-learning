@@ -11472,26 +11472,28 @@ function renderHome(){
       }
     }
     var readTotal=readStoriesCount+readVocabCount+readAnalogyCount;
-    var readRows='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px">';
-    readRows+='<div style="text-align:center;background:var(--bg-subtle);border-radius:12px;padding:10px 6px">';
-    readRows+='<div style="font-size:22px;font-weight:800;font-family:Sora,sans-serif;color:#3B82F6">'+readStoriesCount+'</div>';
-    readRows+='<div style="font-size:10px;color:var(--text-tertiary);margin-top:2px">Stories</div></div>';
-    readRows+='<div style="text-align:center;background:var(--bg-subtle);border-radius:12px;padding:10px 6px">';
-    readRows+='<div style="font-size:22px;font-weight:800;font-family:Sora,sans-serif;color:#8B5CF6">'+readVocabCount+'</div>';
-    readRows+='<div style="font-size:10px;color:var(--text-tertiary);margin-top:2px">Vocab</div></div>';
-    readRows+='<div style="text-align:center;background:var(--bg-subtle);border-radius:12px;padding:10px 6px">';
-    readRows+='<div style="font-size:22px;font-weight:800;font-family:Sora,sans-serif;color:#F59E0B">'+readAnalogyCount+'</div>';
-    readRows+='<div style="font-size:10px;color:var(--text-tertiary);margin-top:2px">Analogies</div></div>';
-    readRows+='</div>';
-    if(readTotal===0){
-      readRows+='<div style="text-align:center;padding:12px;color:var(--text-tertiary);font-size:13px">No reading sessions yet.<br>Tap Start Reading to begin!</div>';
-    } else {
-      readRows+='<div style="display:flex;align-items:center;gap:8px;background:var(--bg-subtle);border-radius:10px;padding:10px 12px">';
-      readRows+='<span style="font-size:18px">📖</span>';
-      readRows+='<div><div style="font-size:12px;font-weight:600;color:var(--text-primary)">'+readTotal+' sessions completed</div>';
-      readRows+='<div style="font-size:11px;color:var(--text-tertiary)">'+readMinsToday+' min reading today</div></div>';
-      readRows+='</div>';
-    }
+    /* LA progression stats (mirrors math category breakdown) */
+    var laReadRows='';
+    try{
+      var laCurr=buildLACurriculum(prof.grade);
+      var laProgData=loadLAProg(prof.grade,pid);
+      for(var lci=0;lci<laCurr.length;lci++){
+        var lcat=laCurr[lci];
+        if(!lcat||!lcat.lv||!lcat.lv.length)continue;
+        var lcp=0;var lcs=false;
+        for(var lli=0;lli<lcat.lv.length;lli++){var lpp=laProgData[lcat.lv[lli].id];if(lpp&&lpp.passed)lcp++;if(lpp&&lpp.attempts>0)lcs=true;}
+        var lcpct=Math.round(lcp/lcat.lv.length*100);
+        var lcc=lcp===lcat.lv.length?'#10B981':lcs?'#3B82F6':'#CBD5E1';
+        var ldot=lcp===lcat.lv.length?'✓':lcs?'▶':'○';
+        laReadRows+='<div style="display:flex;align-items:center;gap:6px;margin-bottom:5px">';
+        laReadRows+='<span style="font-size:9px;color:'+lcc+';width:10px;text-align:center;flex-shrink:0">'+ldot+'</span>';
+        laReadRows+='<span style="font-size:11px;color:var(--text-secondary);width:80px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+lcat.nm+'</span>';
+        laReadRows+='<div style="flex:1;background:var(--bg-subtle);border-radius:99px;height:5px;overflow:hidden"><div style="width:'+lcpct+'%;background:'+lcc+';height:100%;border-radius:99px"></div></div>';
+        laReadRows+='<span style="font-size:10px;color:var(--text-tertiary);width:26px;text-align:right;flex-shrink:0">'+lcp+'/'+lcat.lv.length+'</span>';
+        laReadRows+='</div>';
+      }
+    }catch(e){laReadRows='<div style="font-size:12px;color:var(--text-tertiary);padding:4px 0">Tap Start to begin!</div>';}
+    var readRows=laReadRows||'<div style="font-size:12px;color:var(--text-tertiary);padding:4px 0">Tap Start Language Arts to begin!</div>';
 
     /* ── CARD ── */
     var cardId='card-'+pid;
@@ -11546,7 +11548,7 @@ h+='</div></div>';
     /* Subject tabs */
     h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:0;border-radius:10px;overflow:hidden;border:1.5px solid var(--border);margin-bottom:12px" onclick="event.stopPropagation()">';
     h+='<button id="tab-math-'+pid+'" onclick="switchCardTab(\''+pid+'\',\'math\')" style="padding:9px;font-size:12px;font-weight:700;cursor:pointer;border:none;border-right:1px solid var(--border);background:'+gc.color+';color:#fff">📐 Math</button>';
-    h+='<button id="tab-read-'+pid+'" onclick="event.stopPropagation();renderReadingHub('+prof.grade+',\''+pid+'\')" style="padding:9px;font-size:12px;font-weight:700;cursor:pointer;border:none;background:#3B82F6;color:#fff">📖 Language Arts</button>';
+    h+='<button id="tab-read-'+pid+'" onclick="event.stopPropagation();switchCardTab(\''+pid+'\',\'reading\')" style="padding:9px;font-size:12px;font-weight:700;cursor:pointer;border:none;background:var(--bg-subtle);color:var(--text-tertiary)">📖 Language Arts</button>';
     h+='</div>';
 
     /* Math content */
@@ -15319,7 +15321,7 @@ function switchCardTab(pid, subject){
     mathContent.style.display='none'; readContent.style.display='block';
     mathTab.style.background='var(--bg-subtle)'; mathTab.style.color='var(--text-tertiary)';
     readTab.style.background='#3B82F6'; readTab.style.color='#fff';
-    startBtn.textContent='📖 Start Reading'; startBtn.style.background='#3B82F6';
+    startBtn.textContent='📖 Start Language Arts'; startBtn.style.background='#3B82F6';
     startBtn.onclick=function(e){
       e.stopPropagation();
       ST.profileId=pid; ST.grade=grade;
