@@ -11545,7 +11545,7 @@ h+='</div></div>';
     /* Subject tabs */
     h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:0;border-radius:10px;overflow:hidden;border:1.5px solid var(--border);margin-bottom:12px" onclick="event.stopPropagation()">';
     h+='<button id="tab-math-'+pid+'" onclick="switchCardTab(\''+pid+'\',\'math\')" style="padding:9px;font-size:12px;font-weight:700;cursor:pointer;border:none;border-right:1px solid var(--border);background:'+gc.color+';color:#fff">📐 Math</button>';
-    h+='<button id="tab-read-'+pid+'" onclick="switchCardTab(\''+pid+'\',\'reading\')" style="padding:9px;font-size:12px;font-weight:700;cursor:pointer;border:none;background:var(--bg-subtle);color:var(--text-tertiary)">📖 Reading</button>';
+    h+='<button id="tab-read-'+pid+'" onclick="event.stopPropagation();ST.profileId=pid;renderReadingHub('+prof.grade+',\''+pid+'\')" style="padding:9px;font-size:12px;font-weight:700;cursor:pointer;border:none;background:#3B82F6;color:#fff">📖 Language Arts</button>';
     h+='</div>';
 
     /* Math content */
