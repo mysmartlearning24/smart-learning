@@ -26,8 +26,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="color-scheme" content="light dark">
-<title>SMART v6.18</title>
+  <meta name="color-scheme" content="light">
+<title>SMART v6.19</title>
 <script>
 /* Early error handler — catches Firebase SDK failures before main script runs */
 window.onerror=function(msg,src,line,col,err){
@@ -49,6 +49,7 @@ window.onerror=function(msg,src,line,col,err){
 
 /* ── DESIGN TOKENS ─────────────────────────── */
 :root {
+  color-scheme: light;
   --white: #FFFFFF;
   --bg: #F6F7F9;
   --bg-subtle: #ECEEF2;
@@ -516,7 +517,7 @@ body {
   box-shadow: var(--shadow-xs);
 }
 .lt:active { transform: scale(0.94); }
-.lt.lk { opacity: 0.25; cursor: not-allowed; box-shadow: none; filter: grayscale(60%); pointer-events: auto; }
+.lt.lk { opacity: 0.38; cursor: default; box-shadow: none; }
 
 /* ── PROFILE/GRADE CARDS ────────────────────── */
 .gc {
@@ -1018,7 +1019,7 @@ body {
           <label style="font-size:12px;font-weight:600;color:var(--text-secondary);letter-spacing:0.5px;display:block;margin-bottom:6px">PASSWORD</label>
           <input id="li-pass" type="password" autocomplete="current-password" placeholder="Enter your password"
             style="width:100%;padding:13px 14px;border:1.5px solid var(--border);border-radius:12px;font-size:16px;font-family:DM Sans,sans-serif;color:var(--text-primary);outline:none;background:var(--bg);box-sizing:border-box"
-            onfocus="this.style.borderColor='#FF5C35'" onblur="this.style.borderColor='#E4E7EC'"
+            onfocus="this.style.borderColor='#FF5C35'" onblur="this.style.borderColor=''"
             onkeydown="if(event.key==='Enter')doLogin()">
         </div>
         <div id="li-err" style="display:none;background:#FEF2F2;border:1.5px solid #FECACA;border-radius:10px;padding:10px 14px;font-size:14px;color:#EF4444;margin-bottom:14px"></div>
@@ -1036,13 +1037,13 @@ body {
           <label style="font-size:12px;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:6px">USERNAME</label>
           <input id="li-muser" type="text" placeholder="Master username"
             style="width:100%;padding:13px 14px;border:1.5px solid var(--border);border-radius:12px;font-size:16px;font-family:DM Sans,sans-serif;color:var(--text-primary);outline:none;background:var(--bg);box-sizing:border-box"
-            onfocus="this.style.borderColor='#FF5C35'" onblur="this.style.borderColor='#E4E7EC'">
+            onfocus="this.style.borderColor='#FF5C35'" onblur="this.style.borderColor=''">
         </div>
         <div style="margin-bottom:20px">
           <label style="font-size:12px;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:6px">PASSWORD</label>
           <input id="li-mpass" type="password" placeholder="Master password"
             style="width:100%;padding:13px 14px;border:1.5px solid var(--border);border-radius:12px;font-size:16px;font-family:DM Sans,sans-serif;color:var(--text-primary);outline:none;background:var(--bg);box-sizing:border-box"
-            onfocus="this.style.borderColor='#FF5C35'" onblur="this.style.borderColor='#E4E7EC'"
+            onfocus="this.style.borderColor='#FF5C35'" onblur="this.style.borderColor=''"
             onkeydown="if(event.key==='Enter')doMasterLogin()">
         </div>
         <div id="li-merr" style="display:none;background:#FEF2F2;border:1.5px solid #FECACA;border-radius:10px;padding:10px 14px;font-size:14px;color:#EF4444;margin-bottom:14px"></div>
@@ -6867,7 +6868,7 @@ function finishGrammar(){
   var score=_GR.score,pid=_GR.pid,grade=_GR.grade;
   var st=updateStreak(pid);
   var earnedPts=addPoints(pid,grade,score,10,'reading');
-  addHist(grade,{date:new Date().toISOString(),lid:'grammar_g'+grade,score:score,time:elapsed,mode:'grammar',subject:'reading',total:10,streakAfter:st.count,_ansTmp:_GR.answers},pid);
+  addHist(grade,{date:new Date().toISOString(),lid:'grammar_g'+grade,score:score,time:elapsed,mode:'grammar',subject:'literacy',total:10,streakAfter:st.count,_ansTmp:_GR.answers},pid);
   syncToCloud(grade);
   var gc=gradeConf(grade);
   var pct=Math.round(score/10*100);
@@ -7263,7 +7264,7 @@ function finishVocab(){
   var score=_VB.score,pid=_VB.pid,grade=_VB.grade;
   var st=updateStreak(pid);
   var earnedPts=addPoints(pid,grade,score,10,'reading');
-  addHist(grade,{date:new Date().toISOString(),lid:'vocab_g'+grade,score:score,time:elapsed,mode:'vocab',subject:'reading',total:10,streakAfter:st.count,_ansTmp:_VB.answers},pid);
+  addHist(grade,{date:new Date().toISOString(),lid:'vocab_g'+grade,score:score,time:elapsed,mode:'vocab',subject:'literacy',total:10,streakAfter:st.count,_ansTmp:_VB.answers},pid);
   syncToCloud(grade);
   var gc=gradeConf(grade);
   var pct=Math.round(score/10*100);
@@ -11999,7 +12000,7 @@ function renderCurriculum(grade,pid){
       var streak=(pp3&&pp3.streak)||0;
       var stars=best===null?'':best>=36?'***':best>=30?'**':best>=20?'*':'';
       h+='<div class="lt'+(ok?'':' lk')+'" style="background:'+cat.color+(ok?'22':'0d')+';border-color:'+cat.color+(ok?'55':'22')+'" onclick="goLevel('+grade+','+ci+','+li+',\''+pid+'\')">';
-      h+=(!ok?'<div style="font-size:18px;margin-bottom:2px;opacity:0.9">🔒</div>':'');
+      h+=(!ok?'<div style="font-size:10px;color:var(--text-tertiary);margin-bottom:4px">🔒</div>':'');
       h+='<div style="font-size:19px;font-weight:700;color:'+(ok?cat.color:'#94A3B8')+'">'+lv.nm+'</div>';
       h+='<div style="font-size:10px;color:var(--text-secondary);margin-top:3px">'+(best!==null?best+'/'+getQDrill(grade):ok?'Try it!':'Locked')+'</div>';
       if(ok&&streak>0){h+='<div style="font-size:10px;color:#FF5C35;margin-top:2px">&#128293;'+streak+'/3</div>';}
@@ -12025,7 +12026,7 @@ function renderCurriculum(grade,pid){
       var wok=wli===0||(cprog[wlvs[wli-1].id]&&cprog[wlvs[wli-1].id].passed);
       var wpp=cprog[wlv.id];
       var wbest=wpp?wpp.bestScore:null;
-      h+='<div class="lt'+(wok?'':' lk')+'" style="background:'+wlv.color+(wok?'22':'0d')+';border-color:'+wlv.color+(wok?'55':'22')+'" onclick="'+(wok?'startConceptLevel(\''+(pid)+'\',\''+(wlv.id)+'\')':'showLockedMsg()')+'">';      h+='<div style="font-size:16px;font-weight:800;color:'+wlv.color+'">'+wlv.nm+'</div>';
+      h+='<div class="lt'+(wok?'':' lk')+'" style="background:'+wlv.color+(wok?'22':'0d')+';border-color:'+wlv.color+(wok?'55':'22')+'" onclick="'+(wok?'startConceptLevel(\''+(pid)+'\',\''+(wlv.id)+'\')':'')+'">';      h+='<div style="font-size:16px;font-weight:800;color:'+wlv.color+'">'+wlv.nm+'</div>';
       h+='<div style="font-size:11px;color:var(--text-secondary);margin-top:2px">'+wlv.ds+'</div>';
       h+='<div style="font-size:11px;margin-top:4px;color:#FFD700">'+( wbest!==null?(wbest+'/20'):(wok?'Try it!':'Locked'))+'</div>';
       h+='</div>';
@@ -12059,12 +12060,7 @@ function goLevel(grade,ci,li,pid){
     var cat=cats[ci];
     if(!cat.lv||!cat.lv[li]){console.error('goLevel: no level at li='+li);return;}
     var lv=cat.lv[li];
-    if(!isUnlocked(grade,lv.id,pid)){
-      var prevNm='';
-      if(li>0&&cat.lv[li-1]){prevNm=cat.lv[li-1].nm||cat.lv[li-1].id;}
-      showToast('🔒 Complete '+(prevNm||'the previous level')+' first to unlock '+lv.nm+'!');
-      return;
-    }
+    if(!isUnlocked(grade,lv.id,pid)){return;}
     ST.grade=grade;ST.ci=ci;ST.lid=lv.id;ST.tier=lv.tier||0;ST.mode='drill';
     if(pid){ST.profileId=pid;}
     startDrill();
@@ -12096,14 +12092,6 @@ function startDrill(){
   renderDrill();
 }
 
-function getDrillDirections(op,display){
-  if(op==='frac')return '⌨️ Type: numerator/denominator  e.g. 3/4';
-  if(op==='eo')return '⌨️ Type  E  for Even  or  O  for Odd';
-  if(op==='time_colon')return '⌨️ Type the time  e.g. 2:30';
-  if(op==='dec'||op==='decimal')return '⌨️ Use the decimal point in your answer';
-  if(display&&typeof display==='string'&&display.indexOf('_')>=0)return '⌨️ Type the missing number';
-  return '⌨️ Type your answer';
-}
 function renderDrill(){
   var gc=gradeConf(ST.grade);
   var pr=ST.probs[ST.q];
@@ -12699,21 +12687,6 @@ function startConceptLevel(pid,lvlId){
 function startConceptMode(pid){
   startConceptLevel(pid,'WP1');
 }
-
-function showToast(msg){
-  var t=document.getElementById('_toast');
-  if(!t){t=document.createElement('div');t.id='_toast';
-    t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(30,30,30,0.92);color:#fff;padding:10px 18px;border-radius:24px;font-size:13px;font-weight:600;z-index:9999;pointer-events:none;transition:opacity 0.3s;max-width:90vw;text-align:center';
-    document.body.appendChild(t);}
-  t.textContent=msg;t.style.opacity='1';
-  clearTimeout(t._to);t._to=setTimeout(function(){t.style.opacity='0';},2200);
-}
-
-function showLockedMsg(){
-  showToast('🔒 Complete the previous level first to unlock this!');
-}
-
-
 
 function renderConcept(){
   var wp=ST.conceptBank[ST.conceptIdx];
@@ -15389,166 +15362,9 @@ function renderFamiliesList(fams){
     h+='<button onclick="adminDeleteFamily(FAMS['+fi+'].id,FAMS['+fi+'].name)" style="background:#FEF2F2;border:1.5px solid #FECACA;border-radius:10px;padding:9px;font-size:12px;font-weight:600;cursor:pointer;color:#EF4444">🗑 Delete</button>';
     h+='</div>';
     h+='<button onclick="adminMigrateProfiles(FAMS['+fi+'].id,FAMS['+fi+'].name)" style="width:100%;background:#F0FDF4;border:1.5px solid #86EFAC;border-radius:10px;padding:9px;font-size:12px;font-weight:600;cursor:pointer;color:#16A34A">📦 Move Master Profiles Here</button>';
-    h+='<button onclick="adminLAProgress(FAMS['+fi+'].id,FAMS['+fi+'].name)" style="width:100%;background:#EFF6FF;border:1.5px solid #BFDBFE;border-radius:10px;padding:9px;font-size:12px;font-weight:600;cursor:pointer;color:#2563EB;margin-top:6px">🔓 View / Unlock LA Progress</button>';
-    h+='<button onclick="adminMathProgress(FAMS['+fi+'].id,FAMS['+fi+'].name)" style="width:100%;background:#FFF7ED;border:1.5px solid #FED7AA;border-radius:10px;padding:9px;font-size:12px;font-weight:600;cursor:pointer;color:#C2410C;margin-top:6px">🔓 View / Unlock Math Progress</button>';
     h+='</div>';
   }
   listEl.innerHTML=h;
-}
-
-function adminLAProgress(famId, famName){
-  var profKey = 'smart_'+famId+'_profiles';
-  var raw = localStorage.getItem(profKey) || localStorage.getItem('smart_profiles') || '[]';
-  var profs;
-  try{ profs = JSON.parse(raw); }catch(e){ profs=[]; }
-  if(!profs.length){ alert('No profiles found for '+famName+'. Make sure you are logged in as this family first.'); return; }
-
-  var h='<div class="hdr"><div style="float:left"><button class="bbtn" onclick="renderAdmin()">← Back</button></div>';
-  h+='<div style="text-align:center;padding-top:6px;font-size:17px;font-weight:700;color:#FF5C35">LA Progress: '+famName+'</div>';
-  h+='<div style="clear:both"></div></div>';
-
-  profs.forEach(function(prof){
-    var grade = prof.grade || 1;
-    var pid = prof.id;
-    var prog = {};
-    try{ prog = JSON.parse(localStorage.getItem('smart_la_'+grade+'_'+pid)||'{}'); }catch(e){}
-
-    var cur = buildLACurriculum(grade);
-    h+='<div class="card card-raised" style="margin-bottom:14px">';
-    h+='<div style="font-size:15px;font-weight:700;color:var(--text-primary);margin-bottom:12px">'+prof.name+' · Grade '+grade+'</div>';
-
-    cur.forEach(function(cat){
-      h+='<div style="margin-bottom:10px">';
-      h+='<div style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:6px">'+cat.icon+' '+cat.nm+'</div>';
-      cat.lv.forEach(function(lv){
-        var rec = prog[lv.id];
-        var status = !rec ? 'Not started' : rec.passed ? '✅ Passed ('+(rec.bestScore||rec.score)+'/'+(rec.bestTotal||rec.total)+')' : '❌ Failed ('+(rec.bestScore||rec.score)+'/'+(rec.bestTotal||rec.total)+', '+( rec.attempts||1)+' attempt'+(( rec.attempts||1)>1?'s':'')+')';
-        var statusColor = !rec ? '#94A3B8' : rec.passed ? '#10B981' : '#EF4444';
-        h+='<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 10px;background:var(--bg);border:1.5px solid var(--border);border-radius:8px;margin-bottom:4px">';
-        h+='<div>';
-        h+='<div style="font-size:13px;font-weight:600;color:var(--text-primary)">'+lv.nm+'</div>';
-        h+='<div style="font-size:11px;color:'+statusColor+'">'+status+'</div>';
-        h+='</div>';
-        if(!rec || !rec.passed){
-          h+='<button onclick="adminMarkLAPassed(&quot;'+famId+'&quot;,&quot;'+pid+'&quot;,'+grade+',&quot;'+lv.id+'&quot;)" style="background:#ECFDF5;border:1.5px solid #6EE7B7;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;color:#059669">✓ Mark Passed</button>';
-        } else {
-          h+='<button onclick="adminMarkLAFailed(&quot;'+famId+'&quot;,&quot;'+pid+'&quot;,'+grade+',&quot;'+lv.id+'&quot;)" style="background:#FEF2F2;border:1.5px solid #FECACA;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;color:#DC2626">✕ Reset</button>';
-        }
-        h+='</div>';
-      });
-      h+='</div>';
-    });
-    h+='</div>';
-  });
-
-  el('s-admin').innerHTML=h;
-  go('s-admin');
-}
-
-function adminMarkLAPassed(famId, pid, grade, levelId){
-  var key = 'smart_la_'+grade+'_'+pid;
-  var prog = {};
-  try{ prog = JSON.parse(localStorage.getItem(key)||'{}'); }catch(e){}
-  var prev = prog[levelId] || {};
-  prog[levelId] = {score: prev.bestTotal||1, total: prev.bestTotal||1, passed:true,
-    date: new Date().toISOString(), attempts: prev.attempts||0,
-    bestScore: prev.bestTotal||1, bestTotal: prev.bestTotal||1, adminOverride:true};
-  localStorage.setItem(key, JSON.stringify(prog));
-  alert('Level marked as passed! Reloading view...');
-  adminLAProgress(famId, '');
-}
-
-function adminMarkLAFailed(famId, pid, grade, levelId){
-  if(!confirm('Reset this level to not-passed?')) return;
-  var key = 'smart_la_'+grade+'_'+pid;
-  var prog = {};
-  try{ prog = JSON.parse(localStorage.getItem(key)||'{}'); }catch(e){}
-  if(prog[levelId]){ prog[levelId].passed = false; prog[levelId].adminOverride=true; }
-  localStorage.setItem(key, JSON.stringify(prog));
-  alert('Level reset.');
-  adminLAProgress(famId, '');
-}
-
-function adminMathProgress(famId, famName){
-  var profKey = 'smart_'+famId+'_profiles';
-  var raw = localStorage.getItem(profKey) || localStorage.getItem('smart_profiles') || '[]';
-  var profs;
-  try{ profs = JSON.parse(raw); }catch(e){ profs=[]; }
-  if(!profs.length){ alert('No profiles found for '+famName+'. Log in as this family first.'); return; }
-
-  var h='<div class="hdr"><div style="float:left"><button class="bbtn" onclick="renderAdmin()">← Back</button></div>';
-  h+='<div style="text-align:center;padding-top:6px;font-size:17px;font-weight:700;color:#FF5C35">Math Progress: '+famName+'</div>';
-  h+='<div style="clear:both"></div></div>';
-
-  profs.forEach(function(prof){
-    var grade = prof.grade || 1;
-    var pid = prof.id;
-    var prog = {};
-    try{ prog = JSON.parse(localStorage.getItem('smart_pr_'+pid+'_p')||'{}'); }catch(e){}
-
-    var cats = getCats(grade);
-    h+='<div class="card card-raised" style="margin-bottom:14px">';
-    h+='<div style="font-size:15px;font-weight:700;color:var(--text-primary);margin-bottom:12px">'+prof.name+' · Grade '+grade+'</div>';
-
-    cats.forEach(function(cat){
-      if(!cat||!cat.lv||!cat.lv.length) return;
-      h+='<div style="margin-bottom:10px">';
-      h+='<div style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:6px">'+cat.nm+'</div>';
-      cat.lv.forEach(function(lv){
-        var rec = prog[lv.id];
-        var passed = rec && rec.passed;
-        var best = rec && rec.bestScore !== undefined ? rec.bestScore : (rec ? rec.score : null);
-        var total = rec && rec.bestTotal !== undefined ? rec.bestTotal : (rec ? rec.total : null);
-        var status = !rec ? '○ Not started' : passed ? '✅ Passed'+(best!==null?' ('+best+'/'+(total||'?')+')':'') : '❌ Failed'+(best!==null?' ('+best+'/'+(total||'?')+')':'');
-        var statusColor = !rec ? '#94A3B8' : passed ? '#10B981' : '#EF4444';
-        h+='<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:var(--bg);border:1.5px solid var(--border);border-radius:8px;margin-bottom:3px">';
-        h+='<div>';
-        h+='<span style="font-size:13px;font-weight:600;color:var(--text-primary)">'+lv.nm+'</span>';
-        if(lv.ds) h+='<span style="font-size:11px;color:var(--text-tertiary);margin-left:6px">'+lv.ds+'</span>';
-        h+='<div style="font-size:11px;color:'+statusColor+'">'+status+'</div>';
-        h+='</div>';
-        if(!passed){
-          h+='<button onclick="adminMarkMathPassed(&quot;'+famId+'&quot;,&quot;'+pid+'&quot;,'+grade+',&quot;'+lv.id+'&quot;)" style="background:#ECFDF5;border:1.5px solid #6EE7B7;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;color:#059669;white-space:nowrap">✓ Unlock</button>';
-        } else {
-          h+='<button onclick="adminMarkMathFailed(&quot;'+famId+'&quot;,&quot;'+pid+'&quot;,'+grade+',&quot;'+lv.id+'&quot;)" style="background:#FEF2F2;border:1.5px solid #FECACA;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;color:#DC2626;white-space:nowrap">✕ Reset</button>';
-        }
-        h+='</div>';
-      });
-      h+='</div>';
-    });
-    h+='</div>';
-  });
-
-  el('s-admin').innerHTML=h;
-  go('s-admin');
-}
-
-function adminMarkMathPassed(famId, pid, grade, levelId){
-  var key = _mathProgKey(grade, pid);
-  var prog = {};
-  try{ prog = JSON.parse(localStorage.getItem(key)||'{}'); }catch(e){}
-  var prev = prog[levelId]||{};
-  prog[levelId] = {score:40, total:40, passed:true, bestScore:40, bestTotal:40,
-    date:new Date().toISOString(), adminOverride:true, attempts: prev.attempts||0};
-  localStorage.setItem(key, JSON.stringify(prog));
-  alert('✅ Level unlocked for next level!');
-  adminMathProgress(famId, '');
-}
-
-function adminMarkMathFailed(famId, pid, grade, levelId){
-  if(!confirm('Reset this level to not-passed? This will lock the next level.')) return;
-  var key = _mathProgKey(grade, pid);
-  var prog = {};
-  try{ prog = JSON.parse(localStorage.getItem(key)||'{}'); }catch(e){}
-  if(prog[levelId]){ prog[levelId].passed = false; prog[levelId].adminOverride = true; }
-  localStorage.setItem(key, JSON.stringify(prog));
-  alert('Level reset.');
-  adminMathProgress(famId, '');
-}
-
-function _mathProgKey(grade, pid){
-  // loadProg uses profileKey(pid,'p') = 'smart_pr_'+pid+'_p'
-  return 'smart_pr_'+pid+'_p';
 }
 
 function adminCreateFamily(){
@@ -16503,7 +16319,7 @@ function renderReadingHub(grade, pid){
   var overallPct=totalLv>0?Math.round(passedLv/totalLv*100):0;
 
   /* header */
-  var h='<div class="hdr"><div style="float:left"><button class="bbtn" onclick="_lastTab[\''+ pid +'\']='+'\'reading\';renderHome()">Back</button></div>';
+  var h='<div class="hdr"><div style="float:left"><button class="bbtn" onclick="_lastTab[\''+ pid +'\']='+'"reading";renderHome()">Back</button></div>';
   h+='<div style="float:right"><button class="bbtn" onclick="renderPrizeBoard('+grade+',\''+pid+'\')">🎁</button></div>';
   h+='<div style="text-align:center;padding-top:6px;font-size:17px;font-weight:700;color:#3B82F6">📚 Language Arts</div>';
   h+='<div style="clear:both"></div></div>';
@@ -16762,16 +16578,9 @@ function saveLAProg(grade, pid, prog){
 function markLALevel(grade, pid, levelId, score, total){
   var prog = loadLAProg(grade, pid);
   var passed = score >= Math.ceil(total * 0.7);
-  var prev = prog[levelId] || {};
-  prog[levelId] = {
-    score: passed ? score : (prev.passed ? prev.score : score),
-    total: total,
-    passed: passed || !!prev.passed,
-    date: (passed || !prev.passed) ? new Date().toISOString() : (prev.date||new Date().toISOString()),
-    attempts: (prev.attempts||0) + 1,
-    bestScore: Math.max(score, prev.bestScore||0),
-    bestTotal: total
-  };
+  if(!prog[levelId] || passed){
+    prog[levelId] = {score:score, total:total, passed:passed, date:new Date().toISOString()};
+  }
   saveLAProg(grade, pid, prog);
 }
 
@@ -16936,7 +16745,7 @@ function finishReading(){
     el('s-reading').innerHTML=_h;return;
   }
   var elapsed=Math.round((Date.now()-READING_ST.startTime)/1000);   var pct=READING_ST.total>0?Math.round(READING_ST.score/READING_ST.total*100):0;   var gc=gradeConf(READING_ST.grade);    /* log to history */   try{     addPoints(READING_ST.profileId||ST.profileId,READING_ST.grade,READING_ST.score,READING_ST.total);
-     addHist(READING_ST.grade,{       date:new Date().toISOString(),       lid:'READING_'+READING_ST.mode.toUpperCase(),       score:READING_ST.score,       time:elapsed,       subject:'reading',       total:READING_ST.total     },READING_ST.profileId||ST.profileId);     syncToCloud(READING_ST.grade);   }catch(e){}    var modeLabel={story:'Reading',vocab:'Vocabulary',analogy:'Analogies'}[READING_ST.mode]||'Reading';   var emoji=pct>=90?'🏆':pct>=80?'⭐':pct>=60?'📖':'💪';    var h='<div class="hdr"><div style="float:left"><button class="bbtn" onclick="renderHome()">🏠 Home</button></div>'        +'<div style="text-align:center;padding-top:6px;font-size:14px;font-weight:700;color:'+gc.color+'">'+modeLabel+' Complete</div>'        +'<div style="clear:both"></div></div>';    h+='<div style="text-align:center;padding:24px 0 16px">'     +'<div style="font-size:56px;margin-bottom:8px">'+emoji+'</div>'     +'<div style="font-family:Sora,sans-serif;font-size:72px;font-weight:900;letter-spacing:-3px;color:var(--text-primary)">'+READING_ST.score+'<span style="font-size:28px;color:var(--text-tertiary);font-weight:400">/'+READING_ST.total+'</span></div>'     +'<div style="font-size:16px;color:var(--text-secondary);margin-top:4px">'+(pct>=90?'Outstanding! You are a reading star! 🌟':pct>=80?'Excellent work — keep it up! 🌟':pct>=60?'Good effort! Every page you read makes you smarter!':'Keep reading — you\'re building an amazing skill for life! 💪')+'</div>'
+     addHist(READING_ST.grade,{       date:new Date().toISOString(),       lid:'READING_'+READING_ST.mode.toUpperCase(),       score:READING_ST.score,       time:elapsed,       subject:'reading',       total:READING_ST.total     });     syncToCloud(READING_ST.grade);   }catch(e){}    var modeLabel={story:'Reading',vocab:'Vocabulary',analogy:'Analogies'}[READING_ST.mode]||'Reading';   var emoji=pct>=90?'🏆':pct>=80?'⭐':pct>=60?'📖':'💪';    var h='<div class="hdr"><div style="float:left"><button class="bbtn" onclick="renderHome()">🏠 Home</button></div>'        +'<div style="text-align:center;padding-top:6px;font-size:14px;font-weight:700;color:'+gc.color+'">'+modeLabel+' Complete</div>'        +'<div style="clear:both"></div></div>';    h+='<div style="text-align:center;padding:24px 0 16px">'     +'<div style="font-size:56px;margin-bottom:8px">'+emoji+'</div>'     +'<div style="font-family:Sora,sans-serif;font-size:72px;font-weight:900;letter-spacing:-3px;color:var(--text-primary)">'+READING_ST.score+'<span style="font-size:28px;color:var(--text-tertiary);font-weight:400">/'+READING_ST.total+'</span></div>'     +'<div style="font-size:16px;color:var(--text-secondary);margin-top:4px">'+(pct>=90?'Outstanding! You are a reading star! 🌟':pct>=80?'Excellent work — keep it up! 🌟':pct>=60?'Good effort! Every page you read makes you smarter!':'Keep reading — you\'re building an amazing skill for life! 💪')+'</div>'
     +'</div>';
 
   h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">';
@@ -16968,3 +16777,4 @@ catch(e){
 <button class="dark-toggle" onclick="toggleDark()" id="dark-btn" title="Toggle dark mode">🌙</button>
 </body>
 </html>
+   
