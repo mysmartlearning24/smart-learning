@@ -27,7 +27,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="color-scheme" content="light">
-<title>SMART v6.19</title>
+<title>SMART v6.20</title>
 <script>
 /* Early error handler — catches Firebase SDK failures before main script runs */
 window.onerror=function(msg,src,line,col,err){
@@ -12593,8 +12593,31 @@ function finishDrill(){
   }
   h+='</div></div>';
   var ci2=ST.ci;var g2=ST.grade;
-  h+='<div class="rbx"><button class="hb" style="background:'+gc.color+';color:#fff" onclick="startDrill()">&#8635; Try Again</button>';
-  h+='<button class="hb btn-secondary" onclick="renderCurriculum('+g2+',\''+ST.profileId+'\')">&#128218; Levels</button></div>';
+  /* ── Next-level progression: after 3 completions, force forward ── */
+  var _newAttempts=(p[lid]&&p[lid].attempts)||1;
+  var _nlr=findLvl(g2,lid);
+  var _nextCi=-1,_nextLi=-1,_nextNm='';
+  if(_nlr){
+    var _cats=getCats(g2);
+    if(_nlr.li+1<_nlr.cat.lv.length){_nextCi=_nlr.ci;_nextLi=_nlr.li+1;_nextNm=_nlr.cat.lv[_nextLi].nm||'';}
+    else{for(var _nci=_nlr.ci+1;_nci<_cats.length;_nci++){if(_cats[_nci]&&_cats[_nci].lv&&_cats[_nci].lv.length){_nextCi=_nci;_nextLi=0;_nextNm=_cats[_nci].lv[0].nm||'';break;}}}
+  }
+  var _forceNext=(_newAttempts>=3&&_nextCi>=0);
+  var _forceEnd=(_newAttempts>=3&&_nextCi<0);
+  if(_forceNext){
+    h+='<div style="background:#FEF3C7;border:1.5px solid #FDE68A;border-radius:12px;padding:10px 14px;margin-bottom:10px;font-size:13px;font-weight:600;color:#92400E;text-align:center">';
+    h+='🎯 You\'ve done this level '+_newAttempts+' times — time for the next challenge!</div>';
+    h+='<div class="rbx"><button class="hb" style="background:#10B981;color:#fff;font-size:16px" onclick="goLevel('+g2+','+_nextCi+','+_nextLi+',\''+ST.profileId+'\')">';
+    h+='&#8594; '+_nextNm+' — Next Level</button>';
+    h+='<button class="hb btn-secondary" onclick="renderCurriculum('+g2+',\''+ST.profileId+'\')"'>&#128218; Levels</button></div>';
+  } else if(_forceEnd){
+    h+='<div style="background:#ECFDF5;border:1.5px solid #BBF7D0;border-radius:12px;padding:10px 14px;margin-bottom:10px;font-size:13px;font-weight:700;color:#065F46;text-align:center">🏆 Curriculum Complete! You\'ve finished all levels!</div>';
+    h+='<div class="rbx"><button class="hb btn-secondary" onclick="renderCurriculum('+g2+',\''+ST.profileId+'\')"'>&#128218; Levels</button></div>';
+  } else {
+    h+='<div class="rbx"><button class="hb" style="background:'+gc.color+';color:#fff" onclick="startDrill()">&#8635; Try Again</button>';
+    h+='<button class="hb btn-secondary" onclick="renderCurriculum('+g2+',\''+ST.profileId+'\')"'>&#128218; Levels</button></div>';
+  }
+
   h+='<div class="sp"></div><button class="btn btn-secondary" onclick="renderHome()">&#127968; Home</button>';
   el('s-results').innerHTML=h;  if(score===ST.probs.length&&ST.probs.length>=5){
     setTimeout(function(){showBigCheer('🏆','Perfect!','Every single answer correct. Incredible work!','#10B981');spawnConfetti(40);},400);
