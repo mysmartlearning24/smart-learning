@@ -27,7 +27,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="color-scheme" content="light dark">
-<title>SMART v6.16</title>
+<title>SMART v6.17</title>
 <script>
 /* Early error handler — catches Firebase SDK failures before main script runs */
 window.onerror=function(msg,src,line,col,err){
@@ -12025,7 +12025,7 @@ function renderCurriculum(grade,pid){
       var wok=wli===0||(cprog[wlvs[wli-1].id]&&cprog[wlvs[wli-1].id].passed);
       var wpp=cprog[wlv.id];
       var wbest=wpp?wpp.bestScore:null;
-      h+='<div class="lt'+(wok?'':' lk')+'" style="background:'+wlv.color+(wok?'22':'0d')+';border-color:'+wlv.color+(wok?'55':'22')+'" onclick="'+(wok?'startConceptLevel(\''+(pid)+'\',\''+(wlv.id)+'\')':'')+'">';      h+='<div style="font-size:16px;font-weight:800;color:'+wlv.color+'">'+wlv.nm+'</div>';
+      h+='<div class="lt'+(wok?'':' lk')+'" style="background:'+wlv.color+(wok?'22':'0d')+';border-color:'+wlv.color+(wok?'55':'22')+'" onclick="'+(wok?'startConceptLevel(\''+(pid)+'\',\''+(wlv.id)+'\')':'showLockedMsg()')+'">';      h+='<div style="font-size:16px;font-weight:800;color:'+wlv.color+'">'+wlv.nm+'</div>';
       h+='<div style="font-size:11px;color:var(--text-secondary);margin-top:2px">'+wlv.ds+'</div>';
       h+='<div style="font-size:11px;margin-top:4px;color:#FFD700">'+( wbest!==null?(wbest+'/20'):(wok?'Try it!':'Locked'))+'</div>';
       h+='</div>';
@@ -12059,7 +12059,12 @@ function goLevel(grade,ci,li,pid){
     var cat=cats[ci];
     if(!cat.lv||!cat.lv[li]){console.error('goLevel: no level at li='+li);return;}
     var lv=cat.lv[li];
-    if(!isUnlocked(grade,lv.id,pid)){return;}
+    if(!isUnlocked(grade,lv.id,pid)){
+      var prevNm='';
+      if(li>0&&cat.lv[li-1]){prevNm=cat.lv[li-1].nm||cat.lv[li-1].id;}
+      showToast('🔒 Complete '+(prevNm||'the previous level')+' first to unlock '+lv.nm+'!');
+      return;
+    }
     ST.grade=grade;ST.ci=ci;ST.lid=lv.id;ST.tier=lv.tier||0;ST.mode='drill';
     if(pid){ST.profileId=pid;}
     startDrill();
@@ -12686,6 +12691,21 @@ function startConceptLevel(pid,lvlId){
 function startConceptMode(pid){
   startConceptLevel(pid,'WP1');
 }
+
+function showToast(msg){
+  var t=document.getElementById('_toast');
+  if(!t){t=document.createElement('div');t.id='_toast';
+    t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(30,30,30,0.92);color:#fff;padding:10px 18px;border-radius:24px;font-size:13px;font-weight:600;z-index:9999;pointer-events:none;transition:opacity 0.3s;max-width:90vw;text-align:center';
+    document.body.appendChild(t);}
+  t.textContent=msg;t.style.opacity='1';
+  clearTimeout(t._to);t._to=setTimeout(function(){t.style.opacity='0';},2200);
+}
+
+function showLockedMsg(){
+  showToast('🔒 Complete the previous level first to unlock this!');
+}
+
+
 
 function renderConcept(){
   var wp=ST.conceptBank[ST.conceptIdx];
@@ -15362,6 +15382,7 @@ function renderFamiliesList(fams){
     h+='</div>';
     h+='<button onclick="adminMigrateProfiles(FAMS['+fi+'].id,FAMS['+fi+'].name)" style="width:100%;background:#F0FDF4;border:1.5px solid #86EFAC;border-radius:10px;padding:9px;font-size:12px;font-weight:600;cursor:pointer;color:#16A34A">📦 Move Master Profiles Here</button>';
     h+='<button onclick="adminLAProgress(FAMS['+fi+'].id,FAMS['+fi+'].name)" style="width:100%;background:#EFF6FF;border:1.5px solid #BFDBFE;border-radius:10px;padding:9px;font-size:12px;font-weight:600;cursor:pointer;color:#2563EB;margin-top:6px">🔓 View / Unlock LA Progress</button>';
+    h+='<button onclick="adminMathProgress(FAMS['+fi+'].id,FAMS['+fi+'].name)" style="width:100%;background:#FFF7ED;border:1.5px solid #FED7AA;border-radius:10px;padding:9px;font-size:12px;font-weight:600;cursor:pointer;color:#C2410C;margin-top:6px">🔓 View / Unlock Math Progress</button>';
     h+='</div>';
   }
   listEl.innerHTML=h;
@@ -15438,6 +15459,88 @@ function adminMarkLAFailed(famId, pid, grade, levelId){
   localStorage.setItem(key, JSON.stringify(prog));
   alert('Level reset.');
   adminLAProgress(famId, '');
+}
+
+function adminMathProgress(famId, famName){
+  var profKey = 'smart_'+famId+'_profiles';
+  var raw = localStorage.getItem(profKey) || localStorage.getItem('smart_profiles') || '[]';
+  var profs;
+  try{ profs = JSON.parse(raw); }catch(e){ profs=[]; }
+  if(!profs.length){ alert('No profiles found for '+famName+'. Log in as this family first.'); return; }
+
+  var h='<div class="hdr"><div style="float:left"><button class="bbtn" onclick="renderAdmin()">← Back</button></div>';
+  h+='<div style="text-align:center;padding-top:6px;font-size:17px;font-weight:700;color:#FF5C35">Math Progress: '+famName+'</div>';
+  h+='<div style="clear:both"></div></div>';
+
+  profs.forEach(function(prof){
+    var grade = prof.grade || 1;
+    var pid = prof.id;
+    var prog = {};
+    try{ prog = JSON.parse(localStorage.getItem('smart_pr_'+pid+'_p')||'{}'); }catch(e){}
+
+    var cats = getCats(grade);
+    h+='<div class="card card-raised" style="margin-bottom:14px">';
+    h+='<div style="font-size:15px;font-weight:700;color:var(--text-primary);margin-bottom:12px">'+prof.name+' · Grade '+grade+'</div>';
+
+    cats.forEach(function(cat){
+      if(!cat||!cat.lv||!cat.lv.length) return;
+      h+='<div style="margin-bottom:10px">';
+      h+='<div style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:6px">'+cat.nm+'</div>';
+      cat.lv.forEach(function(lv){
+        var rec = prog[lv.id];
+        var passed = rec && rec.passed;
+        var best = rec && rec.bestScore !== undefined ? rec.bestScore : (rec ? rec.score : null);
+        var total = rec && rec.bestTotal !== undefined ? rec.bestTotal : (rec ? rec.total : null);
+        var status = !rec ? '○ Not started' : passed ? '✅ Passed'+(best!==null?' ('+best+'/'+(total||'?')+')':'') : '❌ Failed'+(best!==null?' ('+best+'/'+(total||'?')+')':'');
+        var statusColor = !rec ? '#94A3B8' : passed ? '#10B981' : '#EF4444';
+        h+='<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:var(--bg);border:1.5px solid var(--border);border-radius:8px;margin-bottom:3px">';
+        h+='<div>';
+        h+='<span style="font-size:13px;font-weight:600;color:var(--text-primary)">'+lv.nm+'</span>';
+        if(lv.ds) h+='<span style="font-size:11px;color:var(--text-tertiary);margin-left:6px">'+lv.ds+'</span>';
+        h+='<div style="font-size:11px;color:'+statusColor+'">'+status+'</div>';
+        h+='</div>';
+        if(!passed){
+          h+='<button onclick="adminMarkMathPassed(&quot;'+famId+'&quot;,&quot;'+pid+'&quot;,'+grade+',&quot;'+lv.id+'&quot;)" style="background:#ECFDF5;border:1.5px solid #6EE7B7;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;color:#059669;white-space:nowrap">✓ Unlock</button>';
+        } else {
+          h+='<button onclick="adminMarkMathFailed(&quot;'+famId+'&quot;,&quot;'+pid+'&quot;,'+grade+',&quot;'+lv.id+'&quot;)" style="background:#FEF2F2;border:1.5px solid #FECACA;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;color:#DC2626;white-space:nowrap">✕ Reset</button>';
+        }
+        h+='</div>';
+      });
+      h+='</div>';
+    });
+    h+='</div>';
+  });
+
+  el('s-admin').innerHTML=h;
+  go('s-admin');
+}
+
+function adminMarkMathPassed(famId, pid, grade, levelId){
+  var key = _mathProgKey(grade, pid);
+  var prog = {};
+  try{ prog = JSON.parse(localStorage.getItem(key)||'{}'); }catch(e){}
+  var prev = prog[levelId]||{};
+  prog[levelId] = {score:40, total:40, passed:true, bestScore:40, bestTotal:40,
+    date:new Date().toISOString(), adminOverride:true, attempts: prev.attempts||0};
+  localStorage.setItem(key, JSON.stringify(prog));
+  alert('✅ Level unlocked for next level!');
+  adminMathProgress(famId, '');
+}
+
+function adminMarkMathFailed(famId, pid, grade, levelId){
+  if(!confirm('Reset this level to not-passed? This will lock the next level.')) return;
+  var key = _mathProgKey(grade, pid);
+  var prog = {};
+  try{ prog = JSON.parse(localStorage.getItem(key)||'{}'); }catch(e){}
+  if(prog[levelId]){ prog[levelId].passed = false; prog[levelId].adminOverride = true; }
+  localStorage.setItem(key, JSON.stringify(prog));
+  alert('Level reset.');
+  adminMathProgress(famId, '');
+}
+
+function _mathProgKey(grade, pid){
+  // loadProg uses profileKey(pid,'p') = 'smart_pr_'+pid+'_p'
+  return 'smart_pr_'+pid+'_p';
 }
 
 function adminCreateFamily(){
