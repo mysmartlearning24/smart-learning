@@ -12609,13 +12609,13 @@ function finishDrill(){
     h+='🎯 You\'ve done this level '+_newAttempts+' times — time for the next challenge!</div>';
     h+='<div class="rbx"><button class="hb" style="background:#10B981;color:#fff;font-size:16px" onclick="goLevel('+g2+','+_nextCi+','+_nextLi+',\''+ST.profileId+'\')">';
     h+='&#8594; '+_nextNm+' — Next Level</button>';
-    h+='<button class="hb btn-secondary" onclick="renderCurriculum('+g2+',\''+ST.profileId+'\')"'>&#128218; Levels</button></div>';
+    h+='<button class="hb btn-secondary" onclick="renderCurriculum('+g2+',\''+ST.profileId+'\')">&#128218; Levels</button></div>';
   } else if(_forceEnd){
     h+='<div style="background:#ECFDF5;border:1.5px solid #BBF7D0;border-radius:12px;padding:10px 14px;margin-bottom:10px;font-size:13px;font-weight:700;color:#065F46;text-align:center">🏆 Curriculum Complete! You\'ve finished all levels!</div>';
-    h+='<div class="rbx"><button class="hb btn-secondary" onclick="renderCurriculum('+g2+',\''+ST.profileId+'\')"'>&#128218; Levels</button></div>';
+    h+='<div class="rbx"><button class="hb btn-secondary" onclick="renderCurriculum('+g2+',\''+ST.profileId+'\')">&#128218; Levels</button></div>';
   } else {
     h+='<div class="rbx"><button class="hb" style="background:'+gc.color+';color:#fff" onclick="startDrill()">&#8635; Try Again</button>';
-    h+='<button class="hb btn-secondary" onclick="renderCurriculum('+g2+',\''+ST.profileId+'\')"'>&#128218; Levels</button></div>';
+    h+='<button class="hb btn-secondary" onclick="renderCurriculum('+g2+',\''+ST.profileId+'\')">&#128218; Levels</button></div>';
   }
 
   h+='<div class="sp"></div><button class="btn btn-secondary" onclick="renderHome()">&#127968; Home</button>';
