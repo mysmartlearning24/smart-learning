@@ -27,7 +27,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="color-scheme" content="light">
-<title>SMART v6.20</title>
+<title>SMART v6.21</title>
 <script>
 /* Early error handler — catches Firebase SDK failures before main script runs */
 window.onerror=function(msg,src,line,col,err){
@@ -3194,23 +3194,47 @@ function dueReviewCount(grade,pid,my){
 }
 function gcd(a,b){return b===0?a:gcd(b,a%b);}
 
+function _mathShuffle(n){
+  var a=[];for(var i=0;i<n;i++)a.push(i);
+  for(var i=n-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}
+  return a;
+}
 function getNextProblem(lid){
-  if(!POOLS[lid]){
+  /* Build combo array once per page-load (memory cache) */
+  if(!POOLS[lid]||!POOLS[lid].combos){
     var combos=allCombos(lid);
-    /* Score difficulty for each problem before building pool */
-    combos.forEach(function(p){ if(!p.diff) p._d=autoDiff(p); else p._d=p.diff; });
-    if(combos.length>0)buildPool(lid,combos);
-    else return fallbackGen(lid);
+    combos.forEach(function(p){if(!p.diff)p._d=autoDiff(p);else p._d=p.diff;});
+    if(!combos.length)return fallbackGen(lid);
+    POOLS[lid]={combos:combos};
   }
-  if(POOLS[lid].idx>=POOLS[lid].problems.length){
-    buildPool(lid,POOLS[lid].problems);
+  var combos=POOLS[lid].combos;
+  var pid=ST.profileId||'';
+  var sk='smart_mpool_'+pid+'_'+lid;
+  /* Load persistent shuffled order from localStorage */
+  var ps=null;
+  try{ps=JSON.parse(localStorage.getItem(sk)||'null');}catch(e){}
+  /* Validate: must be an object with order matching current combo count */
+  if(!ps||!Array.isArray(ps.o)||ps.o.length!==combos.length||typeof ps.i!=='number'){
+    ps={o:_mathShuffle(combos.length),i:0};
   }
-  return POOLS[lid].problems[POOLS[lid].idx++];
+  /* Wrap: reshuffle when all problems exhausted, avoid immediate repeat */
+  if(ps.i>=ps.o.length){
+    var last=ps.o[ps.o.length-1];
+    var newOrd=_mathShuffle(combos.length);
+    if(newOrd.length>1&&newOrd[0]===last){var t=newOrd[0];newOrd[0]=newOrd[1];newOrd[1]=t;}
+    ps={o:newOrd,i:0};
+  }
+  var prob=combos[ps.o[ps.i++]];
+  /* Save updated position back to localStorage */
+  try{localStorage.setItem(sk,JSON.stringify(ps));}catch(e){}
+  return prob;
 }
 function buildPool(lid,arr){
+  /* Legacy shim — main path now uses localStorage-backed getNextProblem */
   var a=arr.slice();
   for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}
-  POOLS[lid]={problems:a,idx:0};
+  if(!POOLS[lid])POOLS[lid]={};
+  POOLS[lid].problems=a;POOLS[lid].idx=0;
 }
 function fallbackGen(lid){
   var a=rnd(1,9),b=rnd(1,9);
