@@ -27,7 +27,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="color-scheme" content="light">
-<title>SMART v6.25</title>
+<title>SMART v6.26</title>
 <script>
 /* Early error handler — catches Firebase SDK failures before main script runs */
 window.onerror=function(msg,src,line,col,err){
@@ -6919,10 +6919,13 @@ function renderGrammar(){
   }
   h+='</div>';
   el('s-grammar').innerHTML=h;
+  _GR.answered=false;_GR.renderTime=Date.now();
   _startIdleTimer();
 }
 
 function answerGrammar(chosen){
+  if(_GR.answered)return;if(_GR.renderTime&&(Date.now()-_GR.renderTime)<400)return;
+  _GR.answered=true;
   _clearIdleTimer();
   var pr=_GR.probs[_GR.q];
   var ok=(chosen===pr.ans);flashFeedback(ok);
@@ -7321,9 +7324,12 @@ function renderVocab(){
   }
   h+='</div>';
   el('s-vocab').innerHTML=h;
+  _VB.answered=false;_VB.renderTime=Date.now();
 }
 
 function answerVocab(chosen){
+  if(_VB.answered)return;if(_VB.renderTime&&(Date.now()-_VB.renderTime)<400)return;
+  _VB.answered=true;
   var pr=_VB.probs[_VB.q];
   var ok=(chosen===pr.ans);flashFeedback(ok);
   _VB.answers.push({q:pr.q,chosen:chosen,ans:pr.ans,ok:ok,exp:pr.exp||'',type:pr.type||''});
@@ -11133,9 +11139,11 @@ function renderGate(){
   }
   h+='</div>';
   el('s-gate').innerHTML=h;
+  _GT.answered=false;
 }
 
 function answerGate(chosen){
+  if(_GT.answered)return;_GT.answered=true;
   var pr=_GT.probs[_GT.q];
   var ok=(chosen===pr.ans);flashFeedback(ok);
   _GT.answers.push({q:pr.q,chosen:chosen,ans:pr.ans,ok:ok,exp:pr.exp||'',battery:pr.battery||''});
@@ -11262,6 +11270,7 @@ function renderGatePracticeTest(){
   }
   h+='</div>';
   el('s-gate').innerHTML=h;
+  _GTP.answered=false;
 }
 
 function renderGateSectionStart(qIdx){
@@ -11295,6 +11304,7 @@ function renderGateSectionStart(qIdx){
 }
 
 function answerGatePracticeTest(chosen){
+  if(_GTP.answered)return;_GTP.answered=true;
   var pr=_GTP.probs[_GTP.q];
   var ok=(chosen===pr.ans);flashFeedback(ok);
   _GTP.answers.push({q:pr.q,chosen:chosen,ans:pr.ans,ok:ok,exp:pr.exp||'',battery:pr.battery||''});
@@ -11404,9 +11414,11 @@ function renderGateDrill(){
   }
   h+='</div>';
   el('s-gate').innerHTML=h;
+  _GD.answered=false;
 }
 
 function answerGateDrill(chosen){
+  if(_GD.answered)return;_GD.answered=true;
   var pr=_GD.probs[_GD.q];
   var ok=(chosen===pr.ans);flashFeedback(ok);
   _GD.answers.push({q:pr.q,chosen:chosen,ans:pr.ans,ok:ok,exp:pr.exp||''});
@@ -12462,6 +12474,7 @@ function toggleNeg(){
 function subDrill(){
   _clearIdleTimer();
   if(!ST.inp)return;
+  if(ST._qStart && (Date.now()-ST._qStart)<400)return; /* anti-brute-force: min 400ms per question */
   var pr=ST.probs[ST.q];
   var correctAns=pr.mf?pr.ans2:pr.an;
   /* handle string answers (fractions, ratios) */
@@ -12850,14 +12863,15 @@ function renderConcept(){
   if(wp.unit){h+='<div style="font-size:13px;color:var(--text-tertiary);margin-bottom:12px">Answer in: '+wp.unit+'</div>';}
   h+='<div class="wp-choices">';
   var _wpch=_sc(wp.choices);for(var i=0;i<_wpch.length;i++){
-    h+='<button class="wp-choice" id="wpc'+i+'" data-val="'+_wpch[i]+'" onclick="answerWP('+i+','+_wpch[i]+','+wp.an+')">'+(wp.unit==='$'?'$':'')+_wpch[i]+(wp.unit&&wp.unit!=='$'?' '+wp.unit:'')+'</button>';
+    h+='<button class="wp-choice" id="wpc'+i+'" data-val="'+_wpch[i]+'" onclick="answerWP('+i+','+_wpch[i]+')">'+(wp.unit==='$'?'$':'')+_wpch[i]+(wp.unit&&wp.unit!=='$'?' '+wp.unit:'')+'</button>';
   }
   h+='</div></div>';
   h+='<div class="sp"></div>';
   el('s-concept').innerHTML=h;go('s-concept');
 }
 
-function answerWP(idx,chosen,correct){
+function answerWP(idx,chosen){
+  var correct=(ST.curWP&&ST.curWP.an!==undefined)?ST.curWP.an:(ST.conceptBank[ST.conceptIdx]?ST.conceptBank[ST.conceptIdx].an:undefined);
   if(ST.wpAnswered)return;
   ST.wpAnswered=true;
   ST.as[ST.conceptIdx]=chosen;
@@ -15962,7 +15976,7 @@ function answerByKey(idx){
   if(btn && !ST.wpAnswered){
     var val = Number(btn.getAttribute('data-val'));
     var wp = ST.conceptBank[ST.conceptIdx];
-    if(wp) answerWP(idx, val, wp.an);
+    if(wp) answerWP(idx, val);
   }
 }
 
@@ -16763,7 +16777,7 @@ function renderReadingQuestion(){
      +'<div style="font-size:15px;font-weight:600;color:var(--text-primary);line-height:1.5;margin-bottom:14px">'+q.q+'</div>';
   q.ch.forEach(function(choice,ci){
     var ltr=['A','B','C','D'][ci];
-    h+='<button class="reading-choice" id="rc-'+ci+'" onclick="answerReading('+ci+','+q.an+')">'
+    h+='<button class="reading-choice" id="rc-'+ci+'" onclick="answerReading('+ci+')">'
        +'<span style="background:var(--bg-subtle);border-radius:6px;padding:2px 8px;font-weight:700;margin-right:8px;font-size:12px;flex-shrink:0">'+ltr+'</span>'
        +choice+'</button>';
   });
@@ -17027,7 +17041,10 @@ function nextReadingQ(){
   renderReadingQuestion();
 }
 
-function answerReading(chosen, correct){
+function answerReading(chosen){
+  var story=READING_ST.storyPool[READING_ST.storyIdx];
+  var q=story.qs[READING_ST.questionIdx];
+  var correct=q.an;
   if(READING_ST.answered)return;
   READING_ST.answered=true;
   var ok=(chosen===correct);
@@ -17052,6 +17069,7 @@ function answerReading(chosen, correct){
 }
 
 function finishReading(){
+  if(READING_ST.total===0&&!_LA_ACTIVE)return; /* no questions answered — ignore */
   if(_LA_ACTIVE&&_LA_ACTIVE.mode==='story_level'){
     var _la=_LA_ACTIVE;_LA_ACTIVE=null;
     markLALevel(_la.grade,_la.pid,_la.levelId,READING_ST.score,READING_ST.total||READING_ST.storyPool[0].qs.length);
@@ -17100,6 +17118,23 @@ catch(e){
   document.body.style.cssText='background:#0d1117;color:#fff;padding:30px;font-family:sans-serif;';
   document.body.innerHTML='<h2 style="color:#ff5050">Error</h2><pre style="color:#FFD700;font-size:11px;margin-top:12px;white-space:pre-wrap">'+String(e)+'\n'+(e.stack||'')+'</pre>';
 }
+
+/* ═══ PAGE VISIBILITY — subtract time-away from reading timer ═══ */
+var _pageHiddenAt = 0;
+document.addEventListener('visibilitychange', function(){
+  if(document.hidden){
+    _pageHiddenAt = Date.now();
+  } else if(_pageHiddenAt > 0){
+    var awayMs = Date.now() - _pageHiddenAt;
+    _pageHiddenAt = 0;
+    /* Shift reading startTime forward so elapsed = active time only */
+    if(READING_ST && READING_ST.startTime > 0){
+      READING_ST.startTime += awayMs;
+    }
+    /* Drill elapsed is updated by setInterval every 500ms; no action needed */
+    /* But if away > idle limit, the idle timer already auto-skipped the question */
+  }
+});
 </script>
 <button class="dark-toggle" onclick="toggleDark()" id="dark-btn" title="Toggle dark mode">🌙</button>
 </body>
