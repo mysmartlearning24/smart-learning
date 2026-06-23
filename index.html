@@ -27,7 +27,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="color-scheme" content="light">
-<title>SMART v6.22</title>
+<title>SMART v6.23</title>
 <script>
 /* Early error handler — catches Firebase SDK failures before main script runs */
 window.onerror=function(msg,src,line,col,err){
@@ -1577,8 +1577,9 @@ function answerCompute(chosen){
   else{_CT.retry.push(pr);_CT.consecutive=0;if(_CT.consecutive<=-2&&_CT.diffLevel>-1)_CT.diffLevel--;}
   _CT.q++;
   if(_CT.q>=_CT.probs.length){
-    if(_CT.retry.length>0){
-      /* Inject retry problems at end of current queue */
+    if(_CT.retry.length>0&&(_CT.retryRounds||0)<2){
+      /* Inject retry problems at end of current queue (max 2 retry rounds) */
+      _CT.retryRounds=(_CT.retryRounds||0)+1;
       _CT.probs=_CT.probs.concat(_CT.retry);
       _CT.retry=[];
       setTimeout(renderCompute,250);
@@ -12789,7 +12790,7 @@ function renderConcept(){
   if(wp.unit){h+='<div style="font-size:13px;color:var(--text-tertiary);margin-bottom:12px">Answer in: '+wp.unit+'</div>';}
   h+='<div class="wp-choices">';
   var _wpch=_sc(wp.choices);for(var i=0;i<_wpch.length;i++){
-    h+='<button class="wp-choice" id="wpc'+i+'" data-val="'+_wpch[i]+'" onclick="answerWP('+i+','+_wpch[i]+','+wp.an+')">'+(wp.unit==='$'?'$':'')+wp.choices[i]+(wp.unit&&wp.unit!=='$'?' '+wp.unit:'')+'</button>';
+    h+='<button class="wp-choice" id="wpc'+i+'" data-val="'+_wpch[i]+'" onclick="answerWP('+i+','+_wpch[i]+','+wp.an+')">'+(wp.unit==='$'?'$':'')+_wpch[i]+(wp.unit&&wp.unit!=='$'?' '+wp.unit:'')+'</button>';
   }
   h+='</div></div>';
   h+='<div class="sp"></div>';
