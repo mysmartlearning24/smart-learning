@@ -27,7 +27,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="color-scheme" content="light">
-<title>SMART v6.27</title>
+<title>SMART v6.28</title>
 <script>
 /* Early error handler — catches Firebase SDK failures before main script runs */
 window.onerror=function(msg,src,line,col,err){
@@ -6962,7 +6962,7 @@ function startGrammar(grade,pid){
   grade=grade||ST.grade||1;pid=pid||ST.profileId;
   var bank=GRAMMAR_BANK[grade]||GRAMMAR_BANK[1];
   var pool=_drawUnseen(bank,pid,grade,'grammar',10);
-  _GR={q:0,probs:pool,answers:[],grade:grade,pid:pid,startTime:Date.now(),score:0};
+  _GR={q:0,probs:pool,answers:[],grade:grade,pid:pid,startTime:Date.now(),score:0};_sessionPush('grammar');
   go('s-grammar');renderGrammar();
 }
 
@@ -6992,6 +6992,7 @@ function answerGrammar(chosen){
   _clearIdleTimer();
   var pr=_GR.probs[_GR.q];
   var ok=(chosen===pr.ans);flashFeedback(ok);
+  if(!ok){_wrongAt=Date.now();}
   _GR.answers.push({q:pr.q,chosen:chosen,ans:pr.ans,ok:ok,exp:pr.exp||''});
   if(ok)_GR.score++;
   _GR.q++;
@@ -6999,6 +7000,7 @@ function answerGrammar(chosen){
 }
 
 function finishGrammar(){
+  _sessionClear();
   _clearIdleTimer();
   if(_LA_ACTIVE&&_LA_ACTIVE.mode==='grammar_level'){
     var _la=_LA_ACTIVE;_LA_ACTIVE=null;
@@ -7395,6 +7397,7 @@ function answerVocab(chosen){
   _VB.answered=true;
   var pr=_VB.probs[_VB.q];
   var ok=(chosen===pr.ans);flashFeedback(ok);
+  if(!ok){_wrongAt=Date.now();}
   _VB.answers.push({q:pr.q,chosen:chosen,ans:pr.ans,ok:ok,exp:pr.exp||'',type:pr.type||''});
   if(ok)_VB.score++;
   _VB.q++;
@@ -7402,6 +7405,7 @@ function answerVocab(chosen){
 }
 
 function finishVocab(){
+  _sessionClear();
   if(_LA_ACTIVE&&_LA_ACTIVE.mode==='vocab_level'){
     var _la=_LA_ACTIVE;_LA_ACTIVE=null;
     var _score=_VB.score,_total=_VB.probs.length;
@@ -11176,7 +11180,7 @@ function startGate(grade,pid){
   var quant=_shuf(bank.filter(function(q){return q.battery==='quantitative';})).slice(0,5);
   var nonverbal=_shuf(bank.filter(function(q){return q.battery==='nonverbal';})).slice(0,5);
   var pool=_shuf(verbal.concat(quant).concat(nonverbal));
-  _GT={q:0,probs:pool,answers:[],grade:grade,pid:pid,startTime:Date.now(),score:0};
+  _GT={q:0,probs:pool,answers:[],grade:grade,pid:pid,startTime:Date.now(),score:0};_sessionPush('gate');
   go('s-gate');renderGate();
 }
 
@@ -11209,6 +11213,7 @@ function answerGate(chosen){
   if(_GT.answered)return;_GT.answered=true;
   var pr=_GT.probs[_GT.q];
   var ok=(chosen===pr.ans);flashFeedback(ok);
+  if(!ok){_wrongAt=Date.now();}
   _GT.answers.push({q:pr.q,chosen:chosen,ans:pr.ans,ok:ok,exp:pr.exp||'',battery:pr.battery||''});
   if(ok)_GT.score++;
   _GT.q++;
@@ -11216,6 +11221,7 @@ function answerGate(chosen){
 }
 
 function finishGate(){
+  _sessionClear();
   var elapsed=Math.round((Date.now()-_GT.startTime)/1000);
   var score=_GT.score,pid=_GT.pid,grade=_GT.grade;
   var st=updateStreak(pid);
@@ -11290,7 +11296,7 @@ function startGatePracticeTest(grade,pid){
   var quant=_shuf(bank.filter(function(q){return q.battery==='quantitative';})).slice(0,15);
   var nonverbal=_shuf(bank.filter(function(q){return q.battery==='nonverbal';})).slice(0,15);
   var pool=verbal.concat(quant).concat(nonverbal);
-  _GTP={q:0,probs:pool,answers:[],grade:grade,pid:pid,startTime:Date.now(),score:0,section:'intro',sectionStart:0};
+  _GTP={q:0,probs:pool,answers:[],grade:grade,pid:pid,startTime:Date.now(),score:0,section:'intro',sectionStart:0};_sessionPush('gate_pt');
   go('s-gate');renderGatePracticeTest();
 }
 
@@ -11370,6 +11376,7 @@ function answerGatePracticeTest(chosen){
   if(_GTP.answered)return;_GTP.answered=true;
   var pr=_GTP.probs[_GTP.q];
   var ok=(chosen===pr.ans);flashFeedback(ok);
+  if(!ok){_wrongAt=Date.now();}
   _GTP.answers.push({q:pr.q,chosen:chosen,ans:pr.ans,ok:ok,exp:pr.exp||'',battery:pr.battery||''});
   if(ok)_GTP.score++;
   _GTP.q++;
@@ -11377,6 +11384,7 @@ function answerGatePracticeTest(chosen){
 }
 
 function finishGatePracticeTest(){
+  _sessionClear();
   var elapsed=Math.round((Date.now()-_GTP.startTime)/1000);
   var score=_GTP.score,pid=_GTP.pid,grade=_GTP.grade;
   var st=updateStreak(pid);
@@ -11454,7 +11462,7 @@ function startGateDrill(grade,pid,drillType){
     var fallbackBattery=(bank.find(function(q2){return q2.type===drillType;})||{}).battery;
     pool=_shuf(bank.filter(function(q){return q.battery===fallbackBattery;})).slice(0,10);
   }
-  _GD={q:0,probs:pool,answers:[],grade:grade,pid:pid,startTime:Date.now(),score:0,drillType:drillType};
+  _GD={q:0,probs:pool,answers:[],grade:grade,pid:pid,startTime:Date.now(),score:0,drillType:drillType};_sessionPush('gate_drill');
   go('s-gate');renderGateDrill();
 }
 
@@ -11484,6 +11492,7 @@ function answerGateDrill(chosen){
   if(_GD.answered)return;_GD.answered=true;
   var pr=_GD.probs[_GD.q];
   var ok=(chosen===pr.ans);flashFeedback(ok);
+  if(!ok){_wrongAt=Date.now();}
   _GD.answers.push({q:pr.q,chosen:chosen,ans:pr.ans,ok:ok,exp:pr.exp||''});
   if(ok)_GD.score++;
   _GD.q++;
@@ -11491,6 +11500,7 @@ function answerGateDrill(chosen){
 }
 
 function finishGateDrill(){
+  _sessionClear();
   var elapsed=Math.round((Date.now()-_GD.startTime)/1000);
   var score=_GD.score,pid=_GD.pid,grade=_GD.grade;
   var total=_GD.probs.length;
@@ -12249,7 +12259,7 @@ function goLevel(grade,ci,li,pid){
 function startDrill(){
   Q_DRILL=getQDrill(ST.grade);
   var Q=Q_DRILL;
-  ST.probs=[];ST.as=[];
+  ST.probs=[];ST.as=[];_sessionPush('drill');
   try{
     for(var i=0;i<Q;i++){ST.probs.push(getNextProblem(ST.lid));}
     ST.probs=addDrawData(ST.lid,ST.probs);
@@ -12562,6 +12572,7 @@ function subDrill(){
     ST.inp='';setTimeout(nextDrillQ,420);
   } else {
     ST.streak=0;
+    _wrongAt=Date.now();
     if(pc2){pc2.className='pc wrong do-shake';}
     if(pa){
       var showGiven = (curPr&&curPr.ratioQ&&ua==='') ? '(blank)' : String(ua);
@@ -12589,17 +12600,20 @@ function nextDrillQ(){
   else{ST.q++;ST.inp='';renderDrill();}
 }
 function quitDrill(){
+  _sessionClear();
+  _invalidateDrillPool(); /* reshuffle so re-entry gets fresh questions */
   _clearIdleTimer();
   clearInterval(ST.tint);
   el('mo-xp').style.display='none';
-  /* save partial session if at least 5 questions done */
-  if(ST.q>=5){
+  /* Include in-progress question if already answered (back-button prevention) */
+  var _qDone=(ST.q<ST.probs.length&&ST.as[ST.q]!==undefined&&ST.as[ST.q]!==null)?ST.q+1:ST.q;
+  if(_qDone>=5){
     var score=0;
-    for(var i=0;i<ST.q;i++){
+    for(var i=0;i<_qDone;i++){
       var correctAns=ST.probs[i].mf?ST.probs[i].ans2:ST.probs[i].an;
       if(String(ST.as[i])===String(correctAns))score++;
     }
-    addHist(ST.grade,{date:new Date().toISOString(),lid:ST.lid,score:score,time:(ST.activeTime>0?Math.min(ST.activeTime,ST.elapsed):ST.elapsed),ans:[],mode:'drill',partial:true,qDone:ST.q,subject:'math'});
+    addHist(ST.grade,{date:new Date().toISOString(),lid:ST.lid,score:score,time:(ST.activeTime>0?Math.min(ST.activeTime,ST.elapsed):ST.elapsed),ans:[],mode:'drill',partial:true,qDone:_qDone,subject:'math'});
     syncToCloud(ST.grade);
   }
   renderCurriculum(ST.grade);
@@ -12663,6 +12677,7 @@ function _autoSkipQuestion(){
    FINISH DRILL
 ═══════════════════════════════════════════ */
 function finishDrill(){
+  _sessionClear();
   _clearIdleTimer();
   clearInterval(ST.tint);
   var time=ST.activeTime>0?Math.min(ST.activeTime,ST.elapsed):ST.elapsed,score=0,i;
@@ -12939,7 +12954,7 @@ function answerWP(idx,chosen){
   ST.wpAnswered=true;
   ST.as[ST.conceptIdx]=chosen;
   var ok=(Number(chosen)===Number(correct));flashFeedback(ok);
-  if(ok){ST.xp++;ST.streak++;}else{ST.streak=0;}
+  if(ok){ST.xp++;ST.streak++;}else{ST.streak=0;_wrongAt=Date.now();}
   /* highlight buttons */
   for(var i=0;i<4;i++){
     var btn=el('wpc'+i);if(!btn)continue;
@@ -12954,6 +12969,7 @@ function answerWP(idx,chosen){
 }
 
 function finishConcept(){
+  _sessionClear();
   clearInterval(ST.tint);
   var time=ST.elapsed,score=0,i;
   for(i=0;i<ST.conceptBank.length;i++){if(Number(ST.as[i])===Number(ST.conceptBank[i].an))score++;}
@@ -12997,6 +13013,7 @@ function finishConcept(){
 }
 
 function quitConcept(){
+  _sessionClear();
   clearInterval(ST.tint);
   if(ST.conceptIdx>=3){
     var score=0;
@@ -16687,6 +16704,7 @@ function finishWritingMode(){
 
 /* ── Reading Hub ── */
 function renderReadingHub(grade, pid){
+  if(_navBlocked()){return;}
   try{
   grade=grade||ST.grade||1; pid=pid||ST.profileId||'';
   ST.profileId=pid; ST.grade=grade;
@@ -17045,13 +17063,14 @@ function startLALevel(grade, pid, catId, lvIdx){
     renderWritingQ();go('s-grammar');
   } else if(lv.mode==='vocab_level'){
     var vpool=lv.pool.slice().sort(function(){return Math.random()-.5;});
-    _VB={q:0,probs:vpool,answers:[],grade:grade,pid:pid,startTime:Date.now(),score:0};
+    _VB={q:0,probs:vpool,answers:[],grade:grade,pid:pid,startTime:Date.now(),score:0};_sessionPush('vocab');
     go('s-vocab');renderVocab();
   } else if(lv.mode==='story_level'){
     READING_ST.grade=grade;READING_ST.profileId=pid;
     READING_ST.mode='story';READING_ST.storyPool=[lv.story];
     READING_ST.storyIdx=0;READING_ST.questionIdx=0;
     READING_ST.score=0;READING_ST.total=0;READING_ST.startTime=Date.now();
+    _sessionPush('reading');
     renderReadingQuestion();go('s-reading');
   }
   }catch(e){alert('LA Level crash: '+String(e.message||e));}
@@ -17090,6 +17109,7 @@ function startReadingMode(grade, pid, mode){
   READING_ST.storyPool = pool.slice().sort(function(){return Math.random()-0.5;});
   READING_ST.storyIdx = 0;
   READING_ST.questionIdx = 0;
+  _sessionPush('reading');
   renderReadingQuestion();
 }
 
@@ -17111,6 +17131,7 @@ function answerReading(chosen){
   if(READING_ST.answered)return;
   READING_ST.answered=true;
   var ok=(chosen===correct);
+  if(!ok){_wrongAt=Date.now();}
   if(ok)READING_ST.score++;
   for(var i=0;i<4;i++){
     var b=document.getElementById('rc-'+i);
@@ -17132,6 +17153,7 @@ function answerReading(chosen){
 }
 
 function finishReading(){
+  _sessionClear();
   if(READING_ST.total===0&&!_LA_ACTIVE)return; /* no questions answered — ignore */
   if(_LA_ACTIVE&&_LA_ACTIVE.mode==='story_level'){
     var _la=_LA_ACTIVE;_LA_ACTIVE=null;
@@ -17230,6 +17252,99 @@ function _checkZoom(){
 /* Defer 500ms so outerWidth is settled after paint */
 setTimeout(_checkZoom, 500);
 window.addEventListener('resize', _checkZoom);
+
+/* ═══════════════════════════════════════════════════════════════════
+   BACK-BUTTON CHEAT PREVENTION — v6.28
+   Three-layer defence:
+   1. IMMEDIATE COMMIT  — _wrongAt set the moment wrong answer lands;
+      answer already in session record before any animation.
+   2. NAV LOCK          — hub/nav functions blocked _WRONG_LOCK_MS (1200ms)
+      after wrong answer; invisible to real users, defeats instant-back.
+   3. POPSTATE INTERCEPT — browser back during active session re-pushes
+      history (blocking nav) then calls abandon handler so partial results
+      are recorded and drill pool is reshuffled for fresh questions next entry.
+   ═══════════════════════════════════════════════════════════════════ */
+var _wrongAt = 0;
+var _WRONG_LOCK_MS = 1200;
+var _drillActive = null;
+function _navBlocked(){
+  return _wrongAt > 0 && (Date.now() - _wrongAt) < _WRONG_LOCK_MS;
+}
+function _sessionPush(mode){
+  _drillActive = mode;
+  try{ history.pushState({_smart: mode}, ''); }catch(e){}
+}
+function _sessionClear(){ _drillActive = null; }
+
+/* Reshuffle drill pool so re-entry after abandon gets genuinely new questions */
+function _invalidateDrillPool(){
+  try{
+    var lid = ST.lid, pid = ST.profileId||'';
+    if(!lid||!POOLS[lid]||!POOLS[lid].combos) return;
+    var n = POOLS[lid].combos.length;
+    var seenSet = {};
+    if(ST.probs){for(var si=0;si<ST.probs.length;si++){
+      var sidx=POOLS[lid].combos.indexOf(ST.probs[si]);
+      if(sidx>=0) seenSet[sidx]=true;
+    }}
+    var newOrd = _mathShuffle(n), ni = 0;
+    if(n > ST.probs.length * 1.5){
+      while(ni < newOrd.length && seenSet[newOrd[ni]]){ ni++; }
+      if(ni >= newOrd.length){ newOrd = _mathShuffle(n); ni = 0; }
+    }
+    var ps = {o:newOrd, i:ni};
+    POOLS[lid].ps = ps;
+    try{ localStorage.setItem('smart_mpool_'+pid+'_'+lid, JSON.stringify(ps)); }catch(e){}
+  }catch(e){}
+}
+
+/* Abandon grammar: push current unanswered Q as wrong, then finish */
+function _abandonGrammar(){
+  try{
+    if(!_GR||!_GR.probs){ renderHome(); return; }
+    if(_GR.q < _GR.probs.length && _GR.answers.length <= _GR.q){
+      var _p=_GR.probs[_GR.q];
+      _GR.answers.push({q:_p.q,chosen:-1,ans:_p.ans,ok:false,exp:_p.exp||''});
+      _GR.q++;
+    }
+    finishGrammar();
+  }catch(e){ try{renderHome();}catch(e2){} }
+}
+/* Abandon vocab: same pattern */
+function _abandonVocab(){
+  try{
+    if(!_VB||!_VB.probs){ renderHome(); return; }
+    if(_VB.q < _VB.probs.length && _VB.answers.length <= _VB.q){
+      var _p=_VB.probs[_VB.q];
+      _VB.answers.push({q:_p.q,chosen:-1,ans:_p.ans,ok:false,exp:_p.exp||'',type:_p.type||''});
+      _VB.q++;
+    }
+    finishVocab();
+  }catch(e){ try{renderHome();}catch(e2){} }
+}
+/* Dispatch to right abandon handler for active session mode */
+function _abandonCurrentSession(){
+  var mode = _drillActive;
+  _sessionClear();
+  try{
+    if(mode==='drill'){ quitDrill(); }
+    else if(mode==='grammar'){ _abandonGrammar(); }
+    else if(mode==='vocab'){ _abandonVocab(); }
+    else if(mode==='gate'||mode==='gate_drill'||mode==='gate_pt'){ renderHome(); }
+    else if(mode==='reading'){ finishReading(); }
+    else if(mode==='concept'){ quitConcept(); }
+    else { renderHome(); }
+  }catch(e){ try{renderHome();}catch(e2){} }
+}
+/* Browser back interceptor */
+window.addEventListener('popstate', function(e){
+  if(_drillActive){
+    try{ history.pushState({_smart:_drillActive},''); }catch(e2){}
+    _abandonCurrentSession();
+  }
+});
+/* Seed history so first back is catchable */
+try{ history.pushState({_smart:'base'},''); }catch(e){}
 </script>
 <button class="dark-toggle" onclick="toggleDark()" id="dark-btn" title="Toggle dark mode">🌙</button>
 </body>
