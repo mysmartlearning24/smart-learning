@@ -27,7 +27,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="color-scheme" content="light">
-<title>SMART v6.26</title>
+<title>SMART v6.27</title>
 <script>
 /* Early error handler — catches Firebase SDK failures before main script runs */
 window.onerror=function(msg,src,line,col,err){
@@ -997,9 +997,72 @@ body {
 .lt:active{transform:scale(.92)!important;transition:transform .08s!important}
 .hb:active{transform:scale(.95)!important;transition:transform .08s!important}
 .bbtn:active{transform:scale(.93)!important;transition:transform .08s!important}
+
+/* ── ZOOM BANNER ────────────────────────────────────── */
+#zoom-banner{
+  display:none;
+  position:fixed;
+  top:0;left:0;right:0;
+  background:linear-gradient(90deg,#FF5C35,#F7931E);
+  color:#fff;
+  padding:10px 14px;
+  text-align:center;
+  font-size:13px;
+  font-weight:600;
+  z-index:10000;
+  font-family:var(--font-body);
+  line-height:1.4;
+  box-shadow:0 2px 8px rgba(0,0,0,0.2);
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+}
+#zoom-banner.show{display:flex;}
+#zoom-banner-close{
+  background:rgba(255,255,255,0.28);
+  border:none;
+  color:#fff;
+  border-radius:6px;
+  padding:3px 10px;
+  font-size:13px;
+  font-weight:700;
+  cursor:pointer;
+  flex-shrink:0;
+  font-family:var(--font-body);
+}
+#zoom-banner-close:active{background:rgba(255,255,255,0.45);}
+
+/* ── COMPACT DRILL — 125-150% browser zoom shrinks dvh ───────────────── */
+@media (max-height:700px){
+  .pc{padding:18px 20px 14px!important;margin-bottom:10px!important;}
+  .pn{font-size:40px!important;letter-spacing:-1.5px!important;}
+  .pa{font-size:34px!important;min-height:44px!important;}
+  .nb{padding:9px 0!important;}
+  #drill-canvas{max-height:min(120px,22vh)!important;}
+  .drill-top{padding:6px 14px 4px!important;}
+  .drill-bottom{padding:2px 12px 6px!important;}
+  .xpbar{margin-bottom:6px!important;}
+}
+@media (max-height:560px){
+  .pc{padding:10px 16px 8px!important;margin-bottom:6px!important;}
+  .pn{font-size:28px!important;letter-spacing:-1px!important;}
+  .pa{font-size:24px!important;min-height:32px!important;}
+  .nb{padding:6px 0!important;font-size:17px!important;}
+  #drill-canvas{max-height:min(80px,16vh)!important;}
+  .xpbar{display:none!important;}
+}
+
+/* Nudge regular screens down when zoom banner is showing */
+body.zoom-warn .screen.active:not(#s-drill){padding-top:52px!important;}
+body.zoom-warn #s-drill.active .drill-top{padding-top:52px!important;}
 </style>
 </head>
 <body>
+<!-- ZOOM WARNING BANNER -->
+<div id="zoom-banner">
+  <span>&#128269; Browser zoom is above 100% &mdash; the app may look off. Press <strong>Ctrl+0</strong> (or <strong>&#8984;+0</strong> on Mac) to reset.</span>
+  <button id="zoom-banner-close" onclick="document.getElementById('zoom-banner').classList.remove('show');document.body.classList.remove('zoom-warn');_zoomDismissed=true;">Got it</button>
+</div>
 <!-- SCREENS -->
 <div id="s-login" class="screen active">
   <div style="max-width:420px;margin:0 auto;padding-top:48px;text-align:center;padding-left:16px;padding-right:16px">
@@ -17135,6 +17198,38 @@ document.addEventListener('visibilitychange', function(){
     /* But if away > idle limit, the idle timer already auto-skipped the question */
   }
 });
+
+/* ═══ ZOOM DETECTION ══════════════════════════════════════════════════
+   Show banner when browser zoom is meaningfully above 100%.
+   Detection: outerWidth/innerWidth ratio > 1.15
+     100% zoom  → ratio ~1.00 → banner hidden
+     125% zoom  → ratio ~1.25 → banner shown
+     150% zoom  → ratio ~1.50 → banner shown
+   CSS @media (max-height) rules above independently compress the drill
+   screen, so layout holds up even if the banner is dismissed.
+   ════════════════════════════════════════════════════════════════════ */
+var _zoomDismissed = false;
+function _checkZoom(){
+  try{
+    if(_zoomDismissed) return;
+    var banner = document.getElementById('zoom-banner');
+    if(!banner) return;
+    var ow = window.outerWidth, iw = window.innerWidth;
+    /* outerWidth can be 0 or unreliable on some macOS/mobile builds */
+    if(!ow || ow < 200 || !iw) return;
+    var ratio = ow / iw;
+    if(ratio > 1.15){
+      banner.classList.add('show');
+      document.body.classList.add('zoom-warn');
+    } else {
+      banner.classList.remove('show');
+      document.body.classList.remove('zoom-warn');
+    }
+  }catch(e){}
+}
+/* Defer 500ms so outerWidth is settled after paint */
+setTimeout(_checkZoom, 500);
+window.addEventListener('resize', _checkZoom);
 </script>
 <button class="dark-toggle" onclick="toggleDark()" id="dark-btn" title="Toggle dark mode">🌙</button>
 </body>
