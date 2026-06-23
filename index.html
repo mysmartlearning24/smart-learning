@@ -27,7 +27,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="color-scheme" content="light">
-<title>SMART v6.24</title>
+<title>SMART v6.25</title>
 <script>
 /* Early error handler — catches Firebase SDK failures before main script runs */
 window.onerror=function(msg,src,line,col,err){
@@ -4759,6 +4759,61 @@ window.addEventListener('load',function(){var b=document.getElementById('sfx-btn
 var _FB_OK=[['\uD83C\uDF89','AWESOME!'],['\u2B50','NAILED IT!'],['\uD83D\uDD25','ON FIRE!'],['\uD83D\uDCAA','CRUSHED IT!'],['\uD83D\uDE80','BOOM!'],['\uD83E\uDD84','PERFECT!'],['\uD83C\uDFC0','SWISH!'],['\u2728','BRILLIANT!']];
 var _FB_NO=[['\uD83E\uDD14','Almost!'],['\uD83D\uDCAD','Good try!'],['\uD83C\uDF31','Keep growing!'],['\uD83E\uDDE0','You got this!'],['\uD83C\uDFAF','So close!']];
 var _fbLast=-1;
+/* ══ CHEER / CELEBRATION FUNCTIONS ══ */
+function spawnConfetti(n){
+  try{
+    var colors=['#FF6B35','#F7931E','#FFD700','#10B981','#6C5CE7','#E84393','#3B82F6'];
+    for(var i=0;i<(n||20);i++){
+      var c=document.createElement('span');
+      c.className='confetti-piece';
+      c.textContent=['🎉','⭐','✨','🌟','💫'][Math.floor(Math.random()*5)];
+      c.style.left=Math.random()*100+'vw';
+      c.style.top='-20px';
+      c.style.fontSize=(12+Math.random()*16)+'px';
+      c.style.animationDelay=(Math.random()*0.8)+'s';
+      c.style.color=colors[Math.floor(Math.random()*colors.length)];
+      document.body.appendChild(c);
+      setTimeout(function(el){return function(){if(el.parentNode)el.parentNode.removeChild(el);};}(c),2000);
+    }
+  }catch(e){}
+}
+function showCheer(type){
+  try{
+    var msgs={
+      'five':['🔥','5 in a row!','You're on fire!'],
+      'ten':['⚡','10 correct!','You're crushing it!'],
+      'half':['🚀','Halfway there!','Keep it up!'],
+      'streak':['✨','Great streak!','Amazing work!']
+    };
+    var m=msgs[type]||['⭐','Great job!','Keep going!'];
+    var old=document.querySelector('.cheer-banner');if(old&&old.parentNode)old.parentNode.removeChild(old);
+    var b=document.createElement('div');b.className='cheer-banner';
+    b.innerHTML='<div style="font-size:28px">'+m[0]+'</div><div style="font-size:17px;font-weight:800;margin:2px 0">'+m[1]+'</div><div class="cheer-sub">'+m[2]+'</div>';
+    document.body.appendChild(b);
+    requestAnimationFrame(function(){b.classList.add('show');});
+    setTimeout(function(){b.classList.remove('show');setTimeout(function(){if(b.parentNode)b.parentNode.removeChild(b);},400);},2200);
+  }catch(e){}
+}
+function showBigCheer(icon,title,msg,color){
+  try{
+    var old=document.querySelector('.cheer-big');if(old&&old.parentNode)old.parentNode.removeChild(old);
+    var d=document.createElement('div');d.className='cheer-big';
+    d.innerHTML='<div style="font-size:64px;margin-bottom:12px">'+icon+'</div>'+
+      '<div style="font-size:26px;font-weight:900;color:'+(color||'#10B981')+';margin-bottom:8px">'+title+'</div>'+
+      '<div style="font-size:16px;color:var(--text-secondary)">'+msg+'</div>';
+    document.body.appendChild(d);
+    spawnConfetti(30);
+    setTimeout(function(){if(d.parentNode)d.parentNode.removeChild(d);},3000);
+  }catch(e){}
+}
+function checkCheer(xp,streak){
+  try{
+    if(streak===3)showCheer('streak');
+    else if(streak===5||xp===5)showCheer('five');
+    else if(xp===10)showCheer('ten');
+    else if(xp===Math.floor(Q_DRILL/2)&&xp>2)showCheer('half');
+  }catch(e){}
+}
 function flashFeedback(ok){
   try{
     var pool=ok?_FB_OK:_FB_NO;
