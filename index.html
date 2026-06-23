@@ -27,7 +27,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="color-scheme" content="light">
-<title>SMART v6.23</title>
+<title>SMART v6.24</title>
 <script>
 /* Early error handler — catches Firebase SDK failures before main script runs */
 window.onerror=function(msg,src,line,col,err){
@@ -3212,22 +3212,27 @@ function getNextProblem(lid){
   var combos=POOLS[lid].combos;
   var pid=ST.profileId||'';
   var sk='smart_mpool_'+pid+'_'+lid;
-  /* Load persistent shuffled order from localStorage */
-  var ps=null;
-  try{ps=JSON.parse(localStorage.getItem(sk)||'null');}catch(e){}
-  /* Validate: must be an object with order matching current combo count */
-  if(!ps||!Array.isArray(ps.o)||ps.o.length!==combos.length||typeof ps.i!=='number'){
-    ps={o:_mathShuffle(combos.length),i:0};
+  /* Use in-memory pool position if available (survives failed localStorage writes) */
+  if(!POOLS[lid].ps){
+    /* First call this session — load from localStorage or create fresh */
+    var ps=null;
+    try{ps=JSON.parse(localStorage.getItem(sk)||'null');}catch(e){}
+    /* Validate: must match current combo count */
+    if(!ps||!Array.isArray(ps.o)||ps.o.length!==combos.length||typeof ps.i!=='number'){
+      ps={o:_mathShuffle(combos.length),i:0};
+    }
+    POOLS[lid].ps=ps;
   }
+  var ps=POOLS[lid].ps;
   /* Wrap: reshuffle when all problems exhausted, avoid immediate repeat */
   if(ps.i>=ps.o.length){
     var last=ps.o[ps.o.length-1];
     var newOrd=_mathShuffle(combos.length);
     if(newOrd.length>1&&newOrd[0]===last){var t=newOrd[0];newOrd[0]=newOrd[1];newOrd[1]=t;}
-    ps={o:newOrd,i:0};
+    ps.o=newOrd;ps.i=0;
   }
   var prob=combos[ps.o[ps.i++]];
-  /* Save updated position back to localStorage */
+  /* Persist updated position — in-memory ps already advanced so session is safe even if this fails */
   try{localStorage.setItem(sk,JSON.stringify(ps));}catch(e){}
   return prob;
 }
