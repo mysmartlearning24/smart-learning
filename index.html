@@ -27,7 +27,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="color-scheme" content="light">
-<title>SMART v6.30</title>
+<title>SMART v6.31</title>
 <script>
 /* Early error handler — catches Firebase SDK failures before main script runs */
 window.onerror=function(msg,src,line,col,err){
@@ -17613,20 +17613,7 @@ function buildVocabPool(bank){
     var type=usableTypes[i%usableTypes.length];
     /* fallback if this word can't support the type */     if(type==='synonym'&&(!word.syn||!word.syn.length)) type='meaning';     if(type==='context'&&(!word.ex||!word.ex.length)) type='meaning';     pool.push({word:word, type:type, bank:bank});   });   return pool; }
 
-function getGrammarPool(grade){
-  /* Map grade number to band key */
-  var g=parseInt(grade)||1;
-  var band=g<=1?'k1':g<=3?'23':g<=5?'45':g<=7?'67':'8';
-  var pool=[];
-  /* Include current band + previous band for variety */
-  var bands=['k1','23','45','67','8'];
-  var bIdx=bands.indexOf(band);
-  for(var bi=0;bi<=bIdx&&bi<bands.length;bi++){
-    var b=GRAMMAR_BANK[bands[bi]];
-    if(b) for(var qi=0;qi<b.length;qi++) pool.push(b[qi]);
-  }
-  return pool;
-}
+
 
 function getPhonicsPool(grade){
   var g=parseInt(grade)||1;
@@ -17651,41 +17638,79 @@ function renderVocabQ(){   if(_vocabIdx>=_vocabPool.length){finishReading();retu
 
 function renderAnalogyQ(){   if(_analogyIdx>=_analogyPool.length){finishReading();return;}   var item=_analogyPool[_analogyIdx];   var gc=gradeConf(READING_ST.grade);   var others=_analogyPool.filter(function(a){return a.d!==item.d;});   var wrongs=others.sort(function(){return Math.random()-0.5;}).slice(0,3).map(function(a){return a.d;});   var choices=[item.d].concat(wrongs).sort(function(){return Math.random()-0.5;});   var correct=choices.indexOf(item.d);    var h='<div class="hdr">'       +'<div style="float:left"><button class="bbtn" onclick="finishReading()">✕ Exit</button></div>'       +'<div style="text-align:center;padding-top:6px;font-size:13px;font-weight:700;color:'+gc.color+'">🔗 Analogies · '+(_analogyIdx+1)+'/'+_analogyPool.length+'</div>'       +'<div style="clear:both"></div></div>';    h+='<div class="card card-raised" style="text-align:center;padding:28px 20px;margin-bottom:16px">'      +'<div style="font-size:11px;font-weight:700;letter-spacing:2px;color:var(--text-tertiary);margin-bottom:18px">COMPLETE THE ANALOGY</div>'      +'<div style="font-family:Sora,sans-serif;font-size:20px;font-weight:800;color:var(--text-primary);line-height:1.6">'      +'<span style="color:var(--brand)">'+item.a+'</span> is to <span style="color:var(--brand)">'+item.b+'</span>'      +'<br><span style="font-size:15px;color:var(--text-tertiary);font-weight:400">as</span><br>'      +'<span style="color:#3B82F6">'+item.c+'</span> is to <span style="background:var(--bg-subtle);color:#3B82F6;padding:3px 14px;border-radius:8px;border:2px dashed #3B82F6">?</span>'      +'</div>'      +(item.cat?'<div style="font-size:11px;color:var(--text-tertiary);margin-top:14px;font-weight:600;letter-spacing:1px">'+item.cat.toUpperCase()+'</div>':'')      +'</div>';    choices.forEach(function(ch,ci){     var ltr=['A','B','C','D'][ci];     h+='<button class="reading-choice" id="an-'+ci+'" onclick="answerAnalogy('+ci+','+correct+')">'        +'<span style="background:var(--bg-subtle);border-radius:6px;padding:2px 8px;font-weight:700;margin-right:8px;font-size:12px">'+ltr+'</span>'        +ch+'</button>';   });   h+='<div id="analogy-fb"></div>';   el('s-reading').innerHTML=h; go('s-reading');   READING_ST.total++; }
 
+function getGrammarPool(grade){
+  var g=parseInt(grade)||1, raw=[];
+  for(var gg=1; gg<=g; gg++){ var b=GRAMMAR_BANK[gg]||GRAMMAR_BANK[String(gg)]; if(b) raw=raw.concat(b); }
+  if(!raw.length){ Object.keys(GRAMMAR_BANK).forEach(function(k){ if(Array.isArray(GRAMMAR_BANK[k])) raw=raw.concat(GRAMMAR_BANK[k]); }); }
+  return raw.map(function(it){
+    var ch = Array.isArray(it.ch)?it.ch.slice():(Array.isArray(it.choices)?it.choices.slice():[]);
+    var correct = (typeof it.an==='number'&&ch[it.an]!==undefined)?ch[it.an]:(typeof it.ans==='string'?it.ans:ch[0]);
+    for(var i=ch.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=ch[i];ch[i]=ch[j];ch[j]=t;}
+    var an=ch.indexOf(correct); if(an<0)an=0;
+    return {q:it.q, ch:ch, an:an, exp:it.exp||'', cat:it.cat||'Grammar'};
+  });
+}
 function renderGrammarQ(){
-  if(_grammarIdx>=_grammarPool.length){finishGrammar();return;}
+  if(_grammarIdx>=_grammarPool.length){finishGrammarSub();return;}
   var item=_grammarPool[_grammarIdx];
-  var gc=gradeConf(READING_ST.grade||1);
   var prog=_grammarIdx+1, total=_grammarPool.length;
   var pct=Math.round(_grammarIdx/total*100);
-
   var h='<div class="hdr"><div style="float:left"><button class="bbtn" onclick="renderReadingHub('+READING_ST.grade+',\''+READING_ST.profileId+'\')">‹ Back</button></div>'
     +'<div style="text-align:center;padding-top:6px;font-size:15px;font-weight:700;color:#D97706">✏️ Grammar · '+prog+'/'+total+'</div>'
     +'<div style="clear:both"></div></div>';
-
-  /* Progress bar */
   h+='<div style="height:4px;background:var(--bg-subtle);margin:0 0 16px"><div style="height:100%;width:'+pct+'%;background:#D97706;transition:width .3s"></div></div>';
-
-  /* Category badge */
-  h+='<div style="text-align:center;margin-bottom:12px"><span style="background:#FEF3C7;color:#92400E;font-size:11px;font-weight:700;padding:4px 12px;border-radius:99px;letter-spacing:.5px">'+item.cat+'</span></div>';
-
-  /* Question */
+  h+='<div style="text-align:center;margin-bottom:12px"><span style="background:#FEF3C7;color:#92400E;font-size:11px;font-weight:700;padding:4px 12px;border-radius:99px">'+item.cat+'</span></div>';
   h+='<div style="background:var(--surface);border:1.5px solid var(--border);border-radius:20px;padding:24px 20px;margin:0 0 16px;text-align:center">'
-    +'<div style="font-family:Sora,sans-serif;font-size:17px;font-weight:700;color:var(--text-primary);line-height:1.5">'+item.q+'</div>'
-    +'</div>';
-
-  /* Answer choices */
+    +'<div style="font-family:Sora,sans-serif;font-size:18px;font-weight:700;color:var(--text-primary);line-height:1.5">'+item.q+'</div></div>';
   h+='<div id="grammar-choices">';
   for(var ci=0;ci<item.ch.length;ci++){
-    h+='<button class="reading-choice" id="gc-'+ci+'" onclick="answerGrammar('+ci+','+item.an+')">'
+    h+='<button class="reading-choice" id="gc-'+ci+'" onclick="answerGrammarSub('+ci+','+item.an+')">'
       +'<span style="display:inline-block;width:28px;height:28px;border-radius:50%;background:#D9770618;color:#D97706;font-weight:800;font-size:13px;line-height:28px;margin-right:10px">'+['A','B','C','D'][ci]+'</span>'
       +item.ch[ci]+'</button>';
   }
-  h+='</div>';
-  h+='<div id="grammar-fb" style="margin-top:16px"></div>';
-
-  el('s-reading').innerHTML=h;
-  go('s-reading');
+  h+='</div><div id="grammar-fb" style="margin-top:16px"></div>';
+  el('s-reading').innerHTML=h; go('s-reading');
 }
+function answerGrammarSub(chosen,correct){
+  for(var i=0;i<4;i++){
+    var btn=document.getElementById('gc-'+i);
+    if(!btn)continue;
+    btn.onclick=null;
+    if(i===correct){btn.style.background='#ECFDF5';btn.style.borderColor='#10B981';btn.style.color='#065F46';}
+    else if(i===chosen&&chosen!==correct){btn.style.background='#FEF2F2';btn.style.borderColor='#EF4444';btn.style.color='#991B1B';}
+    else{btn.style.opacity='0.45';}
+  }
+  var ok=(chosen===correct);
+  if(ok)_grammarScore++;
+  var item=_grammarPool[_grammarIdx];
+  var fb=document.getElementById('grammar-fb');
+  if(fb){
+    fb.innerHTML='<div style="background:'+(ok?'#ECFDF5':'#FEF2F2')+';border:1.5px solid '+(ok?'#10B981':'#EF4444')+';border-radius:16px;padding:16px">'
+      +'<div style="font-weight:800;font-size:15px;color:'+(ok?'#065F46':'#991B1B')+';margin-bottom:6px">'+(ok?'✓ Correct!':'✗ Not quite')+'</div>'
+      +'<div style="font-size:14px;color:var(--text-secondary);line-height:1.5">'+(item.exp||'')+'</div></div>'
+      +'<button class="btn" style="margin-top:14px;background:#D97706;color:#fff" onclick="nextGrammarQ()">Next →</button>';
+  }
+  _grammarIdx++;
+}
+function finishGrammarSub(){
+  var total=_grammarPool.length, pct=total?Math.round(_grammarScore/total*100):0;
+  var emoji=pct>=90?'🏆':pct>=70?'⭐':'📚';
+  var msg=pct>=90?'Perfect! Your grammar is superstar level!':
+    pct>=70?'Great job! Strong grammar makes strong writing!':
+    pct>=50?'Good try! A little grammar practice each day goes a long way!':
+    'Keep going! Grammar is the toolkit for clear writing!';
+  var h='<div class="hdr"><button class="bbtn" onclick="renderReadingHub('+READING_ST.grade+',\''+READING_ST.profileId+'\')">‹ Back</button></div>';
+  h+='<div style="text-align:center;padding:40px 20px 24px"><div style="font-size:56px;margin-bottom:12px">'+emoji+'</div>';
+  h+='<div style="font-family:Sora,sans-serif;font-size:28px;font-weight:900;color:var(--text-primary)">'+pct+'%</div>';
+  h+='<div style="font-size:15px;color:var(--text-secondary);margin-bottom:4px">'+_grammarScore+'/'+total+' correct</div>';
+  h+='<div style="font-size:14px;color:var(--text-tertiary);margin-bottom:16px">'+msg+'</div></div>';
+  h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 16px">';
+  h+='<button class="btn btn-secondary" onclick="startGrammarMode('+READING_ST.grade+',\''+READING_ST.profileId+'\')">Try Again</button>';
+  h+='<button class="btn" style="background:#D97706;color:#fff" onclick="renderReadingHub('+READING_ST.grade+',\''+READING_ST.profileId+'\')">Done</button></div>';
+  el('s-reading').innerHTML=h; go('s-reading');
+}
+function nextGrammarQ(){ renderGrammarQ(); }
+
 
 function renderPhonicsQ(){
   if(_phonicsIdx>=_phonicsPool.length){finishPhonics();return;}
