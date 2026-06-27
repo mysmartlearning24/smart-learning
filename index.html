@@ -27,7 +27,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="color-scheme" content="light">
-<title>SMART v6.28</title>
+<title>SMART v6.30</title>
 <script>
 /* Early error handler — catches Firebase SDK failures before main script runs */
 window.onerror=function(msg,src,line,col,err){
@@ -17336,6 +17336,562 @@ function _abandonCurrentSession(){
     else { renderHome(); }
   }catch(e){ try{renderHome();}catch(e2){} }
 }
+/* ===== v6.30 regression recovery: restore subsystem lost between v5.0 and v6.24 =====
+   (stickers/rewards, sound FX, geometry shape SVG, and reading vocab/analogy/grammar/phonics/skills modes).
+   Verbatim from the v5.0 backup. ===== */
+var _vocabPool=[], _vocabIdx=0;
+var _analogyPool=[], _analogyIdx=0;
+var _grammarPool=[], _grammarIdx=0, _grammarScore=0;
+var _phonicsPool=[], _phonicsIdx=0, _phonicsScore=0;
+var _skillsPool=[], _skillsIdx=0, _skillsScore=0;
+var _audioCtx = null;
+var STICKER_DEFS = [
+  /* Grade K */
+  {id:'k_count',  emoji:'🔢', name:'Counting Champ',    grade:0, cat:'kcount',   need:1},
+  {id:'k_add',    emoji:'➕', name:'Adding Star',        grade:0, cat:'kadd',    need:1},
+  {id:'k_sub',    emoji:'➖', name:'Take Away Hero',     grade:0, cat:'ksub',    need:1},
+  {id:'k_shape',  emoji:'⬡',  name:'Shape Spotter',     grade:0, cat:'kshapes', need:1},
+  {id:'k_more',   emoji:'📏', name:'Compare Captain',   grade:0, cat:'kmore',   need:1},
+
+  /* Grade 1 */
+  {id:'g1_found', emoji:'🌱', name:'Foundation Builder', grade:1, cat:'g1found', need:3},
+  {id:'g1_add',   emoji:'⭐', name:'Addition Ace',       grade:1, cat:'add',     need:3},
+  {id:'g1_sub',   emoji:'🏆', name:'Subtraction Star',  grade:1, cat:'sub',     need:3},
+  {id:'g1_ns',    emoji:'🔮', name:'Number Genius',     grade:1, cat:'numeral', need:3},
+  {id:'g1_bonds', emoji:'🔗', name:'Bond Breaker',      grade:1, cat:'bonds',   need:2},
+  {id:'g1_time',  emoji:'⏰', name:'Time Keeper',       grade:1, cat:'time1',   need:2},
+  {id:'g1_shape', emoji:'💎', name:'Shape Master',      grade:1, cat:'shapes1', need:2},
+  {id:'g1_wp',    emoji:'📖', name:'Word Problem Pro',  grade:1, cat:'wordp1',  need:2},
+
+  /* Grade 2 */
+  {id:'g2_carry', emoji:'🚀', name:'Carrying Champion', grade:2, cat:'add2',    need:2},
+  {id:'g2_borrow',emoji:'⚡', name:'Borrowing Boss',    grade:2, cat:'sub2',    need:2},
+  {id:'g2_times', emoji:'✖️', name:'Times Table Starter',grade:2, cat:'eztables',need:2},
+  {id:'g2_meas',  emoji:'📐', name:'Measurement Master',grade:2, cat:'measurement2',need:1},
+
+  /* Grade 3 */
+  {id:'g3_mult',  emoji:'🔥', name:'Multiplication Machine',grade:3,cat:'htables',need:3},
+  {id:'g3_div',   emoji:'➗', name:'Division Detective',   grade:3,cat:'division3',need:2},
+  {id:'g3_frac',  emoji:'🍕', name:'Fraction Fanatic',     grade:3,cat:'fractions3',need:2},
+  {id:'g3_area',  emoji:'📐', name:'Area Expert',          grade:3,cat:'area3',  need:1},
+  {id:'g3_wp',    emoji:'💡', name:'Problem Solver',       grade:3,cat:'wrdprob3',need:2},
+
+  /* Grade 4 */
+  {id:'g4_mul4',  emoji:'💪', name:'Multiply Hero',   grade:4, cat:'multiadv', need:2},
+  {id:'g4_div4',  emoji:'🎯', name:'Division Pro',    grade:4, cat:'division4', need:2},
+  {id:'g4_frac4', emoji:'🌓', name:'Fraction Wizard', grade:4, cat:'fractions4',need:2},
+
+  /* Grade 5 */
+  {id:'g5_frac',  emoji:'🧮', name:'Fraction Champion',grade:5,cat:'fracops5', need:2},
+  {id:'g5_dec',   emoji:'🔬', name:'Decimal Dynamo',   grade:5,cat:'decops5',  need:2},
+  {id:'g5_geo',   emoji:'🌐', name:'Geometry Guru',    grade:5,cat:'geometry5',need:1},
+
+  /* Grade 6 */
+  {id:'g6_alg',   emoji:'🧠', name:'Algebra Apprentice',grade:6,cat:'algebra', need:3},
+  {id:'g6_ratio', emoji:'⚖️', name:'Ratio Ruler',       grade:6,cat:'ratio6',  need:2},
+  {id:'g6_pct',   emoji:'💯', name:'Percent Perfect',   grade:6,cat:'percent6',need:2},
+
+  /* Grade 7 */
+  {id:'g7_eq',    emoji:'🔭', name:'Equation Expert',  grade:7,cat:'algebra7', need:2},
+  {id:'g7_geo',   emoji:'📡', name:'Geometry Star',    grade:7,cat:'geometry7',need:2},
+  {id:'g7_stat',  emoji:'📊', name:'Statistics Starter',grade:7,cat:'stats7',  need:1},
+
+  /* Grade 8 */
+  {id:'g8_lin',   emoji:'📈', name:'Linear Legend',   grade:8,cat:'linear8',  need:2},
+  {id:'g8_quad',  emoji:'🏅', name:'Quadratic Queen', grade:8,cat:'quadratic',need:2},
+  {id:'g8_stat',  emoji:'🎓', name:'Data Scientist',  grade:8,cat:'stats8',   need:2},
+
+  /* Special milestone stickers */
+  {id:'sp_first',  emoji:'🐣', name:'First Drill!',      grade:-1, special:'first_drill'},
+  {id:'sp_streak5',emoji:'🔥', name:'5-Streak Legend',   grade:-1, special:'streak_5'},
+  {id:'sp_streak10',emoji:'💥',name:'10-Streak Master',  grade:-1, special:'streak_10'},
+  {id:'sp_perfect',emoji:'🏆', name:'Perfect Session',   grade:-1, special:'perfect'},
+  {id:'sp_30min',  emoji:'⏱️', name:'30-Min Warrior',    grade:-1, special:'30_min'},
+  {id:'sp_7day',   emoji:'📅', name:'7-Day Streak',      grade:-1, special:'7_day'},
+];
+
+function getShapeSVG(name, size){
+  size = size || 90;
+  var half = size/2, r = half*0.82;
+  var colors = {
+    circle:    ['#EFF6FF','#3B82F6'],
+    oval:      ['#EFF6FF','#3B82F6'],
+    triangle:  ['#FEF3C7','#F59E0B'],
+    square:    ['#ECFDF5','#10B981'],
+    rectangle: ['#F0FDF4','#22C55E'],
+    pentagon:  ['#FFF7ED','#F97316'],
+    hexagon:   ['#FEFCE8','#EAB308'],
+    heptagon:  ['#FFF1F2','#F43F5E'],
+    octagon:   ['#FDF4FF','#8B5CF6'],
+    rhombus:   ['#EFF6FF','#0EA5E9'],
+    trapezoid: ['#FEF3C7','#D97706'],
+    parallelogram:['#F0FDF4','#16A34A'],
+  };
+  var col = colors[name.toLowerCase()] || ['#F8FAFC','#64748B'];
+  var fill = col[0], stroke = col[1];
+
+  function poly(n, cx, cy, r, rot){
+    var pts = [];
+    for(var i=0;i<n;i++){
+      var angle = (Math.PI*2/n)*i + (rot||0);
+      pts.push((cx+r*Math.cos(angle)).toFixed(1)+','+(cy+r*Math.sin(angle)).toFixed(1));
+    }
+    return pts.join(' ');
+  }
+
+  var svg = '<svg viewBox="0 0 '+size+' '+size+'" width="'+size+'" height="'+size+'" xmlns="http://www.w3.org/2000/svg" style="display:block;margin:0 auto">';
+  var n = name.toLowerCase();
+  if(n==='circle'){
+    svg += '<circle cx="'+half+'" cy="'+half+'" r="'+r+'" fill="'+fill+'" stroke="'+stroke+'" stroke-width="3"/>';
+  } else if(n==='oval'){
+    svg += '<ellipse cx="'+half+'" cy="'+half+'" rx="'+(r*1.3).toFixed(1)+'" ry="'+(r*0.7).toFixed(1)+'" fill="'+fill+'" stroke="'+stroke+'" stroke-width="3"/>';
+  } else if(n==='triangle'){
+    svg += '<polygon points="'+poly(3,half,half,r,-Math.PI/2)+'" fill="'+fill+'" stroke="'+stroke+'" stroke-width="3"/>';
+  } else if(n==='square'){
+    var s=r*1.35;svg += '<rect x="'+(half-s/2).toFixed(1)+'" y="'+(half-s/2).toFixed(1)+'" width="'+s.toFixed(1)+'" height="'+s.toFixed(1)+'" fill="'+fill+'" stroke="'+stroke+'" stroke-width="3"/>';
+  } else if(n==='rectangle'){
+    var rw=r*1.6,rh=r*1.0;svg += '<rect x="'+(half-rw/2).toFixed(1)+'" y="'+(half-rh/2).toFixed(1)+'" width="'+rw.toFixed(1)+'" height="'+rh.toFixed(1)+'" fill="'+fill+'" stroke="'+stroke+'" stroke-width="3"/>';
+  } else if(n==='pentagon'){
+    svg += '<polygon points="'+poly(5,half,half,r,-Math.PI/2)+'" fill="'+fill+'" stroke="'+stroke+'" stroke-width="3"/>';
+  } else if(n==='hexagon'){
+    svg += '<polygon points="'+poly(6,half,half,r,0)+'" fill="'+fill+'" stroke="'+stroke+'" stroke-width="3"/>';
+  } else if(n==='heptagon'){
+    svg += '<polygon points="'+poly(7,half,half,r,-Math.PI/2)+'" fill="'+fill+'" stroke="'+stroke+'" stroke-width="3"/>';
+  } else if(n==='octagon'){
+    svg += '<polygon points="'+poly(8,half,half,r,Math.PI/8)+'" fill="'+fill+'" stroke="'+stroke+'" stroke-width="3"/>';
+  } else if(n==='rhombus'){
+    svg += '<polygon points="'+half+','+((half-r).toFixed(1))+' '+((half+r).toFixed(1))+','+half+' '+half+','+((half+r).toFixed(1))+' '+((half-r).toFixed(1))+','+half+'" fill="'+fill+'" stroke="'+stroke+'" stroke-width="3"/>';
+  } else if(n==='trapezoid'){
+    var tw=r*1.4,bw=r*0.8,h2=r*0.9;
+    svg += '<polygon points="'+(half-tw/2).toFixed(1)+','+(half+h2/2).toFixed(1)+' '+(half+tw/2).toFixed(1)+','+(half+h2/2).toFixed(1)+' '+(half+bw/2).toFixed(1)+','+(half-h2/2).toFixed(1)+' '+(half-bw/2).toFixed(1)+','+(half-h2/2).toFixed(1)+'" fill="'+fill+'" stroke="'+stroke+'" stroke-width="3"/>';
+  } else {
+    /* Default polygon based on name */
+    var sideMap={line:0,semicircle:0,quarter:0};
+    svg += '<polygon points="'+poly(6,half,half,r,0)+'" fill="'+fill+'" stroke="'+stroke+'" stroke-width="3"/>';
+  }
+  svg += '</svg>';
+  return svg;
+}
+
+function getEarnedStickers(pid, grade){
+  var prog = loadProg(grade, pid) || {};
+  var hist = loadHist(grade, pid) || [];
+  var earned = [];
+
+  STICKER_DEFS.forEach(function(stk){
+    /* Special milestone stickers */
+    if(stk.special){
+      if(stk.special==='first_drill' && hist.length>0) earned.push(stk.id);
+      if(stk.special==='streak_5' && hist.some(function(h){return h.streak&&h.streak>=5;})) earned.push(stk.id);
+      if(stk.special==='streak_10' && hist.some(function(h){return h.streak&&h.streak>=10;})) earned.push(stk.id);
+      if(stk.special==='perfect' && hist.some(function(h){return h.score&&h.total&&h.score===h.total&&h.total>=10;})) earned.push(stk.id);
+      if(stk.special==='30_min'){
+        var totalSec=hist.reduce(function(acc,h){return acc+(h.time||0);},0);
+        if(totalSec>=1800) earned.push(stk.id);
+      }
+      return;
+    }
+    /* Category-based stickers */
+    if(stk.grade !== grade && stk.grade !== -1) return;
+    var catLevels=0;
+    Object.keys(prog).forEach(function(lvlId){
+      if(prog[lvlId]&&prog[lvlId].passed){
+        var lvl=findLvlById(lvlId,grade);
+        if(lvl&&lvl.cat&&lvl.cat.id===stk.cat) catLevels++;
+      }
+    });
+    if(catLevels>=stk.need) earned.push(stk.id);
+  });
+  return earned;
+}
+
+function checkNewStickers(pid, grade, prevEarned){
+  var nowEarned = getEarnedStickers(pid, grade);
+  var newOnes = nowEarned.filter(function(id){ return prevEarned.indexOf(id)<0; });
+  if(newOnes.length>0){
+    setTimeout(function(){
+      newOnes.forEach(function(id,i){
+        var stk = STICKER_DEFS.find(function(s){return s.id===id;});
+        if(!stk) return;
+        setTimeout(function(){
+          showStickerUnlock(stk);
+        }, i*1200);
+      });
+    }, 800);
+  }
+}
+
+function showStickerUnlock(stk){
+  soundCheer5();
+  var overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9996;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .2s;pointer-events:none';
+  var card = document.createElement('div');
+  card.style.cssText = 'background:var(--surface);border-radius:28px;padding:40px 44px;text-align:center;transform:scale(0.3);transition:transform .4s cubic-bezier(0.34,1.56,0.64,1);max-width:300px;width:88%;border-top:6px solid #F59E0B';
+  card.innerHTML = '<div style="font-size:64px;margin-bottom:10px">'+stk.emoji+'</div>'
+    +'<div style="font-size:13px;font-weight:800;color:#F59E0B;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px">✨ New Sticker!</div>'
+    +'<div style="font-family:Sora,sans-serif;font-size:22px;font-weight:900;color:var(--text-primary)">'+stk.name+'</div>';
+  overlay.appendChild(card);
+  document.body.appendChild(overlay);
+  setTimeout(function(){ overlay.style.opacity='1'; card.style.transform='scale(1)'; },20);
+  spawnTopConfetti(15);
+  setTimeout(function(){
+    overlay.style.opacity='0';
+    setTimeout(function(){ if(overlay.parentNode) overlay.parentNode.removeChild(overlay); },300);
+  },2400);
+}
+
+function spawnTopConfetti(n){
+  /* Confetti only in TOP 25% so it never covers the drill */
+  var colors=['#FF6B35','#F7931E','#10B981','#3B82F6','#8B5CF6','#EC4899','#F59E0B'];
+  for(var i=0;i<n;i++){
+    (function(idx){
+      setTimeout(function(){
+        var c=document.createElement('div');
+        var sz=(5+Math.random()*7)+'px';
+        c.style.cssText='position:fixed;left:'+(10+Math.random()*80)+'vw;top:'+(Math.random()*22)+'vh'
+          +';width:'+sz+';height:'+sz+';border-radius:'+(Math.random()>0.5?'50%':'3px')
+          +';background:'+colors[Math.floor(Math.random()*colors.length)]
+          +';animation:confettiFall '+(0.7+Math.random()*0.6)+'s ease-in forwards'
+          +';z-index:9989;pointer-events:none;';
+        document.body.appendChild(c);
+        setTimeout(function(){if(c.parentNode)c.parentNode.removeChild(c);},1500);
+      },idx*50);
+    })(i);
+  }
+}
+
+function playTone(freq, duration, type, vol, delay){
+  var ctx = getAudioCtx(); if(!ctx) return;
+  var osc = ctx.createOscillator();
+  var gain = ctx.createGain();
+  osc.connect(gain); gain.connect(ctx.destination);
+  osc.type = type || 'sine';
+  osc.frequency.value = freq;
+  gain.gain.setValueAtTime(0, ctx.currentTime + (delay||0));
+  gain.gain.linearRampToValueAtTime(vol||0.3, ctx.currentTime + (delay||0) + 0.01);
+  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + (delay||0) + duration);
+  osc.start(ctx.currentTime + (delay||0));
+  osc.stop(ctx.currentTime + (delay||0) + duration + 0.05);
+}
+
+function getAudioCtx(){
+  if(!_audioCtx){
+    try{ _audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){}
+  }
+  return _audioCtx;
+}
+
+function soundCheer5(){
+  /* Ascending fanfare — 5 in a row */
+  var notes = [523, 587, 659, 784, 1047]; /* C D E G C */
+  notes.forEach(function(f, i){ playTone(f, 0.18, 'sine', 0.3, i*0.1); });
+}
+
+function findLvlById(lid, grade){
+  var cats=getCats(grade)||[];
+  for(var ci=0;ci<cats.length;ci++){
+    if(!cats[ci]||!cats[ci].lv) continue;
+    for(var li=0;li<cats[ci].lv.length;li++){
+      if(cats[ci].lv[li].id===lid) return {lvl:cats[ci].lv[li], cat:cats[ci,
+{"id": "8S6", "title": "The Philosophy of Free Will", "text": "Right now, you are reading this sentence. You might put this page down, or you might keep reading. That choice feels entirely yours \u2014 a free decision made in the moment.\nBut is it?\nThe free will debate is one of philosophy's oldest and most unresolved questions. Determinists argue that every event \u2014 including every human decision \u2014 is the inevitable result of prior causes. Your brain is matter following physical laws. The neural firing patterns that produce your decisions were caused by earlier neural patterns, which were caused by your past experiences, which were caused by factors you did not choose. Follow the chain back far enough, and your 'choice' was set in motion before you were born.\nCompatibilists argue this is too simple. Even if our choices are physically caused, they can still be 'free' in a meaningful sense \u2014 if we are acting without external coercion, according to our own desires and reasoning, then we are free. Freedom, they say, doesn't require escaping causation; it requires acting on your own reasons.\nNeuroscientist Benjamin Libet conducted experiments in the 1980s that added scientific fuel to the debate. He found that brain activity signaling a movement began about 0.3 seconds before participants consciously decided to move. This suggested that 'decisions' might be generated unconsciously, with consciousness only experiencing them after the fact.\nLibet's critics note that participants could still veto the movement at the last moment \u2014 suggesting some form of conscious control remains.\nThe stakes of this debate extend beyond philosophy. If people truly lack free will, how should we think about moral responsibility, praise, blame, and punishment?", "qs": [{"q": "What is the core claim of determinism as described in the passage?", "ch": ["People make truly free choices every moment", "Every decision is the inevitable result of prior causes stretching back before birth", "Humans have free will only when not under external pressure", "Science has proven free will exists"], "an": 1}, {"q": "What did Libet's experiment suggest about conscious decision-making?", "ch": ["Consciousness generates decisions slightly before brain activity begins", "Brain activity signaling a movement began before participants consciously decided to move", "People cannot veto decisions once they're made", "Consciousness and brain activity happen simultaneously"], "an": 1}, {"q": "How do compatibilists define 'free will'?", "ch": ["As complete escape from all causation", "As acting according to your own reasons and desires without external coercion", "As the ability to make unpredictable choices", "As having unlimited options available"], "an": 1}, {"q": "Why does the author say the free will debate has high stakes?", "ch": ["Because it affects how we design computer algorithms", "Because it challenges our thinking about moral responsibility, praise, blame, and punishment", "Because it determines whether people believe in God", "Because it affects scientific research methodology"], "an": 1}]}, {"id": "8S7", "title": "The Harlem Renaissance", "text": "Between roughly 1920 and 1940, something extraordinary happened in a 2-square-mile neighborhood in upper Manhattan. The Harlem Renaissance was an explosion of Black artistic, intellectual, and social achievement so concentrated and influential that it reshaped American culture \u2014 and Black American identity \u2014 in ways still felt today.\nIt began with the Great Migration. Between 1910 and 1970, about six million Black Americans left the rural South \u2014 fleeing Jim Crow laws, sharecropping, and racial terror \u2014 and moved to northern and western cities. Harlem, in New York City, became the cultural capital of this movement.\nPoets like Langston Hughes and Countee Cullen celebrated Black life with a directness and pride that had no precedent in published American literature. Zora Neale Hurston captured the voices and folklore of the rural South with ethnographic precision and lyrical power. Jean Toomer's 'Cane' blurred the line between poetry and prose in ways that predicted the experimental literature of the late 20th century.\nJazz and blues musicians transformed American music. Clubs along 125th Street attracted white audiences from across the city \u2014 though, in a painful irony, some of Harlem's most famous clubs refused to admit Black patrons.\nIntellectuals like W.E.B. Du Bois and Alain Locke debated what this new cultural power meant. Du Bois argued art should serve as a political weapon against racism. Locke insisted Black artists had the right to create for beauty's own sake.\nThe Renaissance ended with the Great Depression, which devastated Harlem economically. But the writers, musicians, and thinkers it produced changed what was possible \u2014 in American art, and in the way Black Americans saw themselves.", "qs": [{"q": "What historical movement brought large numbers of Black Americans to Harlem?", "ch": ["The Civil Rights Movement", "The Great Migration", "The Abolitionist Movement", "The Industrial Revolution"], "an": 1}, {"q": "What 'painful irony' does the author describe about Harlem's famous clubs?", "ch": ["They played white musicians' music rather than jazz", "Some clubs refused to admit Black patrons despite Black artists performing there", "The clubs were owned by white businessmen who kept all the profits", "They were eventually shut down by the city for racial discrimination"], "an": 1}, {"q": "What was the central disagreement between Du Bois and Alain Locke?", "ch": ["Whether Black artists should move back to the South", "Whether jazz was a legitimate art form", "Whether art should serve political goals or be created for its own sake", "Whether Harlem should remain a Black neighborhood"], "an": 2}, {"q": "What ended the Harlem Renaissance?", "ch": ["The beginning of World War II", "The Great Depression devastated Harlem economically", "A government crackdown on Black cultural institutions", "Most Harlem artists moved to other cities"], "an": 1}]}, {"id": "8S8", "title": "Nuclear Deterrence and the Logic of Mutually Assured Destruction", "text": "During the Cold War, the United States and Soviet Union both built thousands of nuclear warheads \u2014 each capable of destroying a city \u2014 and pointed them at each other. This situation, which lasted for decades, was called Mutually Assured Destruction, or MAD.\nThe logic seems almost insane: both sides had so many weapons that any nuclear attack would guarantee a devastating counterattack, leaving both nations (and potentially all of civilization) destroyed. No one could 'win' a nuclear war. Therefore \u2014 the theory went \u2014 no rational leader would ever start one.\nMAD produced a strange kind of stability. Despite intense ideological conflict, direct military confrontations, and terrifying near-misses (the Cuban Missile Crisis of 1962 came closest to nuclear war), the two superpowers never directly attacked each other.\nBut the logic of deterrence rests on extremely fragile assumptions. It assumes all leaders are rational \u2014 but leaders can be miscalculate under pressure, receive faulty intelligence, or be irrational. In 1983, Soviet officer Stanislav Petrov received a computer alert showing five American missiles incoming. Protocol required him to report an attack. Instead, Petrov decided it was a false alarm \u2014 he was right, and his judgment may have prevented nuclear war.\nIt also assumes weapons systems are perfectly reliable \u2014 but they're not. There have been dozens of documented cases of false alarms in both American and Soviet systems.\nToday, nine countries have nuclear weapons. The deterrence frameworks built for a two-superpower world must somehow apply to a more complex geopolitical landscape. The question of how to prevent nuclear war in the 21st century remains one of the most consequential problems humanity faces.", "qs": [{"q": "What does 'Mutually Assured Destruction' (MAD) mean?", "ch": ["A policy where both sides destroy each other's conventional weapons", "The idea that any nuclear attack would guarantee a devastating counterattack, destroying both nations", "A United Nations treaty limiting nuclear weapons", "A computer simulation used to plan nuclear strategies"], "an": 1}, {"q": "What did Soviet officer Stanislav Petrov do when he received an alert about incoming missiles?", "ch": ["He immediately ordered a counterattack", "He destroyed the alert system", "He decided it was a false alarm and did not report an attack", "He evacuated Moscow"], "an": 2}, {"q": "According to the passage, what makes deterrence theory fragile?", "ch": ["Nuclear weapons are too expensive to maintain", "It assumes leaders are rational and weapons systems are perfectly reliable, but neither is guaranteed", "Most countries refuse to follow deterrence doctrine", "Nuclear weapons don't actually work as planned"], "an": 1}, {"q": "Why does the author say deterrence frameworks built for 'a two-superpower world' may be inadequate today?", "ch": ["The US and Russia are no longer enemies", "Nuclear weapons are now controlled by the UN", "Nine countries now have nuclear weapons, creating a more complex geopolitical situation", "Technology has made nuclear war impossible"], "an": 2}]}, {"id": "8S9", "title": "Mary Shelley and the Birth of Science Fiction", "text": "In the summer of 1816, a group of writers gathered at a villa on Lake Geneva in Switzerland during one of the coldest, wettest summers in recorded history. Volcanic ash from Mount Tambora's eruption the previous year had spread across the globe, dimming sunlight and dropping temperatures. In Europe, crops failed, food was scarce, and the atmosphere was apocalyptic.\nAmong the gathering were the poet Percy Bysshe Shelley, the legendary but troubled Lord Byron, and Byron's personal physician, John Polidori. Stuck indoors by constant rain, they challenged each other to write ghost stories.\nMary Godwin, 18 years old and not yet married to Percy Shelley, took the challenge seriously. She was haunted by a dream of a scientist who creates life and then flees in horror from his creation. She turned the dream into 'Frankenstein, or The Modern Prometheus,' published in 1818.\nThe novel is remarkable for what it asks. It is not simply a horror story \u2014 it is a meditation on creation and responsibility. Victor Frankenstein's sin is not that he makes life; it is that he refuses to accept responsibility for what he makes. The creature, abandoned and rejected, becomes monstrous not by nature but by experience.\nLiterary critics consider 'Frankenstein' the first true science fiction novel \u2014 fiction where the central events emerge from scientific or technological possibilities rather than magic or the supernatural.\nShelley's core question \u2014 what are the ethical obligations of those who create powerful things? \u2014 has grown only more urgent as we develop artificial intelligence, genetic engineering, and other technologies that may one day reshape what it means to be human.", "qs": [{"q": "Why was the summer of 1816 unusually cold and dark?", "ch": ["It was during the Little Ice Age", "Volcanic ash from Mount Tambora's eruption had spread globally", "An unusually long winter persisted that year", "Deforestation across Europe reduced temperatures"], "an": 1}, {"q": "According to the passage, what is Victor Frankenstein's true sin?", "ch": ["Creating life from dead matter", "Using forbidden science", "Refusing to accept responsibility for his creation", "Hiding his experiment from the world"], "an": 2}, {"q": "Why do literary critics consider 'Frankenstein' the first science fiction novel?", "ch": ["It was the first novel written by a woman", "Its central events emerge from scientific possibilities rather than magic", "It predicted many future technologies accurately", "It was the first novel written in third person"], "an": 1}, {"q": "What does the author suggest about the relevance of Shelley's central question today?", "ch": ["It is no longer relevant since we understand science better", "It has become more urgent as we develop AI and genetic engineering", "It applies only to the field of medicine", "Scientists have already answered the question"], "an": 1}]}, {"id": "8S10", "title": "The Economics of Inequality", "text": "In 2021, the world's ten wealthiest people doubled their fortunes during the COVID-19 pandemic while over 160 million people fell into poverty. For many, this captured in miniature a trend decades in the making: across most developed economies, inequality \u2014 the gap between the richest and the rest \u2014 has been growing.\nEconomists measure inequality in various ways. The Gini coefficient assigns a number between 0 and 1: 0 means everyone has equal income; 1 means one person has everything. The United States currently has one of the highest Gini coefficients among wealthy nations \u2014 higher than Russia, higher than most of Europe.\nThe causes of rising inequality are debated, but most economists point to several factors: the decline of manufacturing jobs and labor unions, which had raised wages for working-class Americans; the rise of technology, which rewards skills some workers have and others don't; tax policies that have reduced rates on capital gains and top incomes; and globalization, which expanded markets for skilled workers but created competition for less-skilled ones.\nThe consequences extend beyond economics. Research by epidemiologists Richard Wilkinson and Kate Pickett found that in more unequal societies \u2014 regardless of average wealth \u2014 people have worse health outcomes, higher rates of violence, lower social mobility, and lower levels of trust.\nDebates about what to do are fierce. Some argue for higher taxes on wealth and income, stronger unions, and expanded social programs. Others contend that redistribution reduces incentives for investment and innovation that benefit everyone.\nWhat seems clear is that the question of how to structure a fair economy \u2014 one that rewards initiative while providing genuine opportunity for all \u2014 will define much of the political landscape of the 21st century.", "qs": [{"q": "What is the Gini coefficient?", "ch": ["A measure of a country's total economic output", "A scale measuring income inequality from 0 (perfect equality) to 1 (one person has everything)", "The ratio of government spending to private wealth", "A measurement of global trade volumes"], "an": 1}, {"q": "According to the passage, how does the US compare to other wealthy nations in inequality?", "ch": ["It has the lowest inequality of any wealthy nation", "It is about average among wealthy nations", "It has one of the highest inequality levels among wealthy nations", "It has decreased inequality faster than any other country"], "an": 2}, {"q": "According to Wilkinson and Pickett's research, what happens in more unequal societies?", "ch": ["They tend to have faster economic growth", "They have worse health outcomes, more violence, less social mobility, and lower trust", "They produce more innovation and technology", "They have stronger democratic institutions"], "an": 1}, {"q": "What does the author identify as the central economic question of the 21st century?", "ch": ["How to maximize GDP growth", "How to structure a fair economy that rewards initiative while providing genuine opportunity", "Whether capitalism should be replaced with socialism", "How to reduce government debt"], "an": 1}]}]};
+    }
+  }
+  return null;
+}
+
+function buildVocabPool(bank){
+  var pool=[];
+  var shuffled=bank.slice().sort(function(){return Math.random()-0.5;});
+  var types=['meaning','reverse','synonym','context'];
+  /* For small banks use fewer types */
+  var usableTypes=types.filter(function(t){
+    if(t==='synonym') return bank.some(function(w){return w.syn&&w.syn.length>0;});
+    if(t==='context') return bank.some(function(w){return w.ex&&w.ex.length>0;});
+    return true;
+  });
+  shuffled.forEach(function(word,i){
+    var type=usableTypes[i%usableTypes.length];
+    /* fallback if this word can't support the type */     if(type==='synonym'&&(!word.syn||!word.syn.length)) type='meaning';     if(type==='context'&&(!word.ex||!word.ex.length)) type='meaning';     pool.push({word:word, type:type, bank:bank});   });   return pool; }
+
+function getGrammarPool(grade){
+  /* Map grade number to band key */
+  var g=parseInt(grade)||1;
+  var band=g<=1?'k1':g<=3?'23':g<=5?'45':g<=7?'67':'8';
+  var pool=[];
+  /* Include current band + previous band for variety */
+  var bands=['k1','23','45','67','8'];
+  var bIdx=bands.indexOf(band);
+  for(var bi=0;bi<=bIdx&&bi<bands.length;bi++){
+    var b=GRAMMAR_BANK[bands[bi]];
+    if(b) for(var qi=0;qi<b.length;qi++) pool.push(b[qi]);
+  }
+  return pool;
+}
+
+function getPhonicsPool(grade){
+  var g=parseInt(grade)||1;
+  var bands=g<=0?['k']:g<=1?['k','1']:['k','1','2'];
+  var pool=[];
+  bands.forEach(function(b){ if(PHONICS_BANK[b]) PHONICS_BANK[b].forEach(function(q){pool.push(q);}); });
+  return pool;
+}
+
+function getSkillsPool(grade){
+  var g=parseInt(grade)||1;
+  var band=g<=3?'23':g<=5?'45':'678';
+  var pool=[];
+  if(SKILLS_BANK[band]) SKILLS_BANK[band].forEach(function(q){pool.push(q);});
+  /* Add lower bands too for variety */
+  if(band==='45'&&SKILLS_BANK['23']) SKILLS_BANK['23'].forEach(function(q){pool.push(q);});
+  if(band==='678'){if(SKILLS_BANK['45'])SKILLS_BANK['45'].forEach(function(q){pool.push(q);});}
+  return pool;
+}
+
+function renderVocabQ(){   if(_vocabIdx>=_vocabPool.length){finishReading();return;}   READING_ST.answered=false;   var item=_vocabPool[_vocabIdx];   var word=item.word;   var type=item.type;   var bank=item.bank;   var gc=gradeConf(READING_ST.grade);   var prog=Math.round(_vocabIdx/_vocabPool.length*100);    var question='', promptLabel='', choices=[], correct=0, bigDisplay='';    if(type==='meaning'){     /* Word → Definition */     promptLabel='WHAT DOES THIS WORD MEAN?';     bigDisplay='<div style="font-family:Sora,sans-serif;font-size:44px;font-weight:900;color:var(--brand);letter-spacing:-1px;margin-bottom:10px">'+word.w+'</div>';     if(word.ex) bigDisplay+='<div style="font-size:13px;color:var(--text-tertiary);font-style:italic">"'+word.ex+'"</div>';     var wrongDefs=bank.filter(function(v){return v.w!==word.w;}).sort(function(){return Math.random()-0.5;}).slice(0,3).map(function(v){return v.def;});     choices=[word.def].concat(wrongDefs).sort(function(){return Math.random()-0.5;});     correct=choices.indexOf(word.def);    } else if(type==='reverse'){     /* Definition → Word */     promptLabel='WHICH WORD FITS THIS MEANING?';     bigDisplay='<div style="font-size:17px;font-weight:600;color:var(--text-primary);line-height:1.6;padding:0 4px">"'+word.def+'"</div>';     var wrongWords=bank.filter(function(v){return v.w!==word.w;}).sort(function(){return Math.random()-0.5;}).slice(0,3).map(function(v){return v.w;});     choices=[word.w].concat(wrongWords).sort(function(){return Math.random()-0.5;});     correct=choices.indexOf(word.w);    } else if(type==='synonym'){     /* Synonym pick */     var isSyn=Math.random()>0.5;     if(!word.ant||!word.ant.length) isSyn=true;     promptLabel=isSyn?'WHICH WORD IS A SYNONYM OF...':'WHICH WORD IS AN ANTONYM OF...';     bigDisplay='<div style="font-family:Sora,sans-serif;font-size:44px;font-weight:900;color:var(--brand);letter-spacing:-1px">'+word.w+'</div>';     var target=isSyn?word.syn:word.ant;     /* wrong choices: other words from bank */     var wrongSyns=bank.filter(function(v){return v.w!==word.w&&v.w!==target;}).sort(function(){return Math.random()-0.5;}).slice(0,3).map(function(v){return v.w;});     choices=[target].concat(wrongSyns).sort(function(){return Math.random()-0.5;});     correct=choices.indexOf(target);    } else {     /* Context clue — fill in the blank */     promptLabel='WHICH WORD COMPLETES THE SENTENCE?';     var blank=word.ex.replace(new RegExp('\\b'+word.w+'\\b','i'),'______');     /* if no replacement happened, use a generic sentence */     if(blank===word.ex) blank='She showed great ______ when she faced the challenge.';     bigDisplay='<div style="font-size:17px;font-weight:600;color:var(--text-primary);line-height:1.8;padding:4px">"'+blank+'"</div>';     var wrongCtx=bank.filter(function(v){return v.w!==word.w;}).sort(function(){return Math.random()-0.5;}).slice(0,3).map(function(v){return v.w;});     choices=[word.w].concat(wrongCtx).sort(function(){return Math.random()-0.5;});     correct=choices.indexOf(word.w);   }    /* type badge colors */   var typeMeta={     meaning: {label:'Meaning',  color:'#FF5C35', bg:'#FFF7F5'},     reverse: {label:'Definition →Word', color:'#8B5CF6', bg:'#F5F3FF'},     synonym: {label:'Synonym / Antonym', color:'#10B981', bg:'#F0FDF4'},     context: {label:'Context Clue', color:'#3B82F6', bg:'#EFF6FF'},   };   var tm=typeMeta[type]||typeMeta.meaning;    var h='<div class="hdr">'       +'<div style="float:left"><button class="bbtn" onclick="finishReading()">✕ Exit</button></div>'       +'<div style="text-align:center;padding-top:6px;font-size:13px;font-weight:700;color:'+gc.color+'">📝 Vocabulary · '+(_vocabIdx+1)+'/'+_vocabPool.length+'</div>'       +'<div style="clear:both"></div>'       +'<div style="height:4px;background:var(--bg-subtle);border-radius:2px;margin-top:8px">'       +'<div style="height:4px;width:'+prog+'%;background:'+gc.color+';border-radius:2px;transition:width .3s"></div>'       +'</div></div>';    h+='<div class="card card-raised" style="text-align:center;padding:28px 20px;margin-bottom:14px">'      +'<div style="display:inline-block;background:'+tm.bg+';color:'+tm.color+';border-radius:99px;padding:4px 14px;font-size:11px;font-weight:800;letter-spacing:1.5px;margin-bottom:16px">'+tm.label.toUpperCase()+'</div>'      +'<div style="font-size:11px;font-weight:700;letter-spacing:1.5px;color:var(--text-tertiary);margin-bottom:14px">'+promptLabel+'</div>'      +bigDisplay      +'</div>';    choices.forEach(function(ch,ci){     var ltr=['A','B','C','D'][ci];     h+='<button class="reading-choice" id="vc-'+ci+'" onclick="answerVocab('+ci+','+correct+')">'        +'<span style="background:var(--bg-subtle);border-radius:6px;padding:2px 8px;font-weight:700;margin-right:8px;font-size:12px;flex-shrink:0">'+ltr+'</span>'        +ch+'</button>';   });   h+='<div id="vocab-fb"></div>';   el('s-reading').innerHTML=h; go('s-reading');   READING_ST.total++; }
+
+function renderAnalogyQ(){   if(_analogyIdx>=_analogyPool.length){finishReading();return;}   var item=_analogyPool[_analogyIdx];   var gc=gradeConf(READING_ST.grade);   var others=_analogyPool.filter(function(a){return a.d!==item.d;});   var wrongs=others.sort(function(){return Math.random()-0.5;}).slice(0,3).map(function(a){return a.d;});   var choices=[item.d].concat(wrongs).sort(function(){return Math.random()-0.5;});   var correct=choices.indexOf(item.d);    var h='<div class="hdr">'       +'<div style="float:left"><button class="bbtn" onclick="finishReading()">✕ Exit</button></div>'       +'<div style="text-align:center;padding-top:6px;font-size:13px;font-weight:700;color:'+gc.color+'">🔗 Analogies · '+(_analogyIdx+1)+'/'+_analogyPool.length+'</div>'       +'<div style="clear:both"></div></div>';    h+='<div class="card card-raised" style="text-align:center;padding:28px 20px;margin-bottom:16px">'      +'<div style="font-size:11px;font-weight:700;letter-spacing:2px;color:var(--text-tertiary);margin-bottom:18px">COMPLETE THE ANALOGY</div>'      +'<div style="font-family:Sora,sans-serif;font-size:20px;font-weight:800;color:var(--text-primary);line-height:1.6">'      +'<span style="color:var(--brand)">'+item.a+'</span> is to <span style="color:var(--brand)">'+item.b+'</span>'      +'<br><span style="font-size:15px;color:var(--text-tertiary);font-weight:400">as</span><br>'      +'<span style="color:#3B82F6">'+item.c+'</span> is to <span style="background:var(--bg-subtle);color:#3B82F6;padding:3px 14px;border-radius:8px;border:2px dashed #3B82F6">?</span>'      +'</div>'      +(item.cat?'<div style="font-size:11px;color:var(--text-tertiary);margin-top:14px;font-weight:600;letter-spacing:1px">'+item.cat.toUpperCase()+'</div>':'')      +'</div>';    choices.forEach(function(ch,ci){     var ltr=['A','B','C','D'][ci];     h+='<button class="reading-choice" id="an-'+ci+'" onclick="answerAnalogy('+ci+','+correct+')">'        +'<span style="background:var(--bg-subtle);border-radius:6px;padding:2px 8px;font-weight:700;margin-right:8px;font-size:12px">'+ltr+'</span>'        +ch+'</button>';   });   h+='<div id="analogy-fb"></div>';   el('s-reading').innerHTML=h; go('s-reading');   READING_ST.total++; }
+
+function renderGrammarQ(){
+  if(_grammarIdx>=_grammarPool.length){finishGrammar();return;}
+  var item=_grammarPool[_grammarIdx];
+  var gc=gradeConf(READING_ST.grade||1);
+  var prog=_grammarIdx+1, total=_grammarPool.length;
+  var pct=Math.round(_grammarIdx/total*100);
+
+  var h='<div class="hdr"><div style="float:left"><button class="bbtn" onclick="renderReadingHub('+READING_ST.grade+',\''+READING_ST.profileId+'\')">‹ Back</button></div>'
+    +'<div style="text-align:center;padding-top:6px;font-size:15px;font-weight:700;color:#D97706">✏️ Grammar · '+prog+'/'+total+'</div>'
+    +'<div style="clear:both"></div></div>';
+
+  /* Progress bar */
+  h+='<div style="height:4px;background:var(--bg-subtle);margin:0 0 16px"><div style="height:100%;width:'+pct+'%;background:#D97706;transition:width .3s"></div></div>';
+
+  /* Category badge */
+  h+='<div style="text-align:center;margin-bottom:12px"><span style="background:#FEF3C7;color:#92400E;font-size:11px;font-weight:700;padding:4px 12px;border-radius:99px;letter-spacing:.5px">'+item.cat+'</span></div>';
+
+  /* Question */
+  h+='<div style="background:var(--surface);border:1.5px solid var(--border);border-radius:20px;padding:24px 20px;margin:0 0 16px;text-align:center">'
+    +'<div style="font-family:Sora,sans-serif;font-size:17px;font-weight:700;color:var(--text-primary);line-height:1.5">'+item.q+'</div>'
+    +'</div>';
+
+  /* Answer choices */
+  h+='<div id="grammar-choices">';
+  for(var ci=0;ci<item.ch.length;ci++){
+    h+='<button class="reading-choice" id="gc-'+ci+'" onclick="answerGrammar('+ci+','+item.an+')">'
+      +'<span style="display:inline-block;width:28px;height:28px;border-radius:50%;background:#D9770618;color:#D97706;font-weight:800;font-size:13px;line-height:28px;margin-right:10px">'+['A','B','C','D'][ci]+'</span>'
+      +item.ch[ci]+'</button>';
+  }
+  h+='</div>';
+  h+='<div id="grammar-fb" style="margin-top:16px"></div>';
+
+  el('s-reading').innerHTML=h;
+  go('s-reading');
+}
+
+function renderPhonicsQ(){
+  if(_phonicsIdx>=_phonicsPool.length){finishPhonics();return;}
+  var item=_phonicsPool[_phonicsIdx];
+  var prog=_phonicsIdx+1, total=_phonicsPool.length;
+  var pct=Math.round(_phonicsIdx/total*100);
+  var h='<div class="hdr"><div style="float:left"><button class="bbtn" onclick="renderReadingHub('+READING_ST.grade+',\''+READING_ST.profileId+'\')">‹ Back</button></div>'
+    +'<div style="text-align:center;padding-top:6px;font-size:15px;font-weight:700;color:#059669">🔤 Phonics · '+prog+'/'+total+'</div>'
+    +'<div style="clear:both"></div></div>';
+  h+='<div style="height:4px;background:var(--bg-subtle);margin:0 0 16px"><div style="height:100%;width:'+pct+'%;background:#059669;transition:width .3s"></div></div>';
+  h+='<div style="text-align:center;margin-bottom:12px"><span style="background:#ECFDF5;color:#065F46;font-size:11px;font-weight:700;padding:4px 12px;border-radius:99px">'+item.cat+'</span></div>';
+  h+='<div style="background:var(--surface);border:1.5px solid var(--border);border-radius:20px;padding:24px 20px;margin:0 0 16px;text-align:center">'
+    +'<div style="font-family:Sora,sans-serif;font-size:18px;font-weight:700;color:var(--text-primary);line-height:1.5">'+item.q+'</div></div>';
+  h+='<div id="phonics-choices">';
+  for(var ci=0;ci<item.ch.length;ci++){
+    h+='<button class="reading-choice" id="pc-'+ci+'" onclick="answerPhonics('+ci+','+item.an+')">'
+      +'<span style="display:inline-block;width:28px;height:28px;border-radius:50%;background:#05966918;color:#059669;font-weight:800;font-size:13px;line-height:28px;margin-right:10px">'+['A','B','C','D'][ci]+'</span>'
+      +item.ch[ci]+'</button>';
+  }
+  h+='</div><div id="phonics-fb" style="margin-top:16px"></div>';
+  el('s-reading').innerHTML=h; go('s-reading');
+}
+
+function renderSkillsQ(){
+  if(_skillsIdx>=_skillsPool.length){finishSkills();return;}
+  var item=_skillsPool[_skillsIdx];
+  var prog=_skillsIdx+1, total=_skillsPool.length;
+  var pct=Math.round(_skillsIdx/total*100);
+  var h='<div class="hdr"><div style="float:left"><button class="bbtn" onclick="renderReadingHub('+READING_ST.grade+',\''+READING_ST.profileId+'\')">‹ Back</button></div>'
+    +'<div style="text-align:center;padding-top:6px;font-size:15px;font-weight:700;color:#DC2626">🎯 Reading Skills · '+prog+'/'+total+'</div>'
+    +'<div style="clear:both"></div></div>';
+  h+='<div style="height:4px;background:var(--bg-subtle);margin:0 0 12px"><div style="height:100%;width:'+pct+'%;background:#DC2626;transition:width .3s"></div></div>';
+  h+='<div style="text-align:center;margin-bottom:10px"><span style="background:#FEF2F2;color:#991B1B;font-size:11px;font-weight:700;padding:4px 12px;border-radius:99px">'+item.cat+'</span></div>';
+  /* Passage */
+  h+='<div style="background:var(--bg-subtle);border-left:4px solid #DC2626;border-radius:0 12px 12px 0;padding:16px 18px;margin:0 0 14px;font-size:14px;color:var(--text-secondary);line-height:1.7;font-style:italic">'+item.passage+'</div>';
+  /* Question */
+  h+='<div style="font-family:Sora,sans-serif;font-size:16px;font-weight:700;color:var(--text-primary);margin-bottom:14px;padding:0 4px">'+item.q+'</div>';
+  h+='<div id="skills-choices">';
+  for(var ci=0;ci<item.ch.length;ci++){
+    h+='<button class="reading-choice" id="sk-'+ci+'" onclick="answerSkills('+ci+','+item.an+')">'
+      +'<span style="display:inline-block;width:28px;height:28px;border-radius:50%;background:#DC262618;color:#DC2626;font-weight:800;font-size:13px;line-height:28px;margin-right:10px">'+['A','B','C','D'][ci]+'</span>'
+      +item.ch[ci]+'</button>';
+  }
+  h+='</div><div id="skills-fb" style="margin-top:16px"></div>';
+  el('s-reading').innerHTML=h; go('s-reading');
+}
+
+function answerAnalogy(chosen,correct){   if(READING_ST.answered)return;   READING_ST.answered=true;   var ok=(chosen===correct);   if(ok)READING_ST.score++;   for(var i=0;i<4;i++){     var b=document.getElementById('an-'+i);     if(!b)continue;     if(i===correct)b.className='reading-choice correct';     else if(i===chosen&&!ok)b.className='reading-choice wrong';     b.onclick=null;   }   var item=_analogyPool[_analogyIdx];   var fb=document.getElementById('analogy-fb');   if(fb){     fb.innerHTML='<div style="background:'+(ok?'var(--green-light)':'var(--red-light)')+';border:1.5px solid '+(ok?'var(--green)':'var(--red)')+';border-radius:12px;padding:12px 16px;margin:12px 0">'       +'<b style="color:'+(ok?'var(--green)':'var(--red)')+'">'+(ok?'✓ Correct! Great pattern thinking!':'✗ Not quite — here is the correct pair:')+'</b>'       +'<div style="font-size:13px;color:var(--text-secondary);margin-top:4px">'+item.a+' → '+item.b+' &nbsp;::&nbsp; '+item.c+' → <b>'+item.d+'</b></div>'       +'</div>'       +'<button onclick="nextAnalogy()" class="btn btn-primary">Next →</button>';   } }
+
+function answerPhonics(chosen,correct){
+  for(var i=0;i<4;i++){
+    var btn=document.getElementById('pc-'+i);
+    if(!btn)continue;
+    btn.onclick=null;
+    if(i===correct){btn.style.background='#ECFDF5';btn.style.borderColor='#10B981';btn.style.color='#065F46';}
+    else if(i===chosen&&chosen!==correct){btn.style.background='#FEF2F2';btn.style.borderColor='#EF4444';btn.style.color='#991B1B';}
+    else{btn.style.opacity='0.45';}
+  }
+  var ok=(chosen===correct);
+  if(ok)_phonicsScore++;
+  var item=_phonicsPool[_phonicsIdx];
+  var fb=document.getElementById('phonics-fb');
+  if(fb){
+    fb.innerHTML='<div style="background:'+(ok?'#ECFDF5':'#FEF2F2')+';border:1.5px solid '+(ok?'#10B981':'#EF4444')+';border-radius:16px;padding:16px">'
+      +'<div style="font-weight:800;font-size:15px;color:'+(ok?'#065F46':'#991B1B')+';margin-bottom:6px">'+(ok?'✓ Correct!':'✗ Not quite')+'</div>'
+      +'<div style="font-size:14px;color:var(--text-secondary);line-height:1.5">'+item.exp+'</div></div>'
+      +'<button class="btn" style="margin-top:14px;background:#059669;color:#fff" onclick="nextPhonicsQ()">Next →</button>';
+  }
+  _phonicsIdx++;
+}
+
+function answerSkills(chosen,correct){
+  for(var i=0;i<4;i++){
+    var btn=document.getElementById('sk-'+i);
+    if(!btn)continue;
+    btn.onclick=null;
+    if(i===correct){btn.style.background='#ECFDF5';btn.style.borderColor='#10B981';btn.style.color='#065F46';}
+    else if(i===chosen&&chosen!==correct){btn.style.background='#FEF2F2';btn.style.borderColor='#EF4444';btn.style.color='#991B1B';}
+    else{btn.style.opacity='0.45';}
+  }
+  var ok=(chosen===correct);
+  if(ok)_skillsScore++;
+  var item=_skillsPool[_skillsIdx];
+  var fb=document.getElementById('skills-fb');
+  if(fb){
+    fb.innerHTML='<div style="background:'+(ok?'#ECFDF5':'#FEF2F2')+';border:1.5px solid '+(ok?'#10B981':'#EF4444')+';border-radius:16px;padding:16px">'
+      +'<div style="font-weight:800;font-size:15px;color:'+(ok?'#065F46':'#991B1B')+';margin-bottom:6px">'+(ok?'✓ Correct! You got it!':'✗ Not quite — here\'s the explanation:')+'</div>'
+      +'<div style="font-size:14px;color:var(--text-secondary);line-height:1.5">'+item.exp+'</div></div>'
+      +'<button class="btn" style="margin-top:14px;background:#DC2626;color:#fff" onclick="nextSkillsQ()">Got it — Next →</button>';
+  }
+  _skillsIdx++;
+}
+
+function finishPhonics(){
+  var total=_phonicsPool.length, pct=Math.round(_phonicsScore/total*100);
+  var emoji=pct>=90?'🏆':pct>=70?'⭐':'📚';
+  var phonMsg=pct>=90?'Perfect! Your phonics skills are superstar level! 🏆':
+    pct>=70?'Great job! Strong phonics = strong reading! ⭐':
+    pct>=50?'Good try! Practice sounding out words every day and you will see big improvement! 📚':
+    'Keep going! Phonics is the key to unlocking every word you will ever read! 💪';
+  var h='<div class="hdr"><button class="bbtn" onclick="renderReadingHub('+READING_ST.grade+',\''+READING_ST.profileId+'\')">‹ Back</button></div>';
+  h+='<div style="text-align:center;padding:40px 20px 24px"><div style="font-size:56px;margin-bottom:12px">'+emoji+'</div>';
+  h+='<div style="font-family:Sora,sans-serif;font-size:28px;font-weight:900;color:var(--text-primary)">'+pct+'%</div>';
+  h+='<div style="font-size:15px;color:var(--text-secondary);margin-bottom:4px">'+_phonicsScore+'/'+total+' correct</div>';
+  h+='<div style="font-size:14px;color:var(--text-tertiary);margin-bottom:16px">'+phonMsg+'</div></div>';
+  h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 16px">';
+  h+='<button class="btn btn-secondary" onclick="startPhonicsMode('+READING_ST.grade+',\''+READING_ST.profileId+'\')">Try Again</button>';
+  h+='<button class="btn" style="background:#059669;color:#fff" onclick="renderReadingHub('+READING_ST.grade+',\''+READING_ST.profileId+'\')">Done</button></div>';
+  el('s-reading').innerHTML=h; go('s-reading');
+}
+
+function finishSkills(){
+  var total=_skillsPool.length, pct=Math.round(_skillsScore/total*100);
+  var emoji=pct>=90?'🏆':pct>=70?'⭐':'📚';
+  var skillMsg=pct>=90?'Incredible! You think like a real literary scholar! 🏆':
+    pct>=70?'Strong reading skills! You can find evidence and analyze text like a pro! ⭐':
+    pct>=50?'Good effort! Re-read passages carefully and look for clues in the text! 📚':
+    'Keep practicing! Close reading is one of the most powerful skills you can build! 💪';
+  var h='<div class="hdr"><button class="bbtn" onclick="renderReadingHub('+READING_ST.grade+',\''+READING_ST.profileId+'\')">‹ Back</button></div>';
+  h+='<div style="text-align:center;padding:40px 20px 24px"><div style="font-size:56px;margin-bottom:12px">'+emoji+'</div>';
+  h+='<div style="font-family:Sora,sans-serif;font-size:28px;font-weight:900;color:var(--text-primary)">'+pct+'%</div>';
+  h+='<div style="font-size:15px;color:var(--text-secondary);margin-bottom:4px">'+_skillsScore+'/'+total+' correct</div>';
+  h+='<div style="font-size:14px;color:var(--text-tertiary);margin-bottom:16px">'+skillMsg+'</div></div>';
+  h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 16px">';
+  h+='<button class="btn btn-secondary" onclick="startSkillsMode('+READING_ST.grade+',\''+READING_ST.profileId+'\')">Try Again</button>';
+  h+='<button class="btn" style="background:#DC2626;color:#fff" onclick="renderReadingHub('+READING_ST.grade+',\''+READING_ST.profileId+'\')">Done</button></div>';
+  el('s-reading').innerHTML=h; go('s-reading');
+}
+
+function nextAnalogy(){   READING_ST.answered=false;   _analogyIdx++;   renderAnalogyQ(); }
+
+function nextPhonicsQ(){ renderPhonicsQ(); }
+
+function nextSkillsQ(){ renderSkillsQ(); }
+
+function startVocabMode(){
+  var g=READING_ST.grade;
+  var gKey=g>=8?'8':g>=6?'67':g>=4?'45':g>=2?'23':'k1';
+  var bank=(VOCAB_BANK[gKey]||VOCAB_BANK['k1']).slice();
+  /* shuffle and build question pool with mixed types */
+  _vocabPool=buildVocabPool(bank);
+  _vocabIdx=0;
+  READING_ST.answered=false;
+  renderVocabQ();
+}
+
+function startAnalogyMode(){   var g=READING_ST.grade;   _analogyPool=ANALOGIES.filter(function(a){return a.grade<=g+1;})                          .sort(function(){return Math.random()-0.5;}).slice(0,20);   _analogyIdx=0;   renderAnalogyQ(); }
+
+function startGrammarMode(grade,pid){
+  READING_ST.grade=grade||ST.grade||1;
+  READING_ST.profileId=pid||ST.profileId||'';
+  var pool=getGrammarPool(READING_ST.grade);
+  /* Shuffle */
+  _grammarPool=pool.slice().sort(function(){return Math.random()-0.5;}).slice(0,20);
+  _grammarIdx=0;
+  _grammarScore=0;
+  renderGrammarQ();
+}
+
+function startPhonicsMode(grade,pid){
+  READING_ST.grade=grade||ST.grade||1;
+  READING_ST.profileId=pid||ST.profileId||'';
+  var pool=getPhonicsPool(READING_ST.grade);
+  _phonicsPool=pool.slice().sort(function(){return Math.random()-0.5;}).slice(0,20);
+  _phonicsIdx=0; _phonicsScore=0;
+  renderPhonicsQ();
+}
+
+function startSkillsMode(grade,pid){
+  READING_ST.grade=grade||ST.grade||1;
+  READING_ST.profileId=pid||ST.profileId||'';
+  var pool=getSkillsPool(READING_ST.grade);
+  _skillsPool=pool.slice().sort(function(){return Math.random()-0.5;}).slice(0,15);
+  _skillsIdx=0; _skillsScore=0;
+  renderSkillsQ();
+}
+
+/* v6.29 fix: repair legacy reading-question schema {choices, a:<text>} -> {ch, an:<index>}.
+   64 stories (grades 1-8) shipped with the wrong field names, crashing renderReadingQuestion
+   on q.ch.forEach. Also shuffles so the correct answer is no longer always the first choice.
+   Idempotent and non-destructive (leaves legacy keys intact). */
+function _normalizeStories(){
+  try{
+    if(typeof STORIES==='undefined'||!STORIES) return;
+    Object.keys(STORIES).forEach(function(g){
+      (STORIES[g]||[]).forEach(function(st){
+        (st.qs||[]).forEach(function(q){
+          if(Array.isArray(q.ch) && typeof q.an==='number' && q.ch[q.an]!==undefined) return;
+          var choices = Array.isArray(q.ch)?q.ch:q.choices;
+          if(!Array.isArray(choices)) return;
+          var correctText;
+          if(typeof q.an==='number' && choices[q.an]!==undefined) correctText=choices[q.an];
+          else if(typeof q.a==='string') correctText=q.a;
+          else if(typeof q.a==='number' && choices[q.a]!==undefined) correctText=choices[q.a];
+          else correctText=choices[0];
+          var arr=choices.slice();
+          for(var i=arr.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=arr[i];arr[i]=arr[j];arr[j]=t;}
+          var idx=arr.indexOf(correctText);
+          if(idx<0){ arr=choices.slice(); idx=choices.indexOf(correctText); if(idx<0) idx=0; }
+          q.ch=arr; q.an=idx;
+        });
+      });
+    });
+  }catch(e){ try{console.error('normalizeStories failed',e);}catch(_){} }
+}
+try{ _normalizeStories(); }catch(e){}
 /* Browser back interceptor */
 window.addEventListener('popstate', function(e){
   if(_drillActive){
