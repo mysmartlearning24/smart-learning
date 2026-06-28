@@ -27,7 +27,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="color-scheme" content="light">
-<title>SMART v6.34</title>
+<title>SMART v6.35</title>
 <script>
 /* Early error handler — catches Firebase SDK failures before main script runs */
 window.onerror=function(msg,src,line,col,err){
@@ -18005,6 +18005,7 @@ function startPlacement(pid, subjectsOpt){
 }
 function _plNextQuestion(){
   if(PLC.phase==='depth'){ _plDepthNext(); return; }
+  if(PLC.phase==='rdepth'){ _plRDepthNext(); return; }
   var subj=PLC.subjects[PLC.si];
   if(PLC.rungQ>=PLC.perRung){
     var passed=PLC.rungScore>=PLC.passNeed;
@@ -18026,12 +18027,20 @@ function _plFinishSubject(){
     PLC.phase='depth'; PLC.depthGrade=placedG; PLC.depthTier=0; PLC.depthScore=0; PLC.depthQ=0; PLC.depthMastered=-1;
     _plDepthNext(); return;
   }
+  if(subj==='reading'){
+    PLC.phase='rdepth'; PLC.rdepthGrade=placedG; PLC.rdepthScore=0; PLC.rdepthQ=0; PLC.rdepthTotal=6;
+    _plRDepthNext(); return;
+  }
   _plAdvanceSubject();
 }
 function _plAnswer(idx){
   if(!PLC||PLC.answered) return;
   PLC.answered=true;
-  if(idx===PLC.cur.an){ if(PLC.phase==='depth') PLC.depthScore++; else PLC.rungScore++; }
+  if(idx===PLC.cur.an){
+    if(PLC.phase==='depth') PLC.depthScore++;
+    else if(PLC.phase==='rdepth') PLC.rdepthScore++;
+    else PLC.rungScore++;
+  }
   var btns=document.querySelectorAll('#plc-choices .reading-choice');
   for(var i=0;i<btns.length;i++){ btns[i].onclick=null;
     if(i===PLC.cur.an){ btns[i].style.background='#ECFDF5'; btns[i].style.borderColor='#10B981'; btns[i].style.color='#065F46'; }
@@ -18039,7 +18048,7 @@ function _plAnswer(idx){
     else { btns[i].style.opacity='0.5'; }
   }
   var phase=PLC.phase;
-  setTimeout(function(){ if(phase==='depth') _plDepthNext(); else _plNextQuestion(); }, 600);
+  setTimeout(function(){ if(phase==='depth') _plDepthNext(); else if(phase==='rdepth') _plRDepthNext(); else _plNextQuestion(); }, 600);
 }
 function _plRender(subj, q){
   var label=(subj==='math')?'🔢 Math Check':'📚 Reading Check';
@@ -18189,6 +18198,43 @@ function _plDepthDone(){
   PLC.placed.mathSkipped=n;
   PLC.phase='ladder';
   _plAdvanceSubject();
+}
+
+/* ===== v6.35: reading test-out (skip mastered reading levels) ===== */
+function _plRDepthNext(){
+  if(PLC.rdepthQ>=PLC.rdepthTotal){ _plRDepthDone(); return; }
+  var q=null, t=0;
+  while(!q && t<8){ q=_plReadingQ(PLC.rdepthGrade); t++; }
+  if(!q){ _plRDepthDone(); return; }
+  PLC.cur=q; PLC.answered=false; PLC.rdepthQ++;
+  _plRender('reading', q);
+}
+function _plRDepthDone(){
+  var frac=PLC.rdepthTotal?(PLC.rdepthScore/PLC.rdepthTotal):0;
+  var skipFrac = frac>=0.9?0.25 : frac>=0.75?0.12 : 0;
+  var n=0; try{ n=_markLATestedOut(PLC.pid, PLC.rdepthGrade, skipFrac); }catch(e){}
+  PLC.placed.readingSkipped=n;
+  PLC.phase='ladder';
+  _plAdvanceSubject();
+}
+function _markLATestedOut(pid, g, skipFrac){
+  if(skipFrac<=0) return 0;
+  var prog=loadLAProg(g,pid), n=0;
+  var curr=buildLACurriculum(g)||[];
+  curr.forEach(function(cat){
+    if(!cat||!cat.lv||!cat.lv.length) return;
+    if(cat.id==='la_writ') return; /* writing is open-ended; never auto-skip */
+    var k=Math.floor(cat.lv.length*skipFrac);
+    for(var i=0;i<k;i++){
+      var lv=cat.lv[i];
+      if(lv&&lv.id&&!(prog[lv.id]&&prog[lv.id].passed)){
+        prog[lv.id]={passed:true,testedOut:true,score:100,total:100,attempts:0,bestScore:100,bestTotal:100,date:new Date().toISOString()};
+        n++;
+      }
+    }
+  });
+  saveLAProg(g,pid,prog);
+  return n;
 }
 
 /* Browser back interceptor */
