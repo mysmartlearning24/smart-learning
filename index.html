@@ -27,7 +27,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="color-scheme" content="light">
-<title>SMART v6.32</title>
+<title>SMART v6.33</title>
 <script>
 /* Early error handler — catches Firebase SDK failures before main script runs */
 window.onerror=function(msg,src,line,col,err){
@@ -13622,6 +13622,7 @@ function renderParentDashInner(){
       out+='<div style="flex:1">';
       out+='<div style="font-family:Sora,sans-serif;font-size:20px;font-weight:800;color:var(--text-primary)">'+P.name+'</div>';
       out+='<div style="font-size:12px;font-weight:600;color:'+gc.color+'">'+gc.label+'</div></div>';
+      out+='<div style="display:flex;gap:8px;margin:8px 0 2px;flex-wrap:wrap">'+'<div style="flex:1;min-width:140px;background:#EFF6FF;border-radius:10px;padding:7px 10px;display:flex;align-items:center;justify-content:space-between"><span style="font-size:12px;font-weight:700;color:#1E40AF">&#128290; Math &middot; Gr '+(P.mathGrade||P.grade||1)+'</span><span style="white-space:nowrap"><button class="bbtn" style="padding:1px 8px;font-size:14px" onclick="adjPlace(\''+pid4+'\',\'math\',-1)">&minus;</button> <button class="bbtn" style="padding:1px 8px;font-size:14px" onclick="adjPlace(\''+pid4+'\',\'math\',1)">+</button></span></div>'+'<div style="flex:1;min-width:140px;background:#F5F3FF;border-radius:10px;padding:7px 10px;display:flex;align-items:center;justify-content:space-between"><span style="font-size:12px;font-weight:700;color:#5B21B6">&#128218; Reading &middot; Gr '+(P.readingGrade||P.grade||1)+'</span><span style="white-space:nowrap"><button class="bbtn" style="padding:1px 8px;font-size:14px" onclick="adjPlace(\''+pid4+'\',\'reading\',-1)">&minus;</button> <button class="bbtn" style="padding:1px 8px;font-size:14px" onclick="adjPlace(\''+pid4+'\',\'reading\',1)">+</button></span></div>'+'</div>';
       out+='<div style="text-align:right">';
       out+='<div style="font-size:24px;font-weight:800;font-family:Sora,sans-serif;color:'+gc.color+'">'+pct4+'%</div>';
       out+='<div style="font-size:11px;color:var(--text-tertiary)">'+passed4+'/'+total4+' mastered</div>';
@@ -18103,6 +18104,15 @@ function recordSubjectResult(subject, pid, score, total){
       try{ localStorage.setItem(key,String(streak)); }catch(e){}
     }
   }catch(e){}
+}
+
+/* v6.33: parent-dashboard manual override of per-subject placement */
+function adjPlace(pid, subject, delta){
+  var cur=(subject==='math')?mathGradeOf(pid):readingGradeOf(pid);
+  var ng=Math.max(1,Math.min(8,cur+(delta||0)));
+  setSubjectGrade(pid, subject, ng);
+  try{ localStorage.removeItem('smart_adv_'+subject+'_'+pid); }catch(e){}
+  try{ renderParentDashInner(); }catch(e){}
 }
 
 /* Browser back interceptor */
