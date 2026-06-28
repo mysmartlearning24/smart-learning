@@ -27,7 +27,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="color-scheme" content="light">
-<title>SMART v6.35</title>
+<title>SMART v6.36</title>
 <script>
 /* Early error handler — catches Firebase SDK failures before main script runs */
 window.onerror=function(msg,src,line,col,err){
@@ -11226,8 +11226,8 @@ function finishGate(){
   var elapsed=Math.round((Date.now()-_GT.startTime)/1000);
   var score=_GT.score,pid=_GT.pid,grade=_GT.grade;
   var st=updateStreak(pid);
-  var earnedPts=addPoints(pid,grade,score,15,'math');
-  addHist(grade,{date:new Date().toISOString(),lid:'gate_g'+grade,score:score,time:elapsed,mode:'gate',subject:'gifted',total:15,streakAfter:st.count},pid);
+  var earnedPts=addPoints(pid,grade,Math.round(score*0.5),15,'math');
+  addHist(grade,{date:new Date().toISOString(),lid:'gate_g'+grade,score:score,time:Math.round(elapsed*0.5),actualTime:elapsed,mode:'gate',subject:'gifted',total:15,streakAfter:st.count},pid);
   syncToCloud(grade);
   var gc=gradeConf(grade);
   var pct=Math.round(score/15*100);
@@ -11505,8 +11505,8 @@ function finishGateDrill(){
   var elapsed=Math.round((Date.now()-_GD.startTime)/1000);
   var score=_GD.score,pid=_GD.pid,grade=_GD.grade;
   var total=_GD.probs.length;
-  var earnedPts=addPoints(pid,grade,score,total,'math');
-  addHist(grade,{date:new Date().toISOString(),lid:'gate_drill_'+_GD.drillType+'_g'+grade,score:score,time:elapsed,mode:'gate_drill',subject:'gifted',total:total},pid);
+  var earnedPts=addPoints(pid,grade,Math.round(score*0.5),total,'math');
+  addHist(grade,{date:new Date().toISOString(),lid:'gate_drill_'+_GD.drillType+'_g'+grade,score:score,time:Math.round(elapsed*0.5),actualTime:elapsed,mode:'gate_drill',subject:'gifted',total:total},pid);
   syncToCloud(grade);
   var gc=gradeConf(grade);
   var pct=Math.round(score/total*100);
@@ -12720,7 +12720,7 @@ function finishDrill(){
   var _rpcN=(_rpcData[ST.lid]||0);
   _rpcData[ST.lid]=_rpcN+1;
   try{localStorage.setItem(_rpcKey,JSON.stringify(_rpcData));}catch(e){}
-  addPoints(ST.profileId,ST.grade,_rpcN<3?score:0,ST.probs.length,'math');
+  var _isReplay=!!(prev&&prev.passed); addPoints(ST.profileId,ST.grade,_isReplay?(_rpcN<3?Math.round(score*0.5):0):score,ST.probs.length,'math'); if(_isReplay){_histEntry.actualTime=_histEntry.time;_histEntry.time=Math.round((_histEntry.time||0)*0.5);}
   _histEntry.replayN=_rpcN;
   addHist(ST.grade,_histEntry);
   /* Check for new stickers */
