@@ -27,7 +27,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="color-scheme" content="light">
-<title>SMART v6.33</title>
+<title>SMART v6.34</title>
 <script>
 /* Early error handler — catches Firebase SDK failures before main script runs */
 window.onerror=function(msg,src,line,col,err){
@@ -17998,11 +17998,13 @@ function startPlacement(pid, subjectsOpt){
   PLC={ pid:pid, subjects:(subjectsOpt||['math','reading']), si:0,
         startG:Math.max(1,nominal-1), g:Math.max(1,nominal-1),
         rungScore:0, rungQ:0, perRung:4, passNeed:3,
-        lastPassed:{}, placed:{}, answered:false, cur:null };
+        lastPassed:{}, placed:{}, answered:false, cur:null,
+        phase:'ladder', depthTier:0, depthScore:0, depthQ:0, depthPerTier:3, depthPassNeed:2, depthMastered:-1, depthGrade:0 };
   try{ _sessionPush('placement'); }catch(e){}
   _plNextQuestion();
 }
 function _plNextQuestion(){
+  if(PLC.phase==='depth'){ _plDepthNext(); return; }
   var subj=PLC.subjects[PLC.si];
   if(PLC.rungQ>=PLC.perRung){
     var passed=PLC.rungScore>=PLC.passNeed;
@@ -18020,21 +18022,24 @@ function _plFinishSubject(){
   var placedG=(PLC.lastPassed[subj]!=null)?PLC.lastPassed[subj]:Math.max(1,PLC.startG-1);
   PLC.placed[subj]=placedG;
   setSubjectGrade(PLC.pid, subj, placedG);
-  PLC.si++;
-  if(PLC.si<PLC.subjects.length){ var p=_plProf(PLC.pid)||{}; PLC.g=Math.max(1,(parseInt(p.grade)||1)-1); PLC.rungScore=0; PLC.rungQ=0; _plNextQuestion(); }
-  else { _plDone(); }
+  if(subj==='math'){
+    PLC.phase='depth'; PLC.depthGrade=placedG; PLC.depthTier=0; PLC.depthScore=0; PLC.depthQ=0; PLC.depthMastered=-1;
+    _plDepthNext(); return;
+  }
+  _plAdvanceSubject();
 }
 function _plAnswer(idx){
   if(!PLC||PLC.answered) return;
   PLC.answered=true;
-  if(idx===PLC.cur.an) PLC.rungScore++;
+  if(idx===PLC.cur.an){ if(PLC.phase==='depth') PLC.depthScore++; else PLC.rungScore++; }
   var btns=document.querySelectorAll('#plc-choices .reading-choice');
   for(var i=0;i<btns.length;i++){ btns[i].onclick=null;
     if(i===PLC.cur.an){ btns[i].style.background='#ECFDF5'; btns[i].style.borderColor='#10B981'; btns[i].style.color='#065F46'; }
     else if(i===idx){ btns[i].style.background='#FEF2F2'; btns[i].style.borderColor='#EF4444'; btns[i].style.color='#991B1B'; }
     else { btns[i].style.opacity='0.5'; }
   }
-  setTimeout(function(){ _plNextQuestion(); }, 600);
+  var phase=PLC.phase;
+  setTimeout(function(){ if(phase==='depth') _plDepthNext(); else _plNextQuestion(); }, 600);
 }
 function _plRender(subj, q){
   var label=(subj==='math')?'🔢 Math Check':'📚 Reading Check';
@@ -18113,6 +18118,77 @@ function adjPlace(pid, subject, delta){
   setSubjectGrade(pid, subject, ng);
   try{ localStorage.removeItem('smart_adv_'+subject+'_'+pid); }catch(e){}
   try{ renderParentDashInner(); }catch(e){}
+}
+
+/* ===== v6.34: within-grade test-out (skip mastered levels) ===== */
+function _plAdvanceSubject(){
+  PLC.si++;
+  if(PLC.si<PLC.subjects.length){ var p=_plProf(PLC.pid)||{}; PLC.g=Math.max(1,(parseInt(p.grade)||1)-1); PLC.rungScore=0; PLC.rungQ=0; PLC.phase='ladder'; _plNextQuestion(); }
+  else { _plDone(); }
+}
+function _tierLevels(g, tier){
+  var out=[], cats=CURRICULUM[g]||CURRICULUM[String(g)]||[];
+  cats.forEach(function(c){ (c.lv||[]).forEach(function(l){ if(l&&l.id&&(l.tier||0)===tier) out.push(l.id); }); });
+  return out;
+}
+function _levelsUpToTier(g, maxTier){
+  var out=[], cats=CURRICULUM[g]||CURRICULUM[String(g)]||[];
+  cats.forEach(function(c){ (c.lv||[]).forEach(function(l){ if(l&&l.id&&(l.tier||0)<=maxTier) out.push(l.id); }); });
+  return out;
+}
+function _markTestedOutUpToTier(pid, g, maxTier){
+  if(maxTier<0) return 0;
+  var lids=_levelsUpToTier(g,maxTier), prog=loadProg(g,pid), n=0;
+  lids.forEach(function(lid){ if(!prog[lid]||!prog[lid].passed){ prog[lid]={passed:true,testedOut:true,score:100,ts:Date.now()}; n++; } });
+  saveProg(g,prog,pid);
+  return n;
+}
+function _plMathQTier(g, tier){
+  var lids=_tierLevels(g,tier); if(!lids.length) return null;
+  var opMap={'x':'×','*':'×','/':'÷','+':'+','-':'−','×':'×','÷':'÷'};
+  for(var t=0;t<24;t++){
+    var lid=lids[Math.floor(Math.random()*lids.length)], p;
+    try{ p=getNextProblem(lid); }catch(e){ continue; }
+    if(!p) continue;
+    var ans=p.mf?p.ans2:p.an;
+    if(typeof ans!=='number'||!isFinite(ans)||ans!==Math.round(ans)) continue;
+    var prompt=null;
+    if(p.a!=null&&p.b!=null&&opMap[p.o]){ prompt=p.a+' '+opMap[p.o]+' '+p.b+' = ?'; }
+    else if(typeof p.display==='string'&&p.display.length>0&&p.display.length<42&&p.display.indexOf('<')<0){ prompt=(p.display.indexOf('?')>=0)?p.display:(p.display+' = ?'); }
+    if(!prompt) continue;
+    var opts=[ans], deltas=[1,-1,2,-2,5,-5,10,-10,3,-3];
+    for(var d=0;d<deltas.length&&opts.length<4;d++){ var v=ans+deltas[d]; if(opts.indexOf(v)<0) opts.push(v); }
+    var pad=1; while(opts.length<4){ var v=ans+pad*4; if(opts.indexOf(v)<0)opts.push(v); pad++; }
+    for(var i=opts.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var tt=opts[i];opts[i]=opts[j];opts[j]=tt;}
+    return {q:prompt, ch:opts.map(String), an:opts.indexOf(ans)};
+  }
+  return null;
+}
+function _plDepthNext(){
+  var G=PLC.depthGrade;
+  if(PLC.depthQ>=PLC.depthPerTier){
+    if(PLC.depthScore>=PLC.depthPassNeed){
+      PLC.depthMastered=PLC.depthTier;
+      PLC.depthTier++; PLC.depthScore=0; PLC.depthQ=0;
+      if(PLC.depthTier>3){ _plDepthDone(); return; }
+    } else { _plDepthDone(); return; }
+  }
+  var q=null, tries=0;
+  while(!q && tries<10){ q=_plMathQTier(G, PLC.depthTier); tries++; }
+  if(!q){
+    PLC.depthMastered=PLC.depthTier; PLC.depthTier++; PLC.depthScore=0; PLC.depthQ=0;
+    if(PLC.depthTier>3){ _plDepthDone(); return; }
+    _plDepthNext(); return;
+  }
+  PLC.cur=q; PLC.answered=false; PLC.depthQ++;
+  _plRender('math', q);
+}
+function _plDepthDone(){
+  var n=0;
+  try{ n=_markTestedOutUpToTier(PLC.pid, PLC.depthGrade, PLC.depthMastered); }catch(e){}
+  PLC.placed.mathSkipped=n;
+  PLC.phase='ladder';
+  _plAdvanceSubject();
 }
 
 /* Browser back interceptor */
